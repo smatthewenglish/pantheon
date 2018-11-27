@@ -57,6 +57,7 @@ public class DiscoveryPeer extends DefaultPeer {
     return status;
   }
 
+  @Override
   public void setStatus(final PeerDiscoveryStatus status) {
     this.status = status;
   }
@@ -65,6 +66,7 @@ public class DiscoveryPeer extends DefaultPeer {
     return firstDiscovered;
   }
 
+  @Override
   public PeerId setFirstDiscovered(final long firstDiscovered) {
     this.firstDiscovered = firstDiscovered;
     return this;
@@ -74,6 +76,7 @@ public class DiscoveryPeer extends DefaultPeer {
     return lastContacted;
   }
 
+  @Override
   public void setLastContacted(final long lastContacted) {
     this.lastContacted = lastContacted;
   }

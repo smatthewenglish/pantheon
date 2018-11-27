@@ -32,6 +32,7 @@ import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PeerRequirement;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PeerTable;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PingPacketData;
 import tech.pegasys.pantheon.ethereum.p2p.peers.DefaultPeerId;
+import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
 import tech.pegasys.pantheon.ethereum.p2p.peers.PeerBlacklist;
 import tech.pegasys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage;
 import tech.pegasys.pantheon.util.NetworkUtility;
@@ -271,15 +272,15 @@ public class PeerDiscoveryAgent implements DisconnectCallback {
 
   /**
    * Allows package-private components to dispatch messages to peers. It updates the lastContacted
-   * timestamp of the {@link DiscoveryPeer}. This method wraps the data in a Packet, calculates its
-   * hash and signs it with our private key.
+   * timestamp of the {@link Peer}. This method wraps the data in a Packet, calculates its hash and
+   * signs it with our private key.
    *
    * @param peer the recipient
    * @param type the type of message
    * @param data the data packet to send
    * @return the sent packet
    */
-  public Packet sendPacket(final DiscoveryPeer peer, final PacketType type, final PacketData data) {
+  public Packet sendPacket(final Peer peer, final PacketType type, final PacketData data) {
     final Packet packet = Packet.create(type, data, keyPair);
     LOG.trace(
         ">>> Sending {} discovery packet to {} ({}): {}",

@@ -13,8 +13,11 @@
 package tech.pegasys.pantheon.ethereum.p2p.peers;
 
 import tech.pegasys.pantheon.crypto.SecureRandomProvider;
+import tech.pegasys.pantheon.ethereum.p2p.discovery.PeerDiscoveryStatus;
 import tech.pegasys.pantheon.ethereum.rlp.RLPOutput;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
+
+import java.util.List;
 
 public interface Peer extends PeerId {
 
@@ -49,4 +52,12 @@ public interface Peer extends PeerId {
     out.writeBytesValue(getId());
     out.endList();
   }
+
+  PeerId setFirstDiscovered(long firstDiscovered);
+
+  void setStatus(PeerDiscoveryStatus status);
+
+  void setLastContacted(long lastContacted);
+
+  List<Peer> getPeerTable();
 }

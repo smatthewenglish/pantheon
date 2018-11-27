@@ -17,11 +17,13 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static tech.pegasys.pantheon.util.Preconditions.checkGuard;
 
 import tech.pegasys.pantheon.ethereum.p2p.discovery.PeerDiscoveryPacketDecodingException;
+import tech.pegasys.pantheon.ethereum.p2p.discovery.PeerDiscoveryStatus;
 import tech.pegasys.pantheon.ethereum.rlp.RLPInput;
 import tech.pegasys.pantheon.util.NetworkUtility;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.net.URI;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalInt;
@@ -191,6 +193,22 @@ public class DefaultPeer extends DefaultPeerId implements Peer {
     }
     final DefaultPeer other = (DefaultPeer) obj;
     return id.equals(other.id) && endpoint.equals(other.endpoint);
+  }
+
+  @Override
+  public PeerId setFirstDiscovered(final long firstDiscovered) {
+    return null;
+  }
+
+  @Override
+  public void setStatus(final PeerDiscoveryStatus status) {}
+
+  @Override
+  public void setLastContacted(final long lastContacted) {}
+
+  @Override
+  public List<Peer> getPeerTable() {
+    return null;
   }
 
   @Override
