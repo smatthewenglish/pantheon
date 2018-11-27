@@ -46,7 +46,6 @@ public class RecursivePeerRefreshStateTest {
 
   private final List<TestPeer> aggregatePeerList = new ArrayList<>();
 
-  private NeighborsPacketData neighborsPacketData_bootstrap;
   private NeighborsPacketData neighborsPacketData_000;
   private NeighborsPacketData neighborsPacketData_010;
   private NeighborsPacketData neighborsPacketData_011;
@@ -75,18 +74,15 @@ public class RecursivePeerRefreshStateTest {
   private TestPeer peer_322;
   private TestPeer peer_323;
 
-  private BytesValue target;
-
   @Before
   public void setup() throws Exception {
-    target =
+    JsonNode peers =
+        MAPPER.readTree(RecursivePeerRefreshStateTest.class.getResource("/peers.json"));
+    BytesValue target =
         BytesValue.fromHexString(
             "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000");
     recursivePeerRefreshState =
         new RecursivePeerRefreshState(target, new PeerBlacklist(), bondingAgent, neighborFinder);
-
-    JsonNode peers =
-        MAPPER.readTree(RecursivePeerRefreshStateTest.class.getResource("/peers.json"));
 
     peer_000 = generatePeer(peers);
 
@@ -118,7 +114,6 @@ public class RecursivePeerRefreshStateTest {
     peer_322 = (TestPeer) peer_013.getPeerTable().get(2);
     peer_323 = (TestPeer) peer_013.getPeerTable().get(3);
 
-    neighborsPacketData_bootstrap = NeighborsPacketData.create(Collections.singletonList(peer_000));
     neighborsPacketData_000 = NeighborsPacketData.create(peer_000.getPeerTable());
     neighborsPacketData_010 = NeighborsPacketData.create(peer_010.getPeerTable());
     neighborsPacketData_011 = NeighborsPacketData.create(peer_011.getPeerTable());
@@ -152,38 +147,8 @@ public class RecursivePeerRefreshStateTest {
     aggregatePeerList.add(peer_000); // 21
   }
 
-  private boolean matchPeerToCorrespondingPacketData(
-      final Peer peer, final NeighborsPacketData neighborsPacketData) {
-    String nodeId = null;
-    Matcher idMatcher = Pattern.compile("\\d\\.\\d\\.(\\d)").matcher(peer.toString());
-    if (idMatcher.find()) {
-      nodeId = idMatcher.group(1);
-    }
-    for (Peer neighbour : neighborsPacketData.getNodes()) {
-      idMatcher = Pattern.compile("(\\d)\\.(\\d)\\.(\\d)").matcher(neighbour.toString());
-      if (idMatcher.find()) {
-        String parentId = idMatcher.group(1);
-        if (!nodeId.equals(parentId)) {
-          return false;
-        }
-      }
-    }
-    return true;
-  }
-
   @Test
-  public void shouldConfirmAllPeersMatchCorrespondingPackets() {
-    assertThat(matchPeerToCorrespondingPacketData(peer_000, neighborsPacketData_bootstrap))
-        .isTrue();
-    assertThat(matchPeerToCorrespondingPacketData(peer_000, neighborsPacketData_000)).isTrue();
-    assertThat(matchPeerToCorrespondingPacketData(peer_010, neighborsPacketData_010)).isTrue();
-    assertThat(matchPeerToCorrespondingPacketData(peer_011, neighborsPacketData_011)).isTrue();
-    assertThat(matchPeerToCorrespondingPacketData(peer_012, neighborsPacketData_012)).isTrue();
-    assertThat(matchPeerToCorrespondingPacketData(peer_013, neighborsPacketData_013)).isTrue();
-  }
-
-  @Test
-  public void shouldEstablishRelativeDistances() {
+  public void shouldEstablishRelativeDistanceValues() {
     for (int i = 0; i < aggregatePeerList.size() - 1; i++) {
       int nodeOrdinalRank = aggregatePeerList.get(i).getOrdinalRank();
       int neighborOrdinalRank = aggregatePeerList.get(i + 1).getOrdinalRank();
@@ -192,39 +157,54 @@ public class RecursivePeerRefreshStateTest {
   }
 
   @Test
-  public void shouldIssueRequestToPeerWithLesserDistanceButGreaterHops() {
-    // Prerequisite for processing packets received by this peer...
-    recursivePeerRefreshState.addToOutstandingRequests(peer_000.getId());
-    // Take our bootstrap peer, and add it's peerTable to the anteMap
-    // TODO:^^ this is inelegant, remove it...
-    recursivePeerRefreshState.digestNeighboursPacket(
-        neighborsPacketData_bootstrap, peer_000.getId());
+  public void shouldConfirmPeersMatchCorrespondingPackets() {
+    assertThat(matchPeerToCorrespondingPacketData(peer_000, neighborsPacketData_000)).isTrue();
+    assertThat(matchPeerToCorrespondingPacketData(peer_010, neighborsPacketData_010)).isTrue();
+    assertThat(matchPeerToCorrespondingPacketData(peer_011, neighborsPacketData_011)).isTrue();
+    assertThat(matchPeerToCorrespondingPacketData(peer_012, neighborsPacketData_012)).isTrue();
+    assertThat(matchPeerToCorrespondingPacketData(peer_013, neighborsPacketData_013)).isTrue();
+  }
+
+  @Test
+  public void shouldIssueRequestToPeerWithLesserDistanceGreaterHops() {
+    recursivePeerRefreshState.kickstartBootstrapPeers(Collections.singletonList(peer_000));
+
     verify(bondingAgent).performBonding(peer_000);
     verify(neighborFinder).issueFindNodeRequest(peer_000);
+
     recursivePeerRefreshState.digestNeighboursPacket(neighborsPacketData_000, peer_000.getId());
+
     verify(bondingAgent).performBonding(peer_010);
     verify(bondingAgent).performBonding(peer_011);
     verify(bondingAgent).performBonding(peer_012);
     verify(bondingAgent).performBonding(peer_013);
+
     verify(neighborFinder, never()).issueFindNodeRequest(peer_010);
     verify(neighborFinder).issueFindNodeRequest(peer_011);
     verify(neighborFinder).issueFindNodeRequest(peer_012);
     verify(neighborFinder).issueFindNodeRequest(peer_013);
+
     recursivePeerRefreshState.digestNeighboursPacket(neighborsPacketData_011, peer_011.getId());
+
     verify(bondingAgent).performBonding(peer_120);
     verify(bondingAgent).performBonding(peer_121);
     verify(bondingAgent).performBonding(peer_122);
     verify(bondingAgent).performBonding(peer_123);
+
     recursivePeerRefreshState.digestNeighboursPacket(neighborsPacketData_012, peer_012.getId());
+
     verify(bondingAgent).performBonding(peer_220);
     verify(bondingAgent).performBonding(peer_221);
     verify(bondingAgent).performBonding(peer_222);
     verify(bondingAgent).performBonding(peer_223);
+
     recursivePeerRefreshState.digestNeighboursPacket(neighborsPacketData_013, peer_013.getId());
+
     verify(bondingAgent).performBonding(peer_320);
     verify(bondingAgent).performBonding(peer_321);
     verify(bondingAgent).performBonding(peer_322);
     verify(bondingAgent).performBonding(peer_323);
+
     verify(neighborFinder, never()).issueFindNodeRequest(peer_320);
     verify(neighborFinder, never()).issueFindNodeRequest(peer_321);
     verify(neighborFinder, never()).issueFindNodeRequest(peer_322);
@@ -247,6 +227,25 @@ public class RecursivePeerRefreshStateTest {
       peerTable = Collections.emptyList();
     }
     return new TestPeer(parent, tier, identifier, ordinalRank, id, peerTable);
+  }
+
+  private boolean matchPeerToCorrespondingPacketData(
+      final Peer peer, final NeighborsPacketData neighborsPacketData) {
+    String nodeId = null;
+    Matcher idMatcher = Pattern.compile("\\d\\.\\d\\.(\\d)").matcher(peer.toString());
+    if (idMatcher.find()) {
+      nodeId = idMatcher.group(1);
+    }
+    for (Peer neighbour : neighborsPacketData.getNodes()) {
+      idMatcher = Pattern.compile("(\\d)\\.(\\d)\\.(\\d)").matcher(neighbour.toString());
+      if (idMatcher.find()) {
+        String parentId = idMatcher.group(1);
+        if (!nodeId.equals(parentId)) {
+          return false;
+        }
+      }
+    }
+    return true;
   }
 
   static class TestPeer implements Peer {
