@@ -13,9 +13,13 @@
 package tech.pegasys.pantheon.ethereum.p2p.discovery.internal;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 
 import tech.pegasys.pantheon.ethereum.p2p.peers.Endpoint;
 import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
+import tech.pegasys.pantheon.ethereum.p2p.peers.PeerBlacklist;
 import tech.pegasys.pantheon.util.bytes.Bytes32;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
@@ -32,6 +36,13 @@ import org.junit.Test;
 
 public class RecursivePeerRefreshStateTest {
   private static final ObjectMapper MAPPER = new ObjectMapper();
+
+  private RecursivePeerRefreshState recursivePeerRefreshState;
+
+  private final RecursivePeerRefreshState.BondingAgent bondingAgent =
+      mock(RecursivePeerRefreshState.BondingAgent.class);
+  private final RecursivePeerRefreshState.NeighborFinder neighborFinder =
+      mock(RecursivePeerRefreshState.NeighborFinder.class);
 
   private final List<TestPeer> aggregatePeerList = new ArrayList<>();
 
@@ -64,8 +75,15 @@ public class RecursivePeerRefreshStateTest {
   private TestPeer peer_322;
   private TestPeer peer_323;
 
+  private BytesValue target;
+
   @Before
-  public void yayaya() throws Exception {
+  public void setup() throws Exception {
+    target =
+        BytesValue.fromHexString(
+            "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000");
+    recursivePeerRefreshState =
+        new RecursivePeerRefreshState(target, new PeerBlacklist(), bondingAgent, neighborFinder);
 
     JsonNode peers =
         MAPPER.readTree(RecursivePeerRefreshStateTest.class.getResource("/peers.json"));
@@ -95,10 +113,10 @@ public class RecursivePeerRefreshStateTest {
 
     peer_013 = (TestPeer) peer_000.getPeerTable().get(3);
 
-    peer_320 = (TestPeer) peer_012.getPeerTable().get(0);
-    peer_321 = (TestPeer) peer_012.getPeerTable().get(1);
-    peer_322 = (TestPeer) peer_012.getPeerTable().get(2);
-    peer_323 = (TestPeer) peer_012.getPeerTable().get(3);
+    peer_320 = (TestPeer) peer_013.getPeerTable().get(0);
+    peer_321 = (TestPeer) peer_013.getPeerTable().get(1);
+    peer_322 = (TestPeer) peer_013.getPeerTable().get(2);
+    peer_323 = (TestPeer) peer_013.getPeerTable().get(3);
 
     neighborsPacketData_bootstrap = NeighborsPacketData.create(Collections.singletonList(peer_000));
     neighborsPacketData_000 = NeighborsPacketData.create(peer_000.getPeerTable());
@@ -162,6 +180,55 @@ public class RecursivePeerRefreshStateTest {
     assertThat(matchPeerToCorrespondingPacketData(peer_011, neighborsPacketData_011)).isTrue();
     assertThat(matchPeerToCorrespondingPacketData(peer_012, neighborsPacketData_012)).isTrue();
     assertThat(matchPeerToCorrespondingPacketData(peer_013, neighborsPacketData_013)).isTrue();
+  }
+
+  @Test
+  public void shouldEstablishRelativeDistances() {
+    for (int i = 0; i < aggregatePeerList.size() - 1; i++) {
+      int nodeOrdinalRank = aggregatePeerList.get(i).getOrdinalRank();
+      int neighborOrdinalRank = aggregatePeerList.get(i + 1).getOrdinalRank();
+      assertThat(nodeOrdinalRank).isLessThan(neighborOrdinalRank);
+    }
+  }
+
+  @Test
+  public void shouldIssueRequestToPeerWithLesserDistanceButGreaterHops() {
+    // Prerequisite for processing packets received by this peer...
+    recursivePeerRefreshState.addToOutstandingRequests(peer_000.getId());
+    // Take our bootstrap peer, and add it's peerTable to the anteMap
+    // TODO:^^ this is inelegant, remove it...
+    recursivePeerRefreshState.digestNeighboursPacket(
+        neighborsPacketData_bootstrap, peer_000.getId());
+    verify(bondingAgent).performBonding(peer_000);
+    verify(neighborFinder).issueFindNodeRequest(peer_000);
+    recursivePeerRefreshState.digestNeighboursPacket(neighborsPacketData_000, peer_000.getId());
+    verify(bondingAgent).performBonding(peer_010);
+    verify(bondingAgent).performBonding(peer_011);
+    verify(bondingAgent).performBonding(peer_012);
+    verify(bondingAgent).performBonding(peer_013);
+    verify(neighborFinder, never()).issueFindNodeRequest(peer_010);
+    verify(neighborFinder).issueFindNodeRequest(peer_011);
+    verify(neighborFinder).issueFindNodeRequest(peer_012);
+    verify(neighborFinder).issueFindNodeRequest(peer_013);
+    recursivePeerRefreshState.digestNeighboursPacket(neighborsPacketData_011, peer_011.getId());
+    verify(bondingAgent).performBonding(peer_120);
+    verify(bondingAgent).performBonding(peer_121);
+    verify(bondingAgent).performBonding(peer_122);
+    verify(bondingAgent).performBonding(peer_123);
+    recursivePeerRefreshState.digestNeighboursPacket(neighborsPacketData_012, peer_012.getId());
+    verify(bondingAgent).performBonding(peer_220);
+    verify(bondingAgent).performBonding(peer_221);
+    verify(bondingAgent).performBonding(peer_222);
+    verify(bondingAgent).performBonding(peer_223);
+    recursivePeerRefreshState.digestNeighboursPacket(neighborsPacketData_013, peer_013.getId());
+    verify(bondingAgent).performBonding(peer_320);
+    verify(bondingAgent).performBonding(peer_321);
+    verify(bondingAgent).performBonding(peer_322);
+    verify(bondingAgent).performBonding(peer_323);
+    verify(neighborFinder, never()).issueFindNodeRequest(peer_320);
+    verify(neighborFinder, never()).issueFindNodeRequest(peer_321);
+    verify(neighborFinder, never()).issueFindNodeRequest(peer_322);
+    verify(neighborFinder).issueFindNodeRequest(peer_323);
   }
 
   private TestPeer generatePeer(final JsonNode peer) {
