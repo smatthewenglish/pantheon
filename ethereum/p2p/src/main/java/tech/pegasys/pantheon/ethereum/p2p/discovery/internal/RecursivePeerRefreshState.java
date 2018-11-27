@@ -56,9 +56,8 @@ class RecursivePeerRefreshState {
   }
 
   /**
-   * The lookup initiator starts by picking α closest nodes to the target it knows of. The initiator
-   * then sends concurrent FindNode packets to those nodes. α is a system-wide concurrency
-   * parameter, such as 3.
+   * The lookup initiator starts by picking CONCURRENT_REQUEST_LIMIT closest nodes to the target it
+   * knows of. The initiator then sends concurrent FindNode packets to those nodes.
    */
   private void initiatePeerRefreshCycle(final List<Peer> peers) {
     for (Peer peer : peers) {
