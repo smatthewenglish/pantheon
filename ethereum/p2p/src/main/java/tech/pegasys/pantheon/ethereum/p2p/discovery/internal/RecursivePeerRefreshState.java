@@ -57,7 +57,7 @@ class RecursivePeerRefreshState {
 
   /**
    * The lookup initiator starts by picking CONCURRENT_REQUEST_LIMIT closest nodes to the target it
-   * knows of. The initiator then sends concurrent FindNode packets to those nodes.
+   * knows of. The initiator then issues concurrent FindNode packets to those nodes.
    */
   private void initiatePeerRefreshCycle(final List<Peer> peers) {
     for (Peer peer : peers) {
@@ -157,7 +157,7 @@ class RecursivePeerRefreshState {
 
   public interface BondingAgent {
     /**
-     * If peer is not previously known initiate bonding process.
+     * If peer is not previously known, initiate bonding process.
      *
      * @param peer
      */
