@@ -36,10 +36,9 @@ class RecursivePeerRefreshState {
   private final BondingAgent bondingAgent;
   private final NeighborFinder neighborFinder;
   private final HashMap<Peer, Integer> anteMap;
-  private SortedSet<Map.Entry<Peer, Integer>> distanceSortedPeers;
-  List<OutstandingRequest> outstandingRequestList;
-  // private List<BytesValue> outstandingRequestList;
-  private List<BytesValue> contactedInCurrentExecution;
+  private final SortedSet<Map.Entry<Peer, Integer>> distanceSortedPeers;
+  private final List<OutstandingRequest> outstandingRequestList;
+  private final List<BytesValue> contactedInCurrentExecution;
 
   RecursivePeerRefreshState(
       final BytesValue target,
@@ -56,65 +55,42 @@ class RecursivePeerRefreshState {
     this.contactedInCurrentExecution = new ArrayList<>();
   }
 
-  BytesValue getTarget() {
-    return target;
-  }
-
-  SortedSet<Map.Entry<Peer, Integer>> getDistanceSortedPeers() {
-    return distanceSortedPeers;
-  }
-
-  HashMap<Peer, Integer> getAnteMap() {
-    return anteMap;
-  }
-
-  List<OutstandingRequest> getOutstandingRequestList() {
-    return outstandingRequestList;
-  }
-
-  void addToOutstandingRequests(final BytesValue id) {
-    outstandingRequestList.add(new OutstandingRequest(id));
-  }
-
-  private void performIteration() {
-    if (outstandingRequestList.isEmpty()) {
-      // Determine the peers of whom we will request nodes...
-      List<Peer> queryCandidates = determineFindNodeCandidates();
-      initiatePeerRefreshCycle(queryCandidates);
-    }
-  }
-
   /**
-   * This method is called once in the beginning with the bootstrap node(s), and then subsequently
-   * in each iteration, i.e. 'performIteration()'.
-   *
-   * <p>The lookup initiator starts by picking α closest nodes to the target it knows of. The
-   * initiator then sends concurrent FindNode packets to those nodes. α is a system-wide concurrency
+   * The lookup initiator starts by picking α closest nodes to the target it knows of. The initiator
+   * then sends concurrent FindNode packets to those nodes. α is a system-wide concurrency
    * parameter, such as 3.
-   *
-   * @param peers closest peers, no more than CONCURRENT_REQUEST_LIMIT
    */
   private void initiatePeerRefreshCycle(final List<Peer> peers) {
     for (Peer peer : peers) {
-      // When all peers are constituents of contactedInCurrentExecution
-      // the algorithm is over...
       if (!contactedInCurrentExecution.contains(peer.getId())) {
-        // Save the name of this peer, so we know when it responds to us
         BytesValue peerId = peer.getId();
         outstandingRequestList.add(new OutstandingRequest(peerId));
         contactedInCurrentExecution.add(peerId);
         neighborFinder.issueFindNodeRequest(peer);
       }
+      // The lookup terminates when the initiator has queried
+      // and gotten responses from the k closest nodes it has seen.
     }
   }
 
-  /** Process our peers and determine the query candidates for a new round... */
+  void digestNeighboursPacket(
+      final NeighborsPacketData neighboursPacket, final BytesValue peerIdentifier) {
+    if (outstandingRequestList.contains(new OutstandingRequest(peerIdentifier))) {
+      List<Peer> receivedPeerList = neighboursPacket.getNodes();
+      for (Peer receivedPeer : receivedPeerList) {
+        if (!peerBlacklist.contains(receivedPeer)) {
+          bondingAgent.performBonding(receivedPeer);
+          anteMap.put(receivedPeer, distance(target, receivedPeer.getId()));
+        }
+      }
+      outstandingRequestList.remove(new OutstandingRequest(peerIdentifier));
+      performIteration();
+    }
+  }
+
   private List<Peer> determineFindNodeCandidates() {
-    // Add the newly updated 'anteMap' to the 'distanceSortedPeers' data structure...
     distanceSortedPeers.addAll(anteMap.entrySet());
-    // Create a structure that we're able to index into, from the newly sorted set...
     List<Map.Entry<Peer, Integer>> sortedList = new ArrayList<>(distanceSortedPeers);
-    // Create a structure to hold the result of our gathering our closest peers...
     List<Peer> queryCandidates = new ArrayList<>();
     for (int i = 0; i < CONCURRENT_REQUEST_LIMIT; i++) {
       if (i >= sortedList.size()) {
@@ -125,27 +101,21 @@ class RecursivePeerRefreshState {
     return queryCandidates;
   }
 
-  /** Process a received packet, add the contents, i.e. new peers, to the 'anteMap'. */
-  void digestNeighboursPacket(
-      final NeighborsPacketData neighboursPacket, final BytesValue peerIdentifier) {
-    if (outstandingRequestList.contains(new OutstandingRequest(peerIdentifier))) {
-      // Get the peers from this packet...
-      List<Peer> receivedPeerList = neighboursPacket.getNodes();
-      // Treat each one of them individually...
-      for (Peer receivedPeer : receivedPeerList) {
-        if (!peerBlacklist.contains(receivedPeer)) {
-          // Add to our peerTable...
-          bondingAgent.performBonding(receivedPeer);
-          // Add each one to our 'anteMap'...
-          anteMap.put(receivedPeer, distance(target, receivedPeer.getId()));
-        }
-      }
-      // We are no longer waiting on this peer's return message
-      outstandingRequestList.remove(new OutstandingRequest(peerIdentifier));
-      performIteration();
+  private void performIteration() {
+    if (outstandingRequestList.isEmpty()) {
+      List<Peer> queryCandidates = determineFindNodeCandidates();
+      initiatePeerRefreshCycle(queryCandidates);
     }
-    // If we received a neighbours packet from a peer from whom
-    // we've not requested data, something fishy is going on...
+  }
+
+  void kickstartBootstrapPeers(final List<Peer> bootstrapPeers) {
+    for (Peer bootstrapPeer : bootstrapPeers) {
+      BytesValue peerId = bootstrapPeer.getId();
+      outstandingRequestList.add(new OutstandingRequest(peerId));
+      contactedInCurrentExecution.add(peerId);
+      bondingAgent.performBonding(bootstrapPeer);
+      neighborFinder.issueFindNodeRequest(bootstrapPeer);
+    }
   }
 
   static class OutstandingRequest {
@@ -179,7 +149,7 @@ class RecursivePeerRefreshState {
 
   public interface NeighborFinder {
     /**
-     * Wait for the peer to complete bonding then issue a find node request...
+     * Wait for the peer to complete bonding before issuance of FindNode request.
      *
      * @param peer
      */
@@ -188,7 +158,7 @@ class RecursivePeerRefreshState {
 
   public interface BondingAgent {
     /**
-     * If peer is not already in the peer table or started the bonding process, begin bonding...
+     * If peer is not previously known initiate bonding process.
      *
      * @param peer
      */
