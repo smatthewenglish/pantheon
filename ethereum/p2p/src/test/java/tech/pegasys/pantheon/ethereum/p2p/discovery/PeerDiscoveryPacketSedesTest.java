@@ -24,6 +24,7 @@ import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.NeighborsPacketData
 import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.Packet;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PacketData;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PacketType;
+import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
 import tech.pegasys.pantheon.ethereum.rlp.RLP;
 import tech.pegasys.pantheon.ethereum.rlp.RLPException;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
@@ -79,7 +80,7 @@ public class PeerDiscoveryPacketSedesTest {
 
   @Test
   public void neighborsPacketData() {
-    final List<DiscoveryPeer> peers = Arrays.asList(generatePeers(generateKeyPairs(5)));
+    final List<Peer> peers = Arrays.asList(generatePeers(generateKeyPairs(5)));
 
     final NeighborsPacketData packet = NeighborsPacketData.create(peers);
     final BytesValue serialized = RLP.encode(packet::writeTo);
