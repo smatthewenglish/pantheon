@@ -183,7 +183,7 @@ class RecursivePeerRefreshState {
      *
      * @param peer
      */
-    void issueFindNodeRequest(Peer peer);
+    void issueFindNodeRequest(final Peer peer);
   }
 
   public interface BondingAgent {
@@ -192,6 +192,6 @@ class RecursivePeerRefreshState {
      *
      * @param peer
      */
-    void performBonding(Peer peer);
+    void performBonding(final Peer peer);
   }
 }
