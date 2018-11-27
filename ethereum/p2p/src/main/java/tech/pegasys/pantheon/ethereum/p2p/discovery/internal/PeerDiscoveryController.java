@@ -231,17 +231,17 @@ public class PeerDiscoveryController {
             .ifPresent(
                 interaction -> {
                   // Extract the peers from the incoming packet.
-                  final List<DiscoveryPeer> neighbors =
+                  final List<Peer> neighbors =
                       packet
                           .getPacketData(NeighborsPacketData.class)
                           .map(NeighborsPacketData::getNodes)
                           .orElse(emptyList());
 
-                  for (final DiscoveryPeer neighbor : neighbors) {
+                  for (final Peer neighbor : neighbors) {
                     if (peerBlacklist.contains(neighbor) || peerTable.get(neighbor).isPresent()) {
                       continue;
                     }
-                    bond(neighbor, false);
+                    bond((DiscoveryPeer) neighbor, false);
                   }
                 });
         break;
@@ -363,11 +363,11 @@ public class PeerDiscoveryController {
    * @param peer the peer to interrogate
    * @param target the target node ID to find
    */
-  private void findNodes(final DiscoveryPeer peer, final BytesValue target) {
+  private void findNodes(final Peer peer, final BytesValue target) {
     final Consumer<PeerInteractionState> action =
         (interaction) -> {
           final FindNeighborsPacketData data = FindNeighborsPacketData.create(target);
-          agent.sendPacket(peer, PacketType.FIND_NEIGHBORS, data);
+          agent.sendPacket((DiscoveryPeer) peer, PacketType.FIND_NEIGHBORS, data);
         };
     final PeerInteractionState interaction =
         new PeerInteractionState(action, PacketType.NEIGHBORS, packet -> true, true, false);
@@ -401,7 +401,7 @@ public class PeerDiscoveryController {
       final FindNeighborsPacketData packetData, final DiscoveryPeer sender) {
     // TODO: for now return 16 peers. Other implementations calculate how many
     // peers they can fit in a 1280-byte payload.
-    final List<DiscoveryPeer> peers = peerTable.nearestPeers(packetData.getTarget(), 16);
+    final List<Peer> peers = peerTable.nearestPeers(packetData.getTarget(), 16);
     final PacketData data = NeighborsPacketData.create(peers);
     agent.sendPacket(sender, PacketType.NEIGHBORS, data);
   }
