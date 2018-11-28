@@ -12,6 +12,9 @@
  */
 package tech.pegasys.pantheon.ethereum.p2p.discovery.internal;
 
+import static java.util.stream.Collectors.toList;
+import static tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PeerDistanceCalculator.distance;
+
 import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
 import tech.pegasys.pantheon.ethereum.p2p.peers.PeerBlacklist;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
@@ -22,19 +25,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static java.util.stream.Collectors.toList;
-import static tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PeerDistanceCalculator.distance;
-
 class RecursivePeerRefreshState {
   private final int CONCURRENT_REQUEST_LIMIT = 3;
   private final BytesValue target;
   private final PeerBlacklist peerBlacklist;
   private final BondingAgent bondingAgent;
   private final NeighborFinder neighborFinder;
-
   private final List<PeerDistance> anteMap;
-  private final Map<BytesValue, Instant> outstandingRequestList; //Want to check if a peer ID is in this list
-
+  private final Map<BytesValue, Instant> outstandingRequestList;
   private final List<BytesValue> contactedInCurrentExecution;
 
   RecursivePeerRefreshState(
@@ -84,12 +82,17 @@ class RecursivePeerRefreshState {
   }
 
   private List<Peer> determineFindNodeCandidates() {
-    anteMap.sort((peer1, peer2) -> {
-      if (peer1.getDistance() > peer2.getDistance()) return 1;
-      if (peer1.getDistance() < peer2.getDistance()) return -1;
-      return 0;
-    });
-    return anteMap.subList(0, CONCURRENT_REQUEST_LIMIT).stream().map(PeerDistance::getPeer).collect(toList());
+    anteMap.sort(
+        (peer1, peer2) -> {
+          if (peer1.getDistance() > peer2.getDistance()) return 1;
+          if (peer1.getDistance() < peer2.getDistance()) return -1;
+          return 0;
+        });
+    return anteMap
+        .subList(0, CONCURRENT_REQUEST_LIMIT)
+        .stream()
+        .map(PeerDistance::getPeer)
+        .collect(toList());
   }
 
   private void performIteration() {
@@ -123,7 +126,7 @@ class RecursivePeerRefreshState {
     }
 
     Integer getDistance() {
-     return distance;
+      return distance;
     }
 
     @Override
