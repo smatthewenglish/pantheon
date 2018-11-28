@@ -12,22 +12,18 @@
  */
 package tech.pegasys.pantheon.ethereum.p2p.discovery.internal;
 
-import static tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PeerDistanceCalculator.distance;
-
 import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
 import tech.pegasys.pantheon.ethereum.p2p.peers.PeerBlacklist;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
-import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-import java.util.SortedSet;
-import java.util.TreeSet;
+
+import static java.util.stream.Collectors.toList;
+import static tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PeerDistanceCalculator.distance;
 
 class RecursivePeerRefreshState {
   private final int CONCURRENT_REQUEST_LIMIT = 3;
@@ -35,9 +31,10 @@ class RecursivePeerRefreshState {
   private final PeerBlacklist peerBlacklist;
   private final BondingAgent bondingAgent;
   private final NeighborFinder neighborFinder;
-  private final HashMap<Peer, Integer> anteMap;
-  private final SortedSet<Map.Entry<Peer, Integer>> distanceSortedPeers;
-  private final List<OutstandingRequest> outstandingRequestList;
+
+  private final List<PeerDistance> anteMap;
+  private final Map<BytesValue, Instant> outstandingRequestList; //Want to check if a peer ID is in this list
+
   private final List<BytesValue> contactedInCurrentExecution;
 
   RecursivePeerRefreshState(
@@ -49,9 +46,8 @@ class RecursivePeerRefreshState {
     this.peerBlacklist = peerBlacklist;
     this.bondingAgent = bondingAgent;
     this.neighborFinder = neighborFinder;
-    this.anteMap = new HashMap<>();
-    this.distanceSortedPeers = new TreeSet<>(Comparator.comparing(Map.Entry::getValue));
-    this.outstandingRequestList = new ArrayList<>();
+    this.anteMap = new ArrayList<>();
+    this.outstandingRequestList = new HashMap<>();
     this.contactedInCurrentExecution = new ArrayList<>();
   }
 
@@ -63,7 +59,7 @@ class RecursivePeerRefreshState {
     for (Peer peer : peers) {
       if (!contactedInCurrentExecution.contains(peer.getId())) {
         BytesValue peerId = peer.getId();
-        outstandingRequestList.add(new OutstandingRequest(peerId));
+        outstandingRequestList.put(peer.getId(), Instant.now());
         contactedInCurrentExecution.add(peerId);
         neighborFinder.issueFindNodeRequest(peer);
       }
@@ -74,30 +70,26 @@ class RecursivePeerRefreshState {
 
   void digestNeighboursPacket(
       final NeighborsPacketData neighboursPacket, final BytesValue peerIdentifier) {
-    if (outstandingRequestList.contains(new OutstandingRequest(peerIdentifier))) {
+    if (outstandingRequestList.containsKey(peerIdentifier)) {
       List<Peer> receivedPeerList = neighboursPacket.getNodes();
       for (Peer receivedPeer : receivedPeerList) {
         if (!peerBlacklist.contains(receivedPeer)) {
           bondingAgent.performBonding(receivedPeer);
-          anteMap.put(receivedPeer, distance(target, receivedPeer.getId()));
+          anteMap.add(new PeerDistance(receivedPeer, distance(target, receivedPeer.getId())));
         }
       }
-      outstandingRequestList.remove(new OutstandingRequest(peerIdentifier));
+      outstandingRequestList.remove(peerIdentifier);
       performIteration();
     }
   }
 
   private List<Peer> determineFindNodeCandidates() {
-    distanceSortedPeers.addAll(anteMap.entrySet());
-    List<Map.Entry<Peer, Integer>> sortedList = new ArrayList<>(distanceSortedPeers);
-    List<Peer> queryCandidates = new ArrayList<>();
-    for (int i = 0; i < CONCURRENT_REQUEST_LIMIT; i++) {
-      if (i >= sortedList.size()) {
-        break;
-      }
-      queryCandidates.add(sortedList.get(i).getKey());
-    }
-    return queryCandidates;
+    anteMap.sort((peer1, peer2) -> {
+      if (peer1.getDistance() > peer2.getDistance()) return 1;
+      if (peer1.getDistance() < peer2.getDistance()) return -1;
+      return 0;
+    });
+    return anteMap.subList(0, CONCURRENT_REQUEST_LIMIT).stream().map(PeerDistance::getPeer).collect(toList());
   }
 
   private void performIteration() {
@@ -110,39 +102,33 @@ class RecursivePeerRefreshState {
   void kickstartBootstrapPeers(final List<Peer> bootstrapPeers) {
     for (Peer bootstrapPeer : bootstrapPeers) {
       BytesValue peerId = bootstrapPeer.getId();
-      outstandingRequestList.add(new OutstandingRequest(peerId));
+      outstandingRequestList.put(peerId, Instant.now());
       contactedInCurrentExecution.add(peerId);
       bondingAgent.performBonding(bootstrapPeer);
       neighborFinder.issueFindNodeRequest(bootstrapPeer);
     }
   }
 
-  static class OutstandingRequest {
-    Instant creation;
-    BytesValue peerId;
+  static class PeerDistance {
+    Peer peer;
+    Integer distance;
 
-    OutstandingRequest(final BytesValue peerId) {
-      this.creation = Instant.now();
-      this.peerId = peerId;
+    PeerDistance(final Peer peer, final Integer distance) {
+      this.peer = peer;
+      this.distance = distance;
     }
 
-    boolean isExpired() {
-      Duration duration = Duration.between(creation, Instant.now());
-      Duration limit = Duration.ofSeconds(30);
-      return duration.compareTo(limit) >= 0;
+    Peer getPeer() {
+      return peer;
     }
 
-    @Override
-    public boolean equals(final Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-      OutstandingRequest that = (OutstandingRequest) o;
-      return peerId.equals(that.peerId);
+    Integer getDistance() {
+     return distance;
     }
 
     @Override
-    public int hashCode() {
-      return Objects.hash(peerId);
+    public String toString() {
+      return peer + ": " + distance;
     }
   }
 
