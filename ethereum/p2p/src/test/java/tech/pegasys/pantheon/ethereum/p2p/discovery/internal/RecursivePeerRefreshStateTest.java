@@ -32,6 +32,8 @@ import java.util.regex.Pattern;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.vertx.core.Vertx;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -39,6 +41,7 @@ public class RecursivePeerRefreshStateTest {
   private static final ObjectMapper MAPPER = new ObjectMapper();
 
   private RecursivePeerRefreshState recursivePeerRefreshState;
+  private Vertx vertx;
 
   private final RecursivePeerRefreshState.BondingAgent bondingAgent =
       mock(RecursivePeerRefreshState.BondingAgent.class);
@@ -82,8 +85,10 @@ public class RecursivePeerRefreshStateTest {
     BytesValue target =
         BytesValue.fromHexString(
             "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000");
+    vertx = Vertx.vertx();
     recursivePeerRefreshState =
-        new RecursivePeerRefreshState(target, new PeerBlacklist(), bondingAgent, neighborFinder);
+        new RecursivePeerRefreshState(
+            target, new PeerBlacklist(), bondingAgent, neighborFinder, vertx);
 
     peer_000 = generatePeer(peers);
 
@@ -227,7 +232,7 @@ public class RecursivePeerRefreshStateTest {
     verify(neighborFinder).issueFindNodeRequest(peer_012);
     verify(neighborFinder).issueFindNodeRequest(peer_013);
 
-    TimeUnit.SECONDS.sleep(10);
+    TimeUnit.SECONDS.sleep(60);
 
     verify(neighborFinder).issueFindNodeRequest(peer_010);
   }
@@ -319,5 +324,10 @@ public class RecursivePeerRefreshStateTest {
     public String toString() {
       return parent + "." + tier + "." + identifier;
     }
+  }
+
+  @After
+  public void cleaUp() {
+    vertx.close();
   }
 }
