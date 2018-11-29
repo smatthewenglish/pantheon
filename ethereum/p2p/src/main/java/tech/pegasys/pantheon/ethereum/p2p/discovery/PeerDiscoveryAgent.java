@@ -230,8 +230,9 @@ public class PeerDiscoveryAgent implements DisconnectCallback {
   private void handleException(final Throwable exception) {
     if (exception instanceof IOException) {
       LOG.debug("Packet handler exception", exception);
+    } else {
+      LOG.error("Packet handler exception", exception);
     }
-    LOG.error("Packet handler exception", exception);
   }
 
   /**
