@@ -96,7 +96,9 @@ public class PeerDiscoveryController {
   private final Vertx vertx;
   private final PeerTable peerTable;
 
-  private final Collection<DiscoveryPeer> bootstrapNodes;
+  private final Collection<Peer> bootstrapNodes;
+
+  private RecursivePeerRefreshState recursivePeerRefreshState;
 
   /* A tracker for inflight interactions and the state machine of a peer. */
   private final Map<BytesValue, PeerInteractionState> inflightInteractions =
@@ -127,7 +129,7 @@ public class PeerDiscoveryController {
       final Vertx vertx,
       final PeerDiscoveryAgent agent,
       final PeerTable peerTable,
-      final Collection<DiscoveryPeer> bootstrapNodes,
+      final Collection<Peer> bootstrapNodes,
       final long tableRefreshIntervalMs,
       final PeerRequirement peerRequirement,
       final PeerBlacklist peerBlacklist) {
@@ -145,10 +147,14 @@ public class PeerDiscoveryController {
       throw new IllegalStateException("The peer table had already been started");
     }
 
-    bootstrapNodes
-        .stream()
-        .filter(node -> peerTable.tryAdd(node).getOutcome() == Outcome.ADDED)
-        .forEach(node -> bond(node, true));
+    BytesValue target = Peer.randomId();
+
+    // TODO: How to pass these method references...
+    recursivePeerRefreshState =
+            new RecursivePeerRefreshState(
+                    target, new PeerBlacklist(), PeerDiscoveryController::bond, PeerDiscoveryController::findNodes, vertx);
+
+    recursivePeerRefreshState.kickstartBootstrapPeers(bootstrapNodes);
 
     final long timerId =
         vertx.setPeriodic(
@@ -230,19 +236,7 @@ public class PeerDiscoveryController {
         matchInteraction(packet)
             .ifPresent(
                 interaction -> {
-                  // Extract the peers from the incoming packet.
-                  final List<Peer> neighbors =
-                      packet
-                          .getPacketData(NeighborsPacketData.class)
-                          .map(NeighborsPacketData::getNodes)
-                          .orElse(emptyList());
-
-                  for (final Peer neighbor : neighbors) {
-                    if (peerBlacklist.contains(neighbor) || peerTable.get(neighbor).isPresent()) {
-                      continue;
-                    }
-                    bond((DiscoveryPeer) neighbor, false);
-                  }
+                  recursivePeerRefreshState.digestNeighboursPacket(packet.getPacketData(NeighborsPacketData.class).orElse(null), peer);
                 });
         break;
 

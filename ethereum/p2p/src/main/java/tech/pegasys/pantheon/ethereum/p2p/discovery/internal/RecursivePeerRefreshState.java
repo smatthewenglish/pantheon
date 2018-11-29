@@ -22,6 +22,7 @@ import tech.pegasys.pantheon.util.bytes.BytesValue;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 
@@ -131,7 +132,7 @@ class RecursivePeerRefreshState {
     }
   }
 
-  void kickstartBootstrapPeers(final List<Peer> bootstrapPeers) {
+  void kickstartBootstrapPeers(final Collection<Peer> bootstrapPeers) {
     for (Peer bootstrapPeer : bootstrapPeers) {
       BytesValue peerId = bootstrapPeer.getId();
       outstandingRequestList.add(new OutstandingRequest(bootstrapPeer));

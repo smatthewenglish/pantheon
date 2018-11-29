@@ -32,6 +32,7 @@ import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PeerRequirement;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PeerTable;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PingPacketData;
 import tech.pegasys.pantheon.ethereum.p2p.peers.DefaultPeerId;
+import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
 import tech.pegasys.pantheon.ethereum.p2p.peers.PeerBlacklist;
 import tech.pegasys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage;
 import tech.pegasys.pantheon.util.NetworkUtility;
@@ -124,7 +125,7 @@ public class PeerDiscoveryAgent implements DisconnectCallback {
 
     validateConfiguration(config);
 
-    final List<DiscoveryPeer> bootstrapPeers =
+    final List<Peer> bootstrapPeers =
         config.getBootstrapPeers().stream().map(DiscoveryPeer::new).collect(Collectors.toList());
 
     this.vertx = vertx;
