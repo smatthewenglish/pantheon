@@ -222,12 +222,12 @@ public class PeerDiscoveryAgent implements DisconnectCallback {
   }
 
   /**
-   * This is the exception handler for uncontrolled exceptions ocurring in the packet handlers.
+   * This is the exception handler for uncontrolled exceptions occurring in the packet handlers.
    *
-   * @param throwable the exception that was raised
+   * @param exception the exception that was raised
    */
-  private void handleException(final Throwable throwable) {
-    System.out.println(throwable);
+  private void handleException(final Throwable exception) {
+    System.err.println(String.format("Packet handler exception: %s.", exception.getMessage()));
   }
 
   /**
