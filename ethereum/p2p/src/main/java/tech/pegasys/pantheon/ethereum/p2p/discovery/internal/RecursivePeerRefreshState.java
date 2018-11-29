@@ -24,13 +24,12 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.TimerTask;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
+
+import io.vertx.core.Vertx;
 
 class RecursivePeerRefreshState {
   private final int CONCURRENT_REQUEST_LIMIT = 3;
+  private final int TIMEOUT_TASK_DELAY = 30000; // 30 Seconds
   private final BytesValue target;
   private final PeerBlacklist peerBlacklist;
   private final BondingAgent bondingAgent;
@@ -38,16 +37,19 @@ class RecursivePeerRefreshState {
   private final List<PeerDistance> anteList;
   private final List<OutstandingRequest> outstandingRequestList;
   private final List<BytesValue> contactedInCurrentExecution;
+  private final Vertx vertx;
 
   RecursivePeerRefreshState(
       final BytesValue target,
       final PeerBlacklist peerBlacklist,
       final BondingAgent bondingAgent,
-      final NeighborFinder neighborFinder) {
+      final NeighborFinder neighborFinder,
+      final Vertx vertx) {
     this.target = target;
     this.peerBlacklist = peerBlacklist;
     this.bondingAgent = bondingAgent;
     this.neighborFinder = neighborFinder;
+    this.vertx = vertx;
     this.anteList = new ArrayList<>();
     this.outstandingRequestList = new ArrayList<>();
     this.contactedInCurrentExecution = new ArrayList<>();
@@ -56,29 +58,25 @@ class RecursivePeerRefreshState {
   }
 
   private void commenceTimeoutTask() {
-    TimerTask timeoutTask =
-        new TimerTask() {
-          @Override
-          public void run() {
-            List<OutstandingRequest> outstandingRequestListCopy =
-                new ArrayList<>(outstandingRequestList);
+    vertx.setPeriodic(
+        TIMEOUT_TASK_DELAY,
+        v -> {
+          List<OutstandingRequest> outstandingRequestListCopy =
+              new ArrayList<>(outstandingRequestList);
 
-            for (OutstandingRequest outstandingRequest : outstandingRequestListCopy) {
-              if (outstandingRequest.isExpired()) {
-                List<Peer> queryCandidates = determineFindNodeCandidates(anteList.size());
-                for (Peer candidate : queryCandidates) {
-                  if (!contactedInCurrentExecution.contains(candidate.getId())
-                      && !outstandingRequestList.contains(new OutstandingRequest(candidate))) {
-                    executeFindNodeRequest(candidate);
-                  }
+          for (OutstandingRequest outstandingRequest : outstandingRequestListCopy) {
+            if (outstandingRequest.isExpired()) {
+              List<Peer> queryCandidates = determineFindNodeCandidates(anteList.size());
+              for (Peer candidate : queryCandidates) {
+                if (!contactedInCurrentExecution.contains(candidate.getId())
+                    && !outstandingRequestList.contains(new OutstandingRequest(candidate))) {
+                  executeFindNodeRequest(candidate);
                 }
-                outstandingRequestList.remove(outstandingRequest);
               }
+              outstandingRequestList.remove(outstandingRequest);
             }
           }
-        };
-    ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
-    executor.scheduleAtFixedRate(timeoutTask, 0, 2, TimeUnit.SECONDS);
+        });
   }
 
   private void executeFindNodeRequest(final Peer peer) {
@@ -181,7 +179,7 @@ class RecursivePeerRefreshState {
 
     boolean isExpired() {
       Duration duration = Duration.between(creation, Instant.now());
-      Duration limit = Duration.ofSeconds(5);
+      Duration limit = Duration.ofSeconds(30);
       return duration.compareTo(limit) >= 0;
     }
 
