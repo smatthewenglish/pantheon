@@ -177,7 +177,7 @@ public class PeerTable {
    * @param limit The amount of results to return.
    * @return The <code>limit</code> closest peers, at most.
    */
-  public List<Peer> nearestPeers(final BytesValue target, final int limit) {
+  public List<DiscoveryPeer> nearestPeers(final BytesValue target, final int limit) {
     final BytesValue keccak256 = Hash.keccak256(target);
     return getAllPeers()
         .stream()
