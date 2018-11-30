@@ -15,6 +15,7 @@ package tech.pegasys.pantheon.ethereum.p2p.discovery.internal;
 import static java.util.stream.Collectors.toList;
 import static tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PeerDistanceCalculator.distance;
 
+import tech.pegasys.pantheon.ethereum.p2p.discovery.DiscoveryPeer;
 import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
 import tech.pegasys.pantheon.ethereum.p2p.peers.PeerBlacklist;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
@@ -102,8 +103,8 @@ class RecursivePeerRefreshState {
 
   void digestNeighboursPacket(final NeighborsPacketData neighboursPacket, final Peer peer) {
     if (outstandingRequestList.contains(new OutstandingRequest(peer))) {
-      List<Peer> receivedPeerList = neighboursPacket.getNodes();
-      for (Peer receivedPeer : receivedPeerList) {
+      List<DiscoveryPeer> receivedPeerList = neighboursPacket.getNodes();
+      for (DiscoveryPeer receivedPeer : receivedPeerList) {
         if (!peerBlacklist.contains(receivedPeer)) {
           bondingAgent.performBonding(receivedPeer);
           anteList.add(new PeerDistance(receivedPeer, distance(target, receivedPeer.getId())));

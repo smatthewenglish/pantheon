@@ -24,12 +24,12 @@ import java.util.List;
 
 public class NeighborsPacketData implements PacketData {
 
-  private final List<Peer> peers;
+  private final List<DiscoveryPeer> peers;
 
   /* In millis after epoch. */
   private final long expiration;
 
-  private NeighborsPacketData(final List<Peer> peers, final long expiration) {
+  private NeighborsPacketData(final List<DiscoveryPeer> peers, final long expiration) {
     checkArgument(peers != null, "peer list cannot be null");
     checkArgument(expiration >= 0, "expiration must be positive");
 
@@ -38,14 +38,15 @@ public class NeighborsPacketData implements PacketData {
   }
 
   @SuppressWarnings("unchecked")
-  public static NeighborsPacketData create(final List<Peer> peers) {
+  public static NeighborsPacketData create(final List<DiscoveryPeer> peers) {
     return new NeighborsPacketData(
         peers, System.currentTimeMillis() + PacketData.DEFAULT_EXPIRATION_PERIOD_MS);
   }
 
   public static NeighborsPacketData readFrom(final RLPInput in) {
     in.enterList();
-    final List<Peer> peers = in.readList(rlp -> new DiscoveryPeer(DefaultPeer.readFrom(rlp)));
+    final List<DiscoveryPeer> peers =
+        in.readList(rlp -> new DiscoveryPeer(DefaultPeer.readFrom(rlp)));
     final long expiration = in.readLongScalar();
     in.leaveList();
     return new NeighborsPacketData(peers, expiration);
@@ -59,7 +60,7 @@ public class NeighborsPacketData implements PacketData {
     out.endList();
   }
 
-  public List<Peer> getNodes() {
+  public List<DiscoveryPeer> getNodes() {
     return peers;
   }
 

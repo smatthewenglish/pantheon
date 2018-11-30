@@ -17,6 +17,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
+import tech.pegasys.pantheon.ethereum.p2p.discovery.DiscoveryPeer;
 import tech.pegasys.pantheon.ethereum.p2p.peers.Endpoint;
 import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
 import tech.pegasys.pantheon.ethereum.p2p.peers.PeerBlacklist;
@@ -90,7 +91,7 @@ public class RecursivePeerRefreshStateTest {
         new RecursivePeerRefreshState(
             target, new PeerBlacklist(), bondingAgent, neighborFinder, vertx);
 
-    peer_000 = generatePeer(peers);
+    peer_000 = (TestPeer) generatePeer(peers);
 
     peer_010 = (TestPeer) peer_000.getPeerTable().get(0);
 
@@ -237,13 +238,13 @@ public class RecursivePeerRefreshStateTest {
     verify(neighborFinder).issueFindNodeRequest(peer_010);
   }
 
-  private TestPeer generatePeer(final JsonNode peer) {
+  private DiscoveryPeer generatePeer(final JsonNode peer) {
     int parent = peer.get("parent").asInt();
     int tier = peer.get("tier").asInt();
     int identifier = peer.get("identifier").asInt();
     int ordinalRank = peer.get("ordinalRank").asInt();
     BytesValue id = BytesValue.fromHexString(peer.get("id").asText());
-    List<Peer> peerTable = new ArrayList<>();
+    List<DiscoveryPeer> peerTable = new ArrayList<>();
     if (peer.get("peerTable") != null) {
       JsonNode peers = peer.get("peerTable");
       for (JsonNode element : peers) {
@@ -274,13 +275,13 @@ public class RecursivePeerRefreshStateTest {
     return true;
   }
 
-  static class TestPeer implements Peer {
+  static class TestPeer extends DiscoveryPeer {
     int parent;
     int tier;
     int identifier;
     int ordinalRank;
     BytesValue id;
-    List<Peer> peerTable;
+    List<DiscoveryPeer> peerTable;
 
     TestPeer(
         final int parent,
@@ -288,7 +289,8 @@ public class RecursivePeerRefreshStateTest {
         final int identifier,
         final int ordinalRank,
         final BytesValue id,
-        final List<Peer> peerTable) {
+        final List<DiscoveryPeer> peerTable) {
+      super(id, "0.0.0.0", 1, 1);
       this.parent = parent;
       this.tier = tier;
       this.identifier = identifier;
@@ -301,7 +303,7 @@ public class RecursivePeerRefreshStateTest {
       return ordinalRank;
     }
 
-    List<Peer> getPeerTable() {
+    List<DiscoveryPeer> getPeerTable() {
       return peerTable;
     }
 
