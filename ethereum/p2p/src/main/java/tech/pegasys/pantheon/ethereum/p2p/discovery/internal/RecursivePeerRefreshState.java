@@ -55,8 +55,8 @@ class RecursivePeerRefreshState {
       BytesValue peerId = bootstrapPeer.getId();
       outstandingRequestList.add(new OutstandingRequest(bootstrapPeer));
       contactedInCurrentExecution.add(peerId);
-      bondingAgent.performBonding(bootstrapPeer);
-      neighborFinder.issueFindNodeRequest(bootstrapPeer);
+      bondingAgent.performBonding(bootstrapPeer, true);
+      neighborFinder.issueFindNodeRequest(bootstrapPeer, target);
     }
   }
 
@@ -86,7 +86,7 @@ class RecursivePeerRefreshState {
     BytesValue peerId = peer.getId();
     outstandingRequestList.add(new OutstandingRequest(peer));
     contactedInCurrentExecution.add(peerId);
-    neighborFinder.issueFindNodeRequest(peer);
+    neighborFinder.issueFindNodeRequest(peer, target);
   }
 
   /**
@@ -106,7 +106,7 @@ class RecursivePeerRefreshState {
       List<DiscoveryPeer> receivedPeerList = neighboursPacket.getNodes();
       for (DiscoveryPeer receivedPeer : receivedPeerList) {
         if (!peerBlacklist.contains(receivedPeer)) {
-          bondingAgent.performBonding(receivedPeer);
+          bondingAgent.performBonding(receivedPeer, false);
           anteList.add(new PeerDistance(receivedPeer, distance(target, receivedPeer.getId())));
         }
       }
@@ -202,19 +202,21 @@ class RecursivePeerRefreshState {
 
   public interface NeighborFinder {
     /**
-     * Wait for the peer to complete bonding before issuance of FindNode request.
+     * Sends a FIND_NEIGHBORS message to a {@link DiscoveryPeer}, in search of a target value.
      *
-     * @param peer
+     * @param peer the peer to interrogate
+     * @param target the target node ID to find
      */
-    void issueFindNodeRequest(final Peer peer);
+    void issueFindNodeRequest(final Peer peer, final BytesValue target);
   }
 
   public interface BondingAgent {
     /**
-     * If peer is not previously known, initiate bonding process.
+     * Initiates a bonding PING-PONG cycle with a peer.
      *
-     * @param peer
+     * @param peer The targeted peer.
+     * @param bootstrap Whether this is a bootstrap interaction.
      */
-    void performBonding(final Peer peer);
+    void performBonding(final Peer peer, final boolean bootstrap);
   }
 }
