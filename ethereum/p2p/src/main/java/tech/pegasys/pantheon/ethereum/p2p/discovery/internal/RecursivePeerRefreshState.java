@@ -58,28 +58,25 @@ class RecursivePeerRefreshState {
     }
   }
 
-  void executeTimeoutEvaluation() { // This is the first thing that you'll call...
+  /**
+   * This method is intended to be called periodically by the {@link PeerDiscoveryController}, which
+   * will maintain a timer for purposes of effecting expiration of requests outstanding. Requests
+   * once encountered are deemed eligible for eviction if they have not been dispatched before the
+   * next invocation of the method.
+   */
+  public void executeTimeoutEvaluation() {
     List<OutstandingRequest> outstandingRequestListCopy = new ArrayList<>(outstandingRequestList);
-    // For each peer in the list...
     for (OutstandingRequest outstandingRequest : outstandingRequestListCopy) {
-      // If it *has* been previously evaluated, i.e. you've seen it before...
       if (outstandingRequest.getEvaluation()) {
-        // Get all the queryable nodes, sorted by distance...
         List<Peer> queryCandidates = determineFindNodeCandidates(anteList.size());
-        // For each of them in turn...
         for (Peer candidate : queryCandidates) {
-          // If it hasn't already been contacted...
           if (!contactedInCurrentExecution.contains(candidate.getId())
               && !outstandingRequestList.contains(new OutstandingRequest(candidate))) {
-            // And it isn't already one of our current requests...
             executeFindNodeRequest(candidate);
-            // ^^^Then send it a FindNode request and start tracking it...
           }
         }
         outstandingRequestList.remove(outstandingRequest);
       }
-      // Since we encountered it, mark it as eligible for eviction the next time this method is
-      // called...
       outstandingRequest.setEvaluation();
     }
   }
@@ -103,7 +100,7 @@ class RecursivePeerRefreshState {
     }
   }
 
-  void digestNeighboursPacket(final NeighborsPacketData neighboursPacket, final Peer peer) {
+  void onNeighboursPacketReceived(final NeighborsPacketData neighboursPacket, final Peer peer) {
     if (outstandingRequestList.contains(new OutstandingRequest(peer))) {
       List<DiscoveryPeer> receivedPeerList = neighboursPacket.getNodes();
       for (DiscoveryPeer receivedPeer : receivedPeerList) {
@@ -113,7 +110,7 @@ class RecursivePeerRefreshState {
         }
       }
       outstandingRequestList.remove(new OutstandingRequest(peer));
-      performIteration();
+      queryNearestNodes();
     }
   }
 
@@ -127,7 +124,7 @@ class RecursivePeerRefreshState {
     return anteList.subList(0, threshold).stream().map(PeerDistance::getPeer).collect(toList());
   }
 
-  private void performIteration() {
+  private void queryNearestNodes() {
     if (outstandingRequestList.isEmpty()) {
       List<Peer> queryCandidates = determineFindNodeCandidates(CONCURRENT_REQUEST_LIMIT);
       initiatePeerRefreshCycle(queryCandidates);

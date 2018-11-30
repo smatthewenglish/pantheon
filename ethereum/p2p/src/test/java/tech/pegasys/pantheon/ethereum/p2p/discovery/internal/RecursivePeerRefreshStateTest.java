@@ -173,7 +173,7 @@ public class RecursivePeerRefreshStateTest {
     verify(bondingAgent).performBonding(peer_000);
     verify(neighborFinder).issueFindNodeRequest(peer_000);
 
-    recursivePeerRefreshState.digestNeighboursPacket(neighborsPacketData_000, peer_000);
+    recursivePeerRefreshState.onNeighboursPacketReceived(neighborsPacketData_000, peer_000);
 
     verify(bondingAgent).performBonding(peer_010);
     verify(bondingAgent).performBonding(peer_011);
@@ -185,21 +185,21 @@ public class RecursivePeerRefreshStateTest {
     verify(neighborFinder).issueFindNodeRequest(peer_012);
     verify(neighborFinder).issueFindNodeRequest(peer_013);
 
-    recursivePeerRefreshState.digestNeighboursPacket(neighborsPacketData_011, peer_011);
+    recursivePeerRefreshState.onNeighboursPacketReceived(neighborsPacketData_011, peer_011);
 
     verify(bondingAgent).performBonding(peer_120);
     verify(bondingAgent).performBonding(peer_121);
     verify(bondingAgent).performBonding(peer_122);
     verify(bondingAgent).performBonding(peer_123);
 
-    recursivePeerRefreshState.digestNeighboursPacket(neighborsPacketData_012, peer_012);
+    recursivePeerRefreshState.onNeighboursPacketReceived(neighborsPacketData_012, peer_012);
 
     verify(bondingAgent).performBonding(peer_220);
     verify(bondingAgent).performBonding(peer_221);
     verify(bondingAgent).performBonding(peer_222);
     verify(bondingAgent).performBonding(peer_223);
 
-    recursivePeerRefreshState.digestNeighboursPacket(neighborsPacketData_013, peer_013);
+    recursivePeerRefreshState.onNeighboursPacketReceived(neighborsPacketData_013, peer_013);
 
     verify(bondingAgent).performBonding(peer_320);
     verify(bondingAgent).performBonding(peer_321);
@@ -220,7 +220,7 @@ public class RecursivePeerRefreshStateTest {
     verify(bondingAgent).performBonding(peer_000);
     verify(neighborFinder).issueFindNodeRequest(peer_000);
 
-    recursivePeerRefreshState.digestNeighboursPacket(neighborsPacketData_000, peer_000);
+    recursivePeerRefreshState.onNeighboursPacketReceived(neighborsPacketData_000, peer_000);
     recursivePeerRefreshState.executeTimeoutEvaluation();
 
     verify(neighborFinder, never()).issueFindNodeRequest(peer_010);
