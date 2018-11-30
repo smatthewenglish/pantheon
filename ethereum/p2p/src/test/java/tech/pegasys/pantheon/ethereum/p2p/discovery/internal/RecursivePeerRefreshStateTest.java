@@ -175,6 +175,8 @@ public class RecursivePeerRefreshStateTest {
 
     recursivePeerRefreshState.onNeighboursPacketReceived(neighborsPacketData_000, peer_000);
 
+    assertThat(recursivePeerRefreshState.getOutstandingRequestList().size()).isLessThanOrEqualTo(3);
+
     verify(bondingAgent).performBonding(peer_010);
     verify(bondingAgent).performBonding(peer_011);
     verify(bondingAgent).performBonding(peer_012);
@@ -187,6 +189,8 @@ public class RecursivePeerRefreshStateTest {
 
     recursivePeerRefreshState.onNeighboursPacketReceived(neighborsPacketData_011, peer_011);
 
+    assertThat(recursivePeerRefreshState.getOutstandingRequestList().size()).isLessThanOrEqualTo(3);
+
     verify(bondingAgent).performBonding(peer_120);
     verify(bondingAgent).performBonding(peer_121);
     verify(bondingAgent).performBonding(peer_122);
@@ -194,12 +198,16 @@ public class RecursivePeerRefreshStateTest {
 
     recursivePeerRefreshState.onNeighboursPacketReceived(neighborsPacketData_012, peer_012);
 
+    assertThat(recursivePeerRefreshState.getOutstandingRequestList().size()).isLessThanOrEqualTo(3);
+
     verify(bondingAgent).performBonding(peer_220);
     verify(bondingAgent).performBonding(peer_221);
     verify(bondingAgent).performBonding(peer_222);
     verify(bondingAgent).performBonding(peer_223);
 
     recursivePeerRefreshState.onNeighboursPacketReceived(neighborsPacketData_013, peer_013);
+
+    assertThat(recursivePeerRefreshState.getOutstandingRequestList().size()).isLessThanOrEqualTo(3);
 
     verify(bondingAgent).performBonding(peer_320);
     verify(bondingAgent).performBonding(peer_321);
@@ -221,6 +229,9 @@ public class RecursivePeerRefreshStateTest {
     verify(neighborFinder).issueFindNodeRequest(peer_000);
 
     recursivePeerRefreshState.onNeighboursPacketReceived(neighborsPacketData_000, peer_000);
+
+    assertThat(recursivePeerRefreshState.getOutstandingRequestList().size()).isLessThanOrEqualTo(3);
+
     recursivePeerRefreshState.executeTimeoutEvaluation();
 
     verify(neighborFinder, never()).issueFindNodeRequest(peer_010);
@@ -229,6 +240,8 @@ public class RecursivePeerRefreshStateTest {
     verify(neighborFinder).issueFindNodeRequest(peer_013);
 
     recursivePeerRefreshState.executeTimeoutEvaluation();
+
+    assertThat(recursivePeerRefreshState.getOutstandingRequestList().size()).isLessThanOrEqualTo(3);
 
     verify(neighborFinder).issueFindNodeRequest(peer_010);
   }

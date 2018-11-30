@@ -24,6 +24,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+import com.google.common.annotations.VisibleForTesting;
+
 class RecursivePeerRefreshState {
   private final int CONCURRENT_REQUEST_LIMIT = 3;
   private final BytesValue target;
@@ -129,6 +131,11 @@ class RecursivePeerRefreshState {
       List<Peer> queryCandidates = determineFindNodeCandidates(CONCURRENT_REQUEST_LIMIT);
       initiatePeerRefreshCycle(queryCandidates);
     }
+  }
+
+  @VisibleForTesting
+  List<OutstandingRequest> getOutstandingRequestList() {
+    return outstandingRequestList;
   }
 
   static class PeerDistance {
