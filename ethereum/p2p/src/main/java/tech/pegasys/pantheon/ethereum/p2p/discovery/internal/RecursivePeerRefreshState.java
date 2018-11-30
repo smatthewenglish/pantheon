@@ -54,11 +54,9 @@ class RecursivePeerRefreshState {
     this.anteList = new ArrayList<>();
     this.outstandingRequestList = new ArrayList<>();
     this.contactedInCurrentExecution = new ArrayList<>();
-
-    commenceTimeoutTask();
   }
 
-  private void commenceTimeoutTask() {
+  void commenceTimeoutTask() {
     vertx.setPeriodic(
         TIMEOUT_TASK_DELAY,
         v -> {
@@ -96,8 +94,6 @@ class RecursivePeerRefreshState {
       if (!contactedInCurrentExecution.contains(peer.getId())) {
         executeFindNodeRequest(peer);
       }
-      // The lookup terminates when the initiator has queried
-      // and gotten responses from the k closest nodes it has seen.
     }
   }
 
