@@ -27,14 +27,11 @@ import tech.pegasys.pantheon.util.bytes.BytesValue;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.vertx.core.Vertx;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -42,7 +39,6 @@ public class RecursivePeerRefreshStateTest {
   private static final ObjectMapper MAPPER = new ObjectMapper();
 
   private RecursivePeerRefreshState recursivePeerRefreshState;
-  private Vertx vertx;
 
   private final RecursivePeerRefreshState.BondingAgent bondingAgent =
       mock(RecursivePeerRefreshState.BondingAgent.class);
@@ -86,10 +82,8 @@ public class RecursivePeerRefreshStateTest {
     BytesValue target =
         BytesValue.fromHexString(
             "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000");
-    vertx = Vertx.vertx();
     recursivePeerRefreshState =
-        new RecursivePeerRefreshState(
-            target, new PeerBlacklist(), bondingAgent, neighborFinder, vertx);
+        new RecursivePeerRefreshState(target, new PeerBlacklist(), bondingAgent, neighborFinder);
 
     peer_000 = (TestPeer) generatePeer(peers);
 
@@ -219,22 +213,22 @@ public class RecursivePeerRefreshStateTest {
   }
 
   @Test
-  public void shouldIssueRequestToPeerWithGreaterDistanceOnExpirationOfLowerDistancePeerRequest()
-      throws Exception {
-    recursivePeerRefreshState.commenceTimeoutTask();
+  public void shouldIssueRequestToPeerWithGreaterDistanceOnExpirationOfLowerDistancePeerRequest() {
     recursivePeerRefreshState.kickstartBootstrapPeers(Collections.singletonList(peer_000));
+    recursivePeerRefreshState.executeTimeoutEvaluation();
 
     verify(bondingAgent).performBonding(peer_000);
     verify(neighborFinder).issueFindNodeRequest(peer_000);
 
     recursivePeerRefreshState.digestNeighboursPacket(neighborsPacketData_000, peer_000);
+    recursivePeerRefreshState.executeTimeoutEvaluation();
 
     verify(neighborFinder, never()).issueFindNodeRequest(peer_010);
     verify(neighborFinder).issueFindNodeRequest(peer_011);
     verify(neighborFinder).issueFindNodeRequest(peer_012);
     verify(neighborFinder).issueFindNodeRequest(peer_013);
 
-    TimeUnit.SECONDS.sleep(60);
+    recursivePeerRefreshState.executeTimeoutEvaluation();
 
     verify(neighborFinder).issueFindNodeRequest(peer_010);
   }
@@ -281,7 +275,6 @@ public class RecursivePeerRefreshStateTest {
     int tier;
     int identifier;
     int ordinalRank;
-    BytesValue id;
     List<DiscoveryPeer> peerTable;
 
     TestPeer(
@@ -296,7 +289,6 @@ public class RecursivePeerRefreshStateTest {
       this.tier = tier;
       this.identifier = identifier;
       this.ordinalRank = ordinalRank;
-      this.id = id;
       this.peerTable = peerTable;
     }
 
@@ -327,10 +319,5 @@ public class RecursivePeerRefreshStateTest {
     public String toString() {
       return parent + "." + tier + "." + identifier;
     }
-  }
-
-  @After
-  public void cleaUp() {
-    vertx.close();
   }
 }

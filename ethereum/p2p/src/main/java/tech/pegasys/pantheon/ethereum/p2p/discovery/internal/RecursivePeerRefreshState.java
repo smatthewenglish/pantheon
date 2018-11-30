@@ -20,17 +20,12 @@ import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
 import tech.pegasys.pantheon.ethereum.p2p.peers.PeerBlacklist;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
-import java.time.Duration;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-import io.vertx.core.Vertx;
-
 class RecursivePeerRefreshState {
   private final int CONCURRENT_REQUEST_LIMIT = 3;
-  private final int TIMEOUT_TASK_DELAY = 30000; // 30 Seconds
   private final BytesValue target;
   private final PeerBlacklist peerBlacklist;
   private final BondingAgent bondingAgent;
@@ -38,44 +33,55 @@ class RecursivePeerRefreshState {
   private final List<PeerDistance> anteList;
   private final List<OutstandingRequest> outstandingRequestList;
   private final List<BytesValue> contactedInCurrentExecution;
-  private final Vertx vertx;
 
   RecursivePeerRefreshState(
       final BytesValue target,
       final PeerBlacklist peerBlacklist,
       final BondingAgent bondingAgent,
-      final NeighborFinder neighborFinder,
-      final Vertx vertx) {
+      final NeighborFinder neighborFinder) {
     this.target = target;
     this.peerBlacklist = peerBlacklist;
     this.bondingAgent = bondingAgent;
     this.neighborFinder = neighborFinder;
-    this.vertx = vertx;
     this.anteList = new ArrayList<>();
     this.outstandingRequestList = new ArrayList<>();
     this.contactedInCurrentExecution = new ArrayList<>();
   }
 
-  void commenceTimeoutTask() {
-    vertx.setPeriodic(
-        TIMEOUT_TASK_DELAY,
-        v -> {
-          List<OutstandingRequest> outstandingRequestListCopy =
-              new ArrayList<>(outstandingRequestList);
+  void kickstartBootstrapPeers(final List<Peer> bootstrapPeers) {
+    for (Peer bootstrapPeer : bootstrapPeers) {
+      BytesValue peerId = bootstrapPeer.getId();
+      outstandingRequestList.add(new OutstandingRequest(bootstrapPeer));
+      contactedInCurrentExecution.add(peerId);
+      bondingAgent.performBonding(bootstrapPeer);
+      neighborFinder.issueFindNodeRequest(bootstrapPeer);
+    }
+  }
 
-          for (OutstandingRequest outstandingRequest : outstandingRequestListCopy) {
-            if (outstandingRequest.isExpired()) {
-              List<Peer> queryCandidates = determineFindNodeCandidates(anteList.size());
-              for (Peer candidate : queryCandidates) {
-                if (!contactedInCurrentExecution.contains(candidate.getId())
-                    && !outstandingRequestList.contains(new OutstandingRequest(candidate))) {
-                  executeFindNodeRequest(candidate);
-                }
-              }
-              outstandingRequestList.remove(outstandingRequest);
-            }
+  void executeTimeoutEvaluation() { // This is the first thing that you'll call...
+    List<OutstandingRequest> outstandingRequestListCopy = new ArrayList<>(outstandingRequestList);
+    // For each peer in the list...
+    for (OutstandingRequest outstandingRequest : outstandingRequestListCopy) {
+      // If it *has* been previously evaluated, i.e. you've seen it before...
+      if (outstandingRequest.getEvaluation()) {
+        // Get all the queryable nodes, sorted by distance...
+        List<Peer> queryCandidates = determineFindNodeCandidates(anteList.size());
+        // For each of them in turn...
+        for (Peer candidate : queryCandidates) {
+          // If it hasn't already been contacted...
+          if (!contactedInCurrentExecution.contains(candidate.getId())
+              && !outstandingRequestList.contains(new OutstandingRequest(candidate))) {
+            // And it isn't already one of our current requests...
+            executeFindNodeRequest(candidate);
+            // ^^^Then send it a FindNode request and start tracking it...
           }
-        });
+        }
+        outstandingRequestList.remove(outstandingRequest);
+      }
+      // Since we encountered it, mark it as eligible for eviction the next time this method is
+      // called...
+      outstandingRequest.setEvaluation();
+    }
   }
 
   private void executeFindNodeRequest(final Peer peer) {
@@ -128,16 +134,6 @@ class RecursivePeerRefreshState {
     }
   }
 
-  void kickstartBootstrapPeers(final List<Peer> bootstrapPeers) {
-    for (Peer bootstrapPeer : bootstrapPeers) {
-      BytesValue peerId = bootstrapPeer.getId();
-      outstandingRequestList.add(new OutstandingRequest(bootstrapPeer));
-      contactedInCurrentExecution.add(peerId);
-      bondingAgent.performBonding(bootstrapPeer);
-      neighborFinder.issueFindNodeRequest(bootstrapPeer);
-    }
-  }
-
   static class PeerDistance {
     Peer peer;
     Integer distance;
@@ -162,22 +158,24 @@ class RecursivePeerRefreshState {
   }
 
   static class OutstandingRequest {
-    Instant creation;
+    boolean evaluation;
     Peer peer;
 
     OutstandingRequest(final Peer peer) {
-      this.creation = Instant.now();
+      this.evaluation = false;
       this.peer = peer;
+    }
+
+    boolean getEvaluation() {
+      return evaluation;
     }
 
     Peer getPeer() {
       return peer;
     }
 
-    boolean isExpired() {
-      Duration duration = Duration.between(creation, Instant.now());
-      Duration limit = Duration.ofSeconds(30);
-      return duration.compareTo(limit) >= 0;
+    void setEvaluation() {
+      this.evaluation = true;
     }
 
     @Override
