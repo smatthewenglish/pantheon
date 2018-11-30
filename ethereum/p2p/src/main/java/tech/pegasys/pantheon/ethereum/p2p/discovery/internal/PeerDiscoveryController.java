@@ -13,7 +13,6 @@
 package tech.pegasys.pantheon.ethereum.p2p.discovery.internal;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static java.util.Collections.emptyList;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PeerTable.AddResult.Outcome;
@@ -148,11 +147,9 @@ public class PeerDiscoveryController {
     }
 
     BytesValue target = Peer.randomId();
-
-    // TODO: How to pass these method references...
     recursivePeerRefreshState =
-            new RecursivePeerRefreshState(
-                    target, new PeerBlacklist(), PeerDiscoveryController::bond, PeerDiscoveryController::findNodes, vertx);
+        new RecursivePeerRefreshState(
+            target, new PeerBlacklist(), this::bond, this::findNodes, vertx);
 
     recursivePeerRefreshState.kickstartBootstrapPeers(bootstrapNodes);
 
@@ -236,7 +233,8 @@ public class PeerDiscoveryController {
         matchInteraction(packet)
             .ifPresent(
                 interaction -> {
-                  recursivePeerRefreshState.digestNeighboursPacket(packet.getPacketData(NeighborsPacketData.class).orElse(null), peer);
+                  recursivePeerRefreshState.digestNeighboursPacket(
+                      packet.getPacketData(NeighborsPacketData.class).orElse(null), peer);
                 });
         break;
 
@@ -320,11 +318,12 @@ public class PeerDiscoveryController {
   /**
    * Initiates a bonding PING-PONG cycle with a peer.
    *
-   * @param peer The targeted peer.
+   * @param discoPeer The targeted peer.
    * @param bootstrap Whether this is a bootstrap interaction.
    */
   @VisibleForTesting
-  void bond(final DiscoveryPeer peer, final boolean bootstrap) {
+  void bond(final Peer discoPeer, final boolean bootstrap) {
+    DiscoveryPeer peer = (DiscoveryPeer) discoPeer;
     peer.setFirstDiscovered(System.currentTimeMillis());
     peer.setStatus(PeerDiscoveryStatus.BONDING);
 

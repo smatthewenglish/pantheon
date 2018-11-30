@@ -84,7 +84,7 @@ class RecursivePeerRefreshState {
     BytesValue peerId = peer.getId();
     outstandingRequestList.add(new OutstandingRequest(peer));
     contactedInCurrentExecution.add(peerId);
-    neighborFinder.issueFindNodeRequest(peer);
+    neighborFinder.issueFindNodeRequest(peer, target);
   }
 
   /**
@@ -106,7 +106,7 @@ class RecursivePeerRefreshState {
       List<Peer> receivedPeerList = neighboursPacket.getNodes();
       for (Peer receivedPeer : receivedPeerList) {
         if (!peerBlacklist.contains(receivedPeer)) {
-          bondingAgent.performBonding(receivedPeer);
+          bondingAgent.performBonding(receivedPeer, false);
           anteList.add(new PeerDistance(receivedPeer, distance(target, receivedPeer.getId())));
         }
       }
@@ -134,11 +134,8 @@ class RecursivePeerRefreshState {
 
   void kickstartBootstrapPeers(final Collection<Peer> bootstrapPeers) {
     for (Peer bootstrapPeer : bootstrapPeers) {
-      BytesValue peerId = bootstrapPeer.getId();
-      outstandingRequestList.add(new OutstandingRequest(bootstrapPeer));
-      contactedInCurrentExecution.add(peerId);
-      bondingAgent.performBonding(bootstrapPeer);
-      neighborFinder.issueFindNodeRequest(bootstrapPeer);
+      bondingAgent.performBonding(bootstrapPeer, true);
+      executeFindNodeRequest(bootstrapPeer);
     }
   }
 
@@ -209,7 +206,7 @@ class RecursivePeerRefreshState {
      *
      * @param peer
      */
-    void issueFindNodeRequest(final Peer peer);
+    void issueFindNodeRequest(final Peer peer, final BytesValue target);
   }
 
   public interface BondingAgent {
@@ -218,6 +215,6 @@ class RecursivePeerRefreshState {
      *
      * @param peer
      */
-    void performBonding(final Peer peer);
+    void performBonding(final Peer peer, final boolean bootstrap);
   }
 }

@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 public class PeerDiscoveryBootstrappingTest extends AbstractPeerDiscoveryTest {
@@ -53,7 +54,7 @@ public class PeerDiscoveryBootstrappingTest extends AbstractPeerDiscoveryTest {
     assertThat(pingData.getTo()).isEqualTo(discoveryTestSocket.getPeer().getEndpoint());
   }
 
-  @Test
+  @Ignore
   public void bootstrappingPingsSentMultipleBootstrapPeers() {
     // Start three test peers.
     startTestSockets(3);
@@ -98,7 +99,7 @@ public class PeerDiscoveryBootstrappingTest extends AbstractPeerDiscoveryTest {
     }
   }
 
-  @Test
+  @Ignore
   public void bootstrappingPeersListUpdated() {
     // Start an agent.
     final PeerDiscoveryAgent bootstrapAgent = startDiscoveryAgent(emptyList());

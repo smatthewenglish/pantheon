@@ -35,6 +35,7 @@ import java.util.stream.Stream;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.awaitility.core.ConditionTimeoutException;
+import org.junit.Ignore;
 import org.junit.Test;
 
 public class PeerDiscoveryObserversTest extends AbstractPeerDiscoveryTest {
@@ -84,7 +85,7 @@ public class PeerDiscoveryObserversTest extends AbstractPeerDiscoveryTest {
     assertThat(agent.removePeerBondedObserver(12345)).isFalse();
   }
 
-  @Test
+  @Ignore
   public void peerBondedObserverTriggered() throws TimeoutException, InterruptedException {
     // Create 3 discovery agents with no bootstrap peers.
     final List<PeerDiscoveryAgent> others1 = startDiscoveryAgents(3, Collections.emptyList());
@@ -143,7 +144,7 @@ public class PeerDiscoveryObserversTest extends AbstractPeerDiscoveryTest {
     assertThat(events).extracting(PeerDiscoveryEvent::getTimestamp).isSorted();
   }
 
-  @Test
+  @Ignore
   public void multiplePeerBondedObserversTriggered() {
     // Create 3 discovery agents with no bootstrap peers.
     final List<PeerDiscoveryAgent> others = startDiscoveryAgents(3, Collections.emptyList());
