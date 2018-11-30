@@ -223,7 +223,7 @@ public class PeerDiscoveryAgent implements DisconnectCallback {
   }
 
   /**
-   * This is the exception handler for uncontrolled exceptions occurring in the packet handlers.
+   * For uncontrolled exceptions occurring in the packet handlers.
    *
    * @param exception the exception that was raised
    */
