@@ -67,23 +67,22 @@ class RecursivePeerRefreshState {
    * next invocation of the method.
    */
   public void executeTimeoutEvaluation() {
-    List<OutstandingRequest> outstandingRequestListCopy = new ArrayList<>(outstandingRequestList);
-    for (OutstandingRequest outstandingRequest : outstandingRequestListCopy) {
-      if (outstandingRequest.getEvaluation()) {
-        List<Peer> queryCandidates = determineFindNodeCandidates(anteList.size());
-        for (Peer candidate : queryCandidates) {
+    for (int i = 0; i < outstandingRequestList.size(); i++) {
+      if (outstandingRequestList.get(i).getEvaluation()) {
+        List<DiscoveryPeer> queryCandidates = determineFindNodeCandidates(anteList.size());
+        for (DiscoveryPeer candidate : queryCandidates) {
           if (!contactedInCurrentExecution.contains(candidate.getId())
               && !outstandingRequestList.contains(new OutstandingRequest(candidate))) {
+            outstandingRequestList.remove(i);
             executeFindNodeRequest(candidate);
           }
         }
-        outstandingRequestList.remove(outstandingRequest);
       }
-      outstandingRequest.setEvaluation();
+      outstandingRequestList.get(i).setEvaluation();
     }
   }
 
-  private void executeFindNodeRequest(final Peer peer) {
+  private void executeFindNodeRequest(final DiscoveryPeer peer) {
     BytesValue peerId = peer.getId();
     outstandingRequestList.add(new OutstandingRequest(peer));
     contactedInCurrentExecution.add(peerId);
@@ -94,8 +93,8 @@ class RecursivePeerRefreshState {
    * The lookup initiator starts by picking CONCURRENT_REQUEST_LIMIT closest nodes to the target it
    * knows of. The initiator then issues concurrent FindNode packets to those nodes.
    */
-  private void initiatePeerRefreshCycle(final List<Peer> peers) {
-    for (Peer peer : peers) {
+  private void initiatePeerRefreshCycle(final List<DiscoveryPeer> peers) {
+    for (DiscoveryPeer peer : peers) {
       if (!contactedInCurrentExecution.contains(peer.getId())) {
         executeFindNodeRequest(peer);
       }
@@ -116,7 +115,7 @@ class RecursivePeerRefreshState {
     }
   }
 
-  private List<Peer> determineFindNodeCandidates(final int threshold) {
+  private List<DiscoveryPeer> determineFindNodeCandidates(final int threshold) {
     anteList.sort(
         (peer1, peer2) -> {
           if (peer1.getDistance() > peer2.getDistance()) return 1;
@@ -128,7 +127,7 @@ class RecursivePeerRefreshState {
 
   private void queryNearestNodes() {
     if (outstandingRequestList.isEmpty()) {
-      List<Peer> queryCandidates = determineFindNodeCandidates(CONCURRENT_REQUEST_LIMIT);
+      List<DiscoveryPeer> queryCandidates = determineFindNodeCandidates(CONCURRENT_REQUEST_LIMIT);
       initiatePeerRefreshCycle(queryCandidates);
     }
   }
@@ -139,15 +138,15 @@ class RecursivePeerRefreshState {
   }
 
   static class PeerDistance {
-    Peer peer;
+    DiscoveryPeer peer;
     Integer distance;
 
-    PeerDistance(final Peer peer, final Integer distance) {
+    PeerDistance(final DiscoveryPeer peer, final Integer distance) {
       this.peer = peer;
       this.distance = distance;
     }
 
-    Peer getPeer() {
+    DiscoveryPeer getPeer() {
       return peer;
     }
 
