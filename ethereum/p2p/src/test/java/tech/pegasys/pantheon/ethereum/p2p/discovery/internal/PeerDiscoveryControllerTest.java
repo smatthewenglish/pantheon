@@ -546,7 +546,7 @@ public class PeerDiscoveryControllerTest {
     assertThat(controller.getPeers()).doesNotContain(otherPeer2);
   }
 
-  @Ignore
+  @Test
   public void shouldNotBondWithBlacklistedPeer()
       throws InterruptedException, ExecutionException, TimeoutException {
     final DiscoveryPeer[] peers = createPeersInLastBucket(peer, 3);

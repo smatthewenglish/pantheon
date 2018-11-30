@@ -148,8 +148,7 @@ public class PeerDiscoveryController {
 
     BytesValue target = Peer.randomId();
     recursivePeerRefreshState =
-        new RecursivePeerRefreshState(
-            target, new PeerBlacklist(), this::bond, this::findNodes, vertx);
+        new RecursivePeerRefreshState(target, peerBlacklist, this::bond, this::findNodes, vertx);
 
     recursivePeerRefreshState.kickstartBootstrapPeers(bootstrapNodes);
 

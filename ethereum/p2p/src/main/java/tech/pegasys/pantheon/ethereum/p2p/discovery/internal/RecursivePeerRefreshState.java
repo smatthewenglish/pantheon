@@ -122,6 +122,9 @@ class RecursivePeerRefreshState {
           if (peer1.getDistance() < peer2.getDistance()) return -1;
           return 0;
         });
+    if (anteList.size() <= CONCURRENT_REQUEST_LIMIT) {
+      return anteList.stream().map(PeerDistance::getPeer).collect(toList());
+    }
     return anteList.subList(0, threshold).stream().map(PeerDistance::getPeer).collect(toList());
   }
 
