@@ -12,6 +12,7 @@
  */
 package tech.pegasys.pantheon.ethereum.p2p.discovery.internal;
 
+import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -19,7 +20,6 @@ import static org.mockito.Mockito.verify;
 
 import tech.pegasys.pantheon.ethereum.p2p.discovery.DiscoveryPeer;
 import tech.pegasys.pantheon.ethereum.p2p.peers.Endpoint;
-import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
 import tech.pegasys.pantheon.ethereum.p2p.peers.PeerBlacklist;
 import tech.pegasys.pantheon.util.bytes.Bytes32;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
@@ -27,8 +27,6 @@ import tech.pegasys.pantheon.util.bytes.BytesValue;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -166,6 +164,20 @@ public class RecursivePeerRefreshStateTest {
     assertThat(matchPeerToCorrespondingPacketData(peer_013, neighborsPacketData_013)).isTrue();
   }
 
+  private boolean matchPeerToCorrespondingPacketData(
+      final TestPeer peer, final NeighborsPacketData neighborsPacketData) {
+    for (TestPeer neighbour :
+        neighborsPacketData.getNodes().stream().map(p -> (TestPeer) p).collect(toList())) {
+      if (neighbour.getParent() != peer.getIdentifier()) {
+        return false;
+      }
+      if (neighbour.getTier() != peer.getTier() + 1) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   @Test
   public void shouldIssueRequestToPeerWithLesserDistanceGreaterHops() {
     recursivePeerRefreshState.kickstartBootstrapPeers(Collections.singletonList(peer_000));
@@ -264,25 +276,6 @@ public class RecursivePeerRefreshStateTest {
     return new TestPeer(parent, tier, identifier, ordinalRank, id, peerTable);
   }
 
-  private boolean matchPeerToCorrespondingPacketData(
-      final Peer peer, final NeighborsPacketData neighborsPacketData) {
-    String nodeId = null;
-    Matcher idMatcher = Pattern.compile("\\d\\.\\d\\.(\\d)").matcher(peer.toString());
-    if (idMatcher.find()) {
-      nodeId = idMatcher.group(1);
-    }
-    for (Peer neighbour : neighborsPacketData.getNodes()) {
-      idMatcher = Pattern.compile("(\\d)\\.(\\d)\\.(\\d)").matcher(neighbour.toString());
-      if (idMatcher.find()) {
-        String parentId = idMatcher.group(1);
-        if (!nodeId.equals(parentId)) {
-          return false;
-        }
-      }
-    }
-    return true;
-  }
-
   static class TestPeer extends DiscoveryPeer {
     int parent;
     int tier;
@@ -303,6 +296,18 @@ public class RecursivePeerRefreshStateTest {
       this.identifier = identifier;
       this.ordinalRank = ordinalRank;
       this.peerTable = peerTable;
+    }
+
+    int getParent() {
+      return parent;
+    }
+
+    int getTier() {
+      return tier;
+    }
+
+    int getIdentifier() {
+      return identifier;
     }
 
     int getOrdinalRank() {
