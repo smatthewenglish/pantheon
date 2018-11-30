@@ -221,6 +221,7 @@ public class RecursivePeerRefreshStateTest {
   @Test
   public void shouldIssueRequestToPeerWithGreaterDistanceOnExpirationOfLowerDistancePeerRequest()
       throws Exception {
+    recursivePeerRefreshState.commenceTimeoutTask();
     recursivePeerRefreshState.kickstartBootstrapPeers(Collections.singletonList(peer_000));
 
     verify(bondingAgent).performBonding(peer_000);
