@@ -52,7 +52,7 @@ class RecursivePeerRefreshState {
 
   void kickstartBootstrapPeers(final List<Peer> bootstrapPeers) {
     for (Peer bootstrapPeer : bootstrapPeers) {
-      BytesValue peerId = bootstrapPeer.getId();
+      final BytesValue peerId = bootstrapPeer.getId();
       outstandingRequestList.add(new OutstandingRequest(bootstrapPeer));
       contactedInCurrentExecution.add(peerId);
       bondingAgent.performBonding(bootstrapPeer, true);
@@ -69,7 +69,7 @@ class RecursivePeerRefreshState {
   public void executeTimeoutEvaluation() {
     for (int i = 0; i < outstandingRequestList.size(); i++) {
       if (outstandingRequestList.get(i).getEvaluation()) {
-        List<DiscoveryPeer> queryCandidates = determineFindNodeCandidates(anteList.size());
+        final List<DiscoveryPeer> queryCandidates = determineFindNodeCandidates(anteList.size());
         for (DiscoveryPeer candidate : queryCandidates) {
           if (!contactedInCurrentExecution.contains(candidate.getId())
               && !outstandingRequestList.contains(new OutstandingRequest(candidate))) {
@@ -83,7 +83,7 @@ class RecursivePeerRefreshState {
   }
 
   private void executeFindNodeRequest(final DiscoveryPeer peer) {
-    BytesValue peerId = peer.getId();
+    final BytesValue peerId = peer.getId();
     outstandingRequestList.add(new OutstandingRequest(peer));
     contactedInCurrentExecution.add(peerId);
     neighborFinder.issueFindNodeRequest(peer, target);
@@ -103,7 +103,7 @@ class RecursivePeerRefreshState {
 
   void onNeighboursPacketReceived(final NeighborsPacketData neighboursPacket, final Peer peer) {
     if (outstandingRequestList.contains(new OutstandingRequest(peer))) {
-      List<DiscoveryPeer> receivedPeerList = neighboursPacket.getNodes();
+      final List<DiscoveryPeer> receivedPeerList = neighboursPacket.getNodes();
       for (DiscoveryPeer receivedPeer : receivedPeerList) {
         if (!peerBlacklist.contains(receivedPeer)) {
           bondingAgent.performBonding(receivedPeer, false);
@@ -127,7 +127,8 @@ class RecursivePeerRefreshState {
 
   private void queryNearestNodes() {
     if (outstandingRequestList.isEmpty()) {
-      List<DiscoveryPeer> queryCandidates = determineFindNodeCandidates(CONCURRENT_REQUEST_LIMIT);
+      final List<DiscoveryPeer> queryCandidates =
+          determineFindNodeCandidates(CONCURRENT_REQUEST_LIMIT);
       initiatePeerRefreshCycle(queryCandidates);
     }
   }
@@ -185,7 +186,7 @@ class RecursivePeerRefreshState {
     public boolean equals(final Object o) {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
-      OutstandingRequest that = (OutstandingRequest) o;
+      final OutstandingRequest that = (OutstandingRequest) o;
       return Objects.equals(peer.getId(), that.peer.getId());
     }
 
