@@ -125,6 +125,8 @@ public class PeerDiscoveryController {
   // Observers for "peer dropped" discovery events.
   private final Subscribers<Consumer<PeerDroppedEvent>> peerDroppedObservers = new Subscribers<>();
 
+  private RecursivePeerRefreshState recursivePeerRefreshState;
+
   public PeerDiscoveryController(
       final Vertx vertx,
       final PeerDiscoveryAgent agent,
