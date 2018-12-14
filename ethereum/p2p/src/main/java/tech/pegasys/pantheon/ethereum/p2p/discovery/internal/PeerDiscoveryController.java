@@ -13,7 +13,6 @@
 package tech.pegasys.pantheon.ethereum.p2p.discovery.internal;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static java.util.Collections.emptyList;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PeerTable.AddResult.Outcome;
@@ -244,21 +243,10 @@ public class PeerDiscoveryController {
         matchInteraction(packet)
             .ifPresent(
                 interaction -> {
-                  // Extract the peers from the incoming packet.
-                  final List<DiscoveryPeer> neighbors =
-                      packet
-                          .getPacketData(NeighborsPacketData.class)
-                          .map(NeighborsPacketData::getNodes)
-                          .orElse(emptyList());
-
-                  for (final DiscoveryPeer neighbor : neighbors) {
-                    if (!nodeWhitelist.contains(neighbor)
-                        || peerBlacklist.contains(neighbor)
-                        || peerTable.get(neighbor).isPresent()) {
-                      continue;
-                    }
-                    bond(neighbor, false);
-                  }
+                  recursivePeerRefreshState.setPeerBlacklist(peerBlacklist);
+                  recursivePeerRefreshState.setNodeWhitelistController(nodeWhitelist);
+                  recursivePeerRefreshState.onNeighboursPacketReceived(
+                      packet.getPacketData(NeighborsPacketData.class).orElse(null), peer);
                 });
         break;
 
