@@ -18,6 +18,7 @@ import static tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PeerDistance
 import tech.pegasys.pantheon.ethereum.p2p.discovery.DiscoveryPeer;
 import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
 import tech.pegasys.pantheon.ethereum.p2p.peers.PeerBlacklist;
+import tech.pegasys.pantheon.ethereum.p2p.permissioning.NodeWhitelistController;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.util.ArrayList;
@@ -29,12 +30,14 @@ import com.google.common.annotations.VisibleForTesting;
 class RecursivePeerRefreshState {
   private final int CONCURRENT_REQUEST_LIMIT = 3;
   private final BytesValue target;
-  private final PeerBlacklist peerBlacklist;
   private final BondingAgent bondingAgent;
   private final NeighborFinder neighborFinder;
   private final List<PeerDistance> anteList;
   private final List<OutstandingRequest> outstandingRequestList;
   private final List<BytesValue> contactedInCurrentExecution;
+
+  private NodeWhitelistController nodeWhitelist;
+  private PeerBlacklist peerBlacklist;
 
   RecursivePeerRefreshState(
       final BytesValue target,
@@ -50,8 +53,16 @@ class RecursivePeerRefreshState {
     this.contactedInCurrentExecution = new ArrayList<>();
   }
 
-  void kickstartBootstrapPeers(final List<Peer> bootstrapPeers) {
-    for (Peer bootstrapPeer : bootstrapPeers) {
+  void setPeerBlacklist(final PeerBlacklist peerBlacklist) {
+    this.peerBlacklist = peerBlacklist;
+  }
+
+  void setNodeWhitelistController(final NodeWhitelistController nodeWhitelist) {
+    this.nodeWhitelist = nodeWhitelist;
+  }
+
+  void kickstartBootstrapPeers(final List<DiscoveryPeer> bootstrapPeers) {
+    for (DiscoveryPeer bootstrapPeer : bootstrapPeers) {
       final BytesValue peerId = bootstrapPeer.getId();
       outstandingRequestList.add(new OutstandingRequest(bootstrapPeer));
       contactedInCurrentExecution.add(peerId);
@@ -66,7 +77,7 @@ class RecursivePeerRefreshState {
    * once encountered are deemed eligible for eviction if they have not been dispatched before the
    * next invocation of the method.
    */
-  public void executeTimeoutEvaluation() {
+  void executeTimeoutEvaluation() {
     for (int i = 0; i < outstandingRequestList.size(); i++) {
       if (outstandingRequestList.get(i).getEvaluation()) {
         final List<DiscoveryPeer> queryCandidates = determineFindNodeCandidates(anteList.size());
@@ -105,6 +116,7 @@ class RecursivePeerRefreshState {
     if (outstandingRequestList.contains(new OutstandingRequest(peer))) {
       final List<DiscoveryPeer> receivedPeerList = neighboursPacket.getNodes();
       for (DiscoveryPeer receivedPeer : receivedPeerList) {
+        // if (!peerBlacklist.contains(receivedPeer) && nodeWhitelist.contains(receivedPeer)) {
         if (!peerBlacklist.contains(receivedPeer)) {
           bondingAgent.performBonding(receivedPeer, false);
           anteList.add(new PeerDistance(receivedPeer, distance(target, receivedPeer.getId())));
@@ -122,6 +134,9 @@ class RecursivePeerRefreshState {
           if (peer1.getDistance() < peer2.getDistance()) return -1;
           return 0;
         });
+    if (anteList.size() <= CONCURRENT_REQUEST_LIMIT) {
+      return anteList.stream().map(PeerDistance::getPeer).collect(toList());
+    }
     return anteList.subList(0, threshold).stream().map(PeerDistance::getPeer).collect(toList());
   }
 
@@ -208,7 +223,7 @@ class RecursivePeerRefreshState {
      * @param peer the peer to interrogate
      * @param target the target node ID to find
      */
-    void issueFindNodeRequest(final Peer peer, final BytesValue target);
+    void issueFindNodeRequest(final DiscoveryPeer peer, final BytesValue target);
   }
 
   public interface BondingAgent {
@@ -218,6 +233,6 @@ class RecursivePeerRefreshState {
      * @param peer The targeted peer.
      * @param bootstrap Whether this is a bootstrap interaction.
      */
-    void performBonding(final Peer peer, final boolean bootstrap);
+    void performBonding(final DiscoveryPeer peer, final boolean bootstrap);
   }
 }
