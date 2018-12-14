@@ -25,8 +25,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-import com.google.common.annotations.VisibleForTesting;
-
 class RecursivePeerRefreshState {
   private final int CONCURRENT_REQUEST_LIMIT = 3;
   private final BytesValue target;
@@ -41,10 +39,12 @@ class RecursivePeerRefreshState {
 
   RecursivePeerRefreshState(
       final BytesValue target,
+      final NodeWhitelistController nodeWhitelist,
       final PeerBlacklist peerBlacklist,
       final BondingAgent bondingAgent,
       final NeighborFinder neighborFinder) {
     this.target = target;
+    this.nodeWhitelist = nodeWhitelist;
     this.peerBlacklist = peerBlacklist;
     this.bondingAgent = bondingAgent;
     this.neighborFinder = neighborFinder;

@@ -18,9 +18,11 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
+import tech.pegasys.pantheon.ethereum.p2p.config.PermissioningConfiguration;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.DiscoveryPeer;
 import tech.pegasys.pantheon.ethereum.p2p.peers.Endpoint;
 import tech.pegasys.pantheon.ethereum.p2p.peers.PeerBlacklist;
+import tech.pegasys.pantheon.ethereum.p2p.permissioning.NodeWhitelistController;
 import tech.pegasys.pantheon.util.bytes.Bytes32;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
@@ -82,7 +84,7 @@ public class RecursivePeerRefreshStateTest {
     JsonNode peers =
         MAPPER.readTree(RecursivePeerRefreshStateTest.class.getResource("/peers.json"));
     recursivePeerRefreshState =
-        new RecursivePeerRefreshState(target, new PeerBlacklist(), bondingAgent, neighborFinder);
+        new RecursivePeerRefreshState(target, new NodeWhitelistController(PermissioningConfiguration.createDefault()), new PeerBlacklist(), bondingAgent, neighborFinder);
 
     peer_000 = (TestPeer) generatePeer(peers);
 
@@ -184,7 +186,6 @@ public class RecursivePeerRefreshStateTest {
     recursivePeerRefreshState.kickstartBootstrapPeers(Collections.singletonList(peer_000));
 
     verify(bondingAgent).performBonding(peer_000, true);
-    verify(neighborFinder).issueFindNodeRequest(peer_000, target);
 
     recursivePeerRefreshState.onNeighboursPacketReceived(neighborsPacketData_000, peer_000);
     assertThat(recursivePeerRefreshState.getOutstandingRequestList().size()).isLessThanOrEqualTo(3);
@@ -235,7 +236,6 @@ public class RecursivePeerRefreshStateTest {
     recursivePeerRefreshState.executeTimeoutEvaluation();
 
     verify(bondingAgent).performBonding(peer_000, true);
-    verify(neighborFinder).issueFindNodeRequest(peer_000, target);
 
     recursivePeerRefreshState.onNeighboursPacketReceived(neighborsPacketData_000, peer_000);
     assertThat(recursivePeerRefreshState.getOutstandingRequestList().size()).isLessThanOrEqualTo(3);
