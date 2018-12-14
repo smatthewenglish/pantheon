@@ -115,8 +115,7 @@ class RecursivePeerRefreshState {
     if (outstandingRequestList.contains(new OutstandingRequest(peer))) {
       final List<DiscoveryPeer> receivedPeerList = neighboursPacket.getNodes();
       for (DiscoveryPeer receivedPeer : receivedPeerList) {
-        // if (!peerBlacklist.contains(receivedPeer) && nodeWhitelist.contains(receivedPeer)) {
-        if (!peerBlacklist.contains(receivedPeer)) {
+        if (!peerBlacklist.contains(receivedPeer) && nodeWhitelist.contains(receivedPeer)) {
           bondingAgent.performBonding(receivedPeer, false);
           anteList.add(new PeerDistance(receivedPeer, distance(target, receivedPeer.getId())));
         }
