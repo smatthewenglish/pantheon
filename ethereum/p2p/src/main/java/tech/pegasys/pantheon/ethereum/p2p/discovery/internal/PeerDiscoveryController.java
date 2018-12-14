@@ -40,6 +40,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import com.google.common.annotations.VisibleForTesting;
 import io.vertx.core.Vertx;
@@ -125,6 +126,8 @@ public class PeerDiscoveryController {
   // Observers for "peer dropped" discovery events.
   private final Subscribers<Consumer<PeerDroppedEvent>> peerDroppedObservers = new Subscribers<>();
 
+  private RecursivePeerRefreshState recursivePeerRefreshState;
+
   public PeerDiscoveryController(
       final Vertx vertx,
       final PeerDiscoveryAgent agent,
@@ -149,11 +152,14 @@ public class PeerDiscoveryController {
       throw new IllegalStateException("The peer table had already been started");
     }
 
-    bootstrapNodes
-        .stream()
-        .filter(node -> peerTable.tryAdd(node).getOutcome() == Outcome.ADDED)
-        .filter(node -> nodeWhitelist.contains(node))
-        .forEach(node -> bond(node, true));
+    bootstrapNodes.stream().filter(nodeWhitelist::contains).forEach(peerTable::tryAdd);
+    // bootstrapNodes.stream().filter(nodeWhitelist::contains).forEach(node -> bond(node, true));
+
+    final BytesValue target = Peer.randomId();
+    recursivePeerRefreshState =
+        new RecursivePeerRefreshState(target, peerBlacklist, this::bond, this::findNodes);
+    recursivePeerRefreshState.kickstartBootstrapPeers(
+        bootstrapNodes.stream().filter(nodeWhitelist::contains).collect(Collectors.toList()));
 
     final long timerId =
         vertx.setPeriodic(
