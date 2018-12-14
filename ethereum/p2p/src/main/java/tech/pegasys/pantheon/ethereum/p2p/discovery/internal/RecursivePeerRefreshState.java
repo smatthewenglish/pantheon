@@ -67,7 +67,6 @@ class RecursivePeerRefreshState {
       outstandingRequestList.add(new OutstandingRequest(bootstrapPeer));
       contactedInCurrentExecution.add(peerId);
       bondingAgent.performBonding(bootstrapPeer, true);
-      neighborFinder.issueFindNodeRequest(bootstrapPeer, target);
     }
   }
 

@@ -153,7 +153,6 @@ public class PeerDiscoveryController {
     }
 
     bootstrapNodes.stream().filter(nodeWhitelist::contains).forEach(peerTable::tryAdd);
-    // bootstrapNodes.stream().filter(nodeWhitelist::contains).forEach(node -> bond(node, true));
 
     final BytesValue target = Peer.randomId();
     recursivePeerRefreshState =
