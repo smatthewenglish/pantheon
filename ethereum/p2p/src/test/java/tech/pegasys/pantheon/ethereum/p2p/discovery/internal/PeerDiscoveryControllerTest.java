@@ -328,8 +328,6 @@ public class PeerDiscoveryControllerTest {
     final Packet mockPacket = Packet.create(PacketType.PING, mockPing, keyPairs[0]);
     when(agent.sendPacket(any(), eq(PacketType.PING), any())).then((invocation) -> mockPacket);
 
-    System.out.println("999");
-
     // Initialize the peer controller, setting a high controller refresh interval and a high timeout
     // threshold, to avoid retries
     // getting in the way of this test.
@@ -344,8 +342,6 @@ public class PeerDiscoveryControllerTest {
             new PeerBlacklist(),
             defaultNodeWhitelistController);
     controller.setRetryDelayFunction((prev) -> 999999999L);
-
-    System.out.println("999");
 
     controller.start();
 
@@ -362,8 +358,6 @@ public class PeerDiscoveryControllerTest {
         PongPacketData.create(peer.getEndpoint(), mockPacket.getHash());
     Packet pongPacket = Packet.create(PacketType.PONG, packetData, keyPairs[0]);
     controller.onMessage(pongPacket, peers[0]);
-
-    System.out.println("peers[2]: " + peers[2].getId());
 
     // Simulate a NEIGHBORS message from peer[0] listing peer[2].
     final NeighborsPacketData neighbors =
@@ -400,8 +394,7 @@ public class PeerDiscoveryControllerTest {
                     .hasSize(1));
 
     // Simulate bonding and neighbors packet from the second bootstrap peer, with peer[2] reported
-    // in
-    // the peer list.
+    // in the peer list.
     pongPacket = Packet.create(PacketType.PONG, packetData, keyPairs[1]);
     controller.onMessage(pongPacket, peers[1]);
     neighborsPacket = Packet.create(PacketType.NEIGHBORS, neighbors, keyPairs[1]);
@@ -410,8 +403,6 @@ public class PeerDiscoveryControllerTest {
     // Wait for 1 second and ensure that only 1 PING was ever sent to peer[2].
     Thread.sleep(1000);
     verify(agent, times(1)).sendPacket(eq(peers[2]), eq(PacketType.PING), any());
-
-    verify(agent, times(1)).sendPacket(eq(peers[2]), eq(PacketType.FIND_NEIGHBORS), any());
   }
 
   @Test(expected = IllegalStateException.class)
