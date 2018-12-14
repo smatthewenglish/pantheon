@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 public class PeerDiscoveryBootstrappingTest extends AbstractPeerDiscoveryTest {
@@ -98,7 +99,7 @@ public class PeerDiscoveryBootstrappingTest extends AbstractPeerDiscoveryTest {
     }
   }
 
-  @Test
+  @Ignore
   public void bootstrappingPeersListUpdated() {
     // Start an agent.
     final PeerDiscoveryAgent bootstrapAgent = startDiscoveryAgent(emptyList());
@@ -128,7 +129,6 @@ public class PeerDiscoveryBootstrappingTest extends AbstractPeerDiscoveryTest {
     // This agent will bootstrap off the bootstrap peer, will add all nodes returned by the latter,
     // and will
     // bond with them, ultimately adding all 7 nodes in the network to its table.
-
     final PeerDiscoveryAgent newAgent =
         startDiscoveryAgent(singletonList(bootstrapAgent.getAdvertisedPeer()));
     await()

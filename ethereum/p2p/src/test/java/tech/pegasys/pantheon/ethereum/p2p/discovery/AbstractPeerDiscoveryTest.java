@@ -87,7 +87,7 @@ public abstract class AbstractPeerDiscoveryTest {
   }
 
   /**
-   * Starts multiple discovery agents with the provided boostrap peers.
+   * Starts multiple discovery agents with the provided bootstrap peers.
    *
    * @param count the number of agents to start
    * @param bootstrapPeers the list of bootstrap peers
@@ -121,11 +121,6 @@ public abstract class AbstractPeerDiscoveryTest {
       final List<DiscoveryPeer> bootstrapPeers, final PeerBlacklist blacklist) {
     final DiscoveryConfiguration config = new DiscoveryConfiguration();
     config.setBootstrapPeers(bootstrapPeers);
-
-
-    System.out.println("bootstrapPeers: " + bootstrapPeers.size());
-
-
     config.setBindPort(0);
 
     return startDiscoveryAgent(config, blacklist);
