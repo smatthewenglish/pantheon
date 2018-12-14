@@ -113,6 +113,7 @@ public class PeerDiscoveryBootstrappingTest extends AbstractPeerDiscoveryTest {
             .map(PeerDiscoveryAgent::getAdvertisedPeer)
             .map(Peer::getId)
             .toArray(BytesValue[]::new);
+
     await()
         .atMost(5, TimeUnit.SECONDS)
         .untilAsserted(
@@ -127,6 +128,7 @@ public class PeerDiscoveryBootstrappingTest extends AbstractPeerDiscoveryTest {
     // This agent will bootstrap off the bootstrap peer, will add all nodes returned by the latter,
     // and will
     // bond with them, ultimately adding all 7 nodes in the network to its table.
+
     final PeerDiscoveryAgent newAgent =
         startDiscoveryAgent(singletonList(bootstrapAgent.getAdvertisedPeer()));
     await()
