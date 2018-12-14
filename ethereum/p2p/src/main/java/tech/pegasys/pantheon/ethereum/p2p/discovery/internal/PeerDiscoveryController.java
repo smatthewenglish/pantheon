@@ -155,7 +155,8 @@ public class PeerDiscoveryController {
 
     final BytesValue target = Peer.randomId();
     recursivePeerRefreshState =
-        new RecursivePeerRefreshState(target, nodeWhitelist, peerBlacklist, this::bond, this::findNodes);
+        new RecursivePeerRefreshState(
+            target, nodeWhitelist, peerBlacklist, this::bond, this::findNodes);
     recursivePeerRefreshState.kickstartBootstrapPeers(
         bootstrapNodes.stream().filter(nodeWhitelist::contains).collect(Collectors.toList()));
 
@@ -338,7 +339,6 @@ public class PeerDiscoveryController {
           final PingPacketData data =
               PingPacketData.create(agent.getAdvertisedPeer().getEndpoint(), peer.getEndpoint());
           final Packet sentPacket = agent.sendPacket(peer, PacketType.PING, data);
-
           final BytesValue pingHash = sentPacket.getHash();
           // Update the matching filter to only accept the PONG if it echoes the hash of our PING.
           final Predicate<Packet> newFilter =

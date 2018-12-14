@@ -121,6 +121,11 @@ public abstract class AbstractPeerDiscoveryTest {
       final List<DiscoveryPeer> bootstrapPeers, final PeerBlacklist blacklist) {
     final DiscoveryConfiguration config = new DiscoveryConfiguration();
     config.setBootstrapPeers(bootstrapPeers);
+
+
+    System.out.println("bootstrapPeers: " + bootstrapPeers.size());
+
+
     config.setBindPort(0);
 
     return startDiscoveryAgent(config, blacklist);

@@ -84,7 +84,12 @@ public class RecursivePeerRefreshStateTest {
     JsonNode peers =
         MAPPER.readTree(RecursivePeerRefreshStateTest.class.getResource("/peers.json"));
     recursivePeerRefreshState =
-        new RecursivePeerRefreshState(target, new NodeWhitelistController(PermissioningConfiguration.createDefault()), new PeerBlacklist(), bondingAgent, neighborFinder);
+        new RecursivePeerRefreshState(
+            target,
+            new NodeWhitelistController(PermissioningConfiguration.createDefault()),
+            new PeerBlacklist(),
+            bondingAgent,
+            neighborFinder);
 
     peer_000 = (TestPeer) generatePeer(peers);
 
