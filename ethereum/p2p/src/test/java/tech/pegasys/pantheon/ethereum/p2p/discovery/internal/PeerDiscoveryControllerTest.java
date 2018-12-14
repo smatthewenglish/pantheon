@@ -499,6 +499,11 @@ public class PeerDiscoveryControllerTest {
     doReturn(discoPeerPing).when(agent).sendPacket(eq(discoPeer), eq(PacketType.PING), any());
 
     controller.start();
+
+    final RecursivePeerRefreshState recursivePeerRefreshState =
+        controller.getRecursivePeerRefreshState();
+    recursivePeerRefreshState.addToOutstandingRequestList(peers[0]);
+
     await()
         .atMost(5, TimeUnit.SECONDS)
         .untilAsserted(
@@ -544,7 +549,7 @@ public class PeerDiscoveryControllerTest {
     final Packet pongPacket = MockPacketDataFactory.mockPongPacket(otherPeer, pingPacket.getHash());
     controller.onMessage(pongPacket, otherPeer);
 
-    // Blaclist otherPeer2 before sending return pong
+    // Blacklist otherPeer2 before sending return pong
     blacklist.add(otherPeer2);
     final Packet pongPacket2 =
         MockPacketDataFactory.mockPongPacket(otherPeer2, pingPacket2.getHash());

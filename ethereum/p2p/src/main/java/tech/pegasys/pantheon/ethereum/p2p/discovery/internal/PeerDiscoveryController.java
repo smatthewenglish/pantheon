@@ -146,6 +146,10 @@ public class PeerDiscoveryController {
     this.nodeWhitelist = nodeWhitelist;
   }
 
+  RecursivePeerRefreshState getRecursivePeerRefreshState() {
+    return this.recursivePeerRefreshState;
+  }
+
   public CompletableFuture<?> start() {
     if (!started.compareAndSet(false, true)) {
       throw new IllegalStateException("The peer table had already been started");
@@ -220,25 +224,21 @@ public class PeerDiscoveryController {
           final PingPacketData ping = packet.getPacketData(PingPacketData.class).get();
           respondToPing(ping, packet.getHash(), peer);
         }
-
         break;
       case PONG:
-        {
-          matchInteraction(packet)
-              .ifPresent(
-                  interaction -> {
-                    if (peerBlacklisted) {
-                      return;
-                    }
-                    addToPeerTable(peer);
-
-                    // If this was a bootstrap peer, let's ask it for nodes near to us.
-                    if (interaction.isBootstrap()) {
-                      findNodes(peer, agent.getAdvertisedPeer().getId());
-                    }
-                  });
-          break;
-        }
+        matchInteraction(packet)
+            .ifPresent(
+                interaction -> {
+                  if (peerBlacklisted) {
+                    return;
+                  }
+                  addToPeerTable(peer);
+                  // If this was a bootstrap peer, let's ask it for nodes near to us.
+                  if (interaction.isBootstrap()) {
+                    findNodes(peer, agent.getAdvertisedPeer().getId());
+                  }
+                });
+        break;
       case NEIGHBORS:
         matchInteraction(packet)
             .ifPresent(
@@ -249,7 +249,6 @@ public class PeerDiscoveryController {
                       packet.getPacketData(NeighborsPacketData.class).orElse(null), peer);
                 });
         break;
-
       case FIND_NEIGHBORS:
         if (!peerKnown || peerBlacklisted) {
           break;
@@ -367,7 +366,8 @@ public class PeerDiscoveryController {
    * @param peer the peer to interrogate
    * @param target the target node ID to find
    */
-  private void findNodes(final DiscoveryPeer peer, final BytesValue target) {
+  @VisibleForTesting
+  void findNodes(final DiscoveryPeer peer, final BytesValue target) {
     final Consumer<PeerInteractionState> action =
         (interaction) -> {
           final FindNeighborsPacketData data = FindNeighborsPacketData.create(target);

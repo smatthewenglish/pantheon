@@ -112,10 +112,22 @@ class RecursivePeerRefreshState {
   }
 
   void onNeighboursPacketReceived(final NeighborsPacketData neighboursPacket, final Peer peer) {
+
+    System.out.println(peer.toString());
+
     if (outstandingRequestList.contains(new OutstandingRequest(peer))) {
+
+      System.out.println("oioi");
+
       final List<DiscoveryPeer> receivedPeerList = neighboursPacket.getNodes();
       for (DiscoveryPeer receivedPeer : receivedPeerList) {
+
+        System.out.println("bubu");
+
         if (!peerBlacklist.contains(receivedPeer) && nodeWhitelist.contains(receivedPeer)) {
+
+          System.out.println("baba");
+
           bondingAgent.performBonding(receivedPeer, false);
           anteList.add(new PeerDistance(receivedPeer, distance(target, receivedPeer.getId())));
         }
@@ -144,6 +156,11 @@ class RecursivePeerRefreshState {
           determineFindNodeCandidates(CONCURRENT_REQUEST_LIMIT);
       initiatePeerRefreshCycle(queryCandidates);
     }
+  }
+
+  @VisibleForTesting
+  public void addToOutstandingRequestList(final Peer peer) {
+    outstandingRequestList.add(new OutstandingRequest(peer));
   }
 
   @VisibleForTesting
