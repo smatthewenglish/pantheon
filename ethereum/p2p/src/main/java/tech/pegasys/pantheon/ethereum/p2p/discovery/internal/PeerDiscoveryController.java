@@ -146,10 +146,6 @@ public class PeerDiscoveryController {
     this.nodeWhitelist = nodeWhitelist;
   }
 
-  RecursivePeerRefreshState getRecursivePeerRefreshState() {
-    return this.recursivePeerRefreshState;
-  }
-
   public CompletableFuture<?> start() {
     if (!started.compareAndSet(false, true)) {
       throw new IllegalStateException("The peer table had already been started");
@@ -366,8 +362,7 @@ public class PeerDiscoveryController {
    * @param peer the peer to interrogate
    * @param target the target node ID to find
    */
-  @VisibleForTesting
-  void findNodes(final DiscoveryPeer peer, final BytesValue target) {
+  private void findNodes(final DiscoveryPeer peer, final BytesValue target) {
     final Consumer<PeerInteractionState> action =
         (interaction) -> {
           final FindNeighborsPacketData data = FindNeighborsPacketData.create(target);
@@ -484,6 +479,15 @@ public class PeerDiscoveryController {
    */
   public boolean removePeerDroppedObserver(final long observerId) {
     return peerDroppedObservers.unsubscribe(observerId);
+  }
+
+  /**
+   * Standard getter for RecursivePeerRefreshState object.
+   *
+   * @return Associated RecursivePeerRefreshState.
+   */
+  RecursivePeerRefreshState getRecursivePeerRefreshState() {
+    return this.recursivePeerRefreshState;
   }
 
   /**
