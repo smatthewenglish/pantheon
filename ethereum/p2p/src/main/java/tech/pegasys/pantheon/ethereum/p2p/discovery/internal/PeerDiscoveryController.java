@@ -486,7 +486,8 @@ public class PeerDiscoveryController {
    *
    * @return Associated RecursivePeerRefreshState.
    */
-  RecursivePeerRefreshState getRecursivePeerRefreshState() {
+  @VisibleForTesting
+  public RecursivePeerRefreshState getRecursivePeerRefreshState() {
     return this.recursivePeerRefreshState;
   }
 
