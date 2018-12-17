@@ -107,8 +107,7 @@ public class RecursivePeerRefreshState {
    */
   private void initiatePeerRefreshCycle(final List<DiscoveryPeer> peers) {
     for (DiscoveryPeer peer : peers) {
-      if (!dispatchedFindNeighbours.contains(peer.getId())
-          && !dispatchedBond.contains(peer.getId())) {
+      if (!dispatchedFindNeighbours.contains(peer.getId())) {
         executeFindNodeRequest(peer);
       }
     }
