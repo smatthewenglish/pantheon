@@ -153,10 +153,8 @@ public class PeerDiscoveryController {
 
     bootstrapNodes.stream().filter(nodeWhitelist::contains).forEach(peerTable::tryAdd);
 
-    final BytesValue target = Peer.randomId();
     recursivePeerRefreshState =
-        new RecursivePeerRefreshState(
-            target, nodeWhitelist, peerBlacklist, this::bond, this::findNodes);
+        new RecursivePeerRefreshState(Peer.randomId(), this::bond, this::findNodes);
     recursivePeerRefreshState.kickstartBootstrapPeers(
         bootstrapNodes.stream().filter(nodeWhitelist::contains).collect(Collectors.toList()));
 
@@ -230,17 +228,17 @@ public class PeerDiscoveryController {
                     return;
                   }
                   addToPeerTable(peer);
-                  // If this was a bootstrap peer, let's ask it for nodes near to us.
                   if (interaction.isBootstrap()) {
                     findNodes(peer, agent.getAdvertisedPeer().getId());
                   }
                 });
         break;
       case NEIGHBORS:
-        recursivePeerRefreshState.setPeerBlacklist(peerBlacklist);
-        recursivePeerRefreshState.setNodeWhitelistController(nodeWhitelist);
         recursivePeerRefreshState.onNeighboursPacketReceived(
-            packet.getPacketData(NeighborsPacketData.class).orElse(null), peer);
+            packet.getPacketData(NeighborsPacketData.class).orElse(null),
+            peer,
+            peerBlacklist,
+            nodeWhitelist);
         break;
       case FIND_NEIGHBORS:
         if (!peerKnown || peerBlacklisted) {
@@ -359,13 +357,11 @@ public class PeerDiscoveryController {
    * @param target the target node ID to find
    */
   private void findNodes(final DiscoveryPeer peer, final BytesValue target) {
+    final FindNeighborsPacketData data = FindNeighborsPacketData.create(target);
     final Consumer<PeerInteractionState> action =
-        (interaction) -> {
-          final FindNeighborsPacketData data = FindNeighborsPacketData.create(target);
-          agent.sendPacket(peer, PacketType.FIND_NEIGHBORS, data);
-        };
+        interaction -> agent.sendPacket(peer, PacketType.FIND_NEIGHBORS, data);
     final PeerInteractionState interaction =
-        new PeerInteractionState(action, PacketType.NEIGHBORS, packet -> true, true, false);
+        new PeerInteractionState(action, PacketType.NEIGHBORS, filter -> true, true, false);
     interaction.execute(0);
   }
 
@@ -483,7 +479,7 @@ public class PeerDiscoveryController {
    * @return Associated RecursivePeerRefreshState.
    */
   @VisibleForTesting
-  public RecursivePeerRefreshState getRecursivePeerRefreshState() {
+  RecursivePeerRefreshState getRecursivePeerRefreshState() {
     return this.recursivePeerRefreshState;
   }
 
