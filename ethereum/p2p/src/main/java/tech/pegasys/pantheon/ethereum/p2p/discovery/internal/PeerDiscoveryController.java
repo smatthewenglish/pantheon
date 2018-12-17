@@ -237,14 +237,10 @@ public class PeerDiscoveryController {
                 });
         break;
       case NEIGHBORS:
-        matchInteraction(packet)
-            .ifPresent(
-                interaction -> {
-                  recursivePeerRefreshState.setPeerBlacklist(peerBlacklist);
-                  recursivePeerRefreshState.setNodeWhitelistController(nodeWhitelist);
-                  recursivePeerRefreshState.onNeighboursPacketReceived(
-                      packet.getPacketData(NeighborsPacketData.class).orElse(null), peer);
-                });
+        recursivePeerRefreshState.setPeerBlacklist(peerBlacklist);
+        recursivePeerRefreshState.setNodeWhitelistController(nodeWhitelist);
+        recursivePeerRefreshState.onNeighboursPacketReceived(
+            packet.getPacketData(NeighborsPacketData.class).orElse(null), peer);
         break;
       case FIND_NEIGHBORS:
         if (!peerKnown || peerBlacklisted) {
@@ -370,7 +366,7 @@ public class PeerDiscoveryController {
         };
     final PeerInteractionState interaction =
         new PeerInteractionState(action, PacketType.NEIGHBORS, packet -> true, true, false);
-    dispatchInteraction(peer, interaction);
+    interaction.execute(0);
   }
 
   /**

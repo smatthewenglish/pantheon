@@ -159,7 +159,7 @@ public class RecursivePeerRefreshState {
     this.outstandingRequestList.add(new OutstandingRequest(peer));
   }
 
-  List<OutstandingRequest> getOutstandingRequestList() {
+  public List<OutstandingRequest> getOutstandingRequestList() {
     return this.outstandingRequestList;
   }
 
@@ -186,7 +186,7 @@ public class RecursivePeerRefreshState {
     }
   }
 
-  static class OutstandingRequest {
+  public static class OutstandingRequest {
     boolean evaluation;
     Peer peer;
 
