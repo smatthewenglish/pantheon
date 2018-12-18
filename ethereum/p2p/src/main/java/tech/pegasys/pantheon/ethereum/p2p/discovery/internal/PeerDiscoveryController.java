@@ -157,6 +157,7 @@ public class PeerDiscoveryController {
         new RecursivePeerRefreshState(Peer.randomId(), this::bond, this::findNodes);
     recursivePeerRefreshState.kickstartBootstrapPeers(
         bootstrapNodes.stream().filter(nodeWhitelist::contains).collect(Collectors.toList()));
+    initiateFindNeighboursTimeoutCounter();
 
     final long timerId =
         vertx.setPeriodic(
@@ -177,6 +178,16 @@ public class PeerDiscoveryController {
     inflightInteractions.values().forEach(PeerInteractionState::cancelTimers);
     inflightInteractions.clear();
     return CompletableFuture.completedFuture(null);
+  }
+
+  /**
+   * Cancels outbound FIND_NEIGHBORS requests that have no completed within the fixed 30 second
+   * interval.
+   */
+  private void initiateFindNeighboursTimeoutCounter() {
+    final int timeoutTaskDelay = 30000;
+    vertx.setPeriodic(
+        timeoutTaskDelay, handler -> recursivePeerRefreshState.executeTimeoutEvaluation());
   }
 
   /**
