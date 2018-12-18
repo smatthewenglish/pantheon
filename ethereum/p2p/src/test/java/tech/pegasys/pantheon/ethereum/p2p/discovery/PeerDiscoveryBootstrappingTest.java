@@ -19,7 +19,6 @@ import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
-import io.vertx.core.Vertx;
 import tech.pegasys.pantheon.crypto.SECP256K1;
 import tech.pegasys.pantheon.ethereum.p2p.config.DiscoveryConfiguration;
 import tech.pegasys.pantheon.ethereum.p2p.config.PermissioningConfiguration;
@@ -35,6 +34,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
+import io.vertx.core.Vertx;
 import org.junit.Test;
 
 public class PeerDiscoveryBootstrappingTest extends AbstractPeerDiscoveryTest {
@@ -141,147 +141,146 @@ public class PeerDiscoveryBootstrappingTest extends AbstractPeerDiscoveryTest {
         .untilAsserted(() -> assertThat(newAgent.getPeers()).hasSize(6));
   }
 
-    @Test
-    public void deconstructed() {
-        final int BROADCAST_TCP_PORT = 12356;
-        final Vertx vertx = vertx();
+  @Test
+  public void deconstructed() {
+    final int BROADCAST_TCP_PORT = 12356;
+    final Vertx vertx = vertx();
 
-        // Start an agent.
-        final DiscoveryConfiguration bootstrapConfig = new DiscoveryConfiguration();
-        bootstrapConfig.setBootstrapPeers(emptyList());
-        bootstrapConfig.setBindPort(0);
+    // Start an agent.
+    final DiscoveryConfiguration bootstrapConfig = new DiscoveryConfiguration();
+    bootstrapConfig.setBootstrapPeers(emptyList());
+    bootstrapConfig.setBindPort(0);
 
-        final PeerDiscoveryAgent bootstrapAgent =
-                new PeerDiscoveryAgent(
-                        vertx,
-                        SECP256K1.KeyPair.generate(),
-                        bootstrapConfig,
-                        () -> true,
-                        new PeerBlacklist(),
-                        new NodeWhitelistController(PermissioningConfiguration.createDefault()));
-        try {
-            bootstrapAgent.start(BROADCAST_TCP_PORT).get(5, TimeUnit.SECONDS);
-        } catch (final Exception ex) {
-            throw new AssertionError("Could not initialize discovery agent", ex);
-        }
-
-
-        // Start other five agents, pointing to the one above as a bootstrap peer.
-        final DiscoveryConfiguration agentConfig = new DiscoveryConfiguration();
-        agentConfig.setBootstrapPeers(singletonList(bootstrapAgent.getAdvertisedPeer()));
-        agentConfig.setBindPort(0);
-
-        final PeerDiscoveryAgent agent0 =
-                new PeerDiscoveryAgent(
-                        vertx,
-                        SECP256K1.KeyPair.generate(),
-                        agentConfig,
-                        () -> true,
-                        new PeerBlacklist(),
-                        new NodeWhitelistController(PermissioningConfiguration.createDefault()));
-        try {
-            agent0.start(BROADCAST_TCP_PORT).get(5, TimeUnit.SECONDS);
-        } catch (final Exception ex) {
-            throw new AssertionError("Could not initialize discovery agent", ex);
-        }
-        BytesValue id0 = agent0.getAdvertisedPeer().getId();
-
-        final PeerDiscoveryAgent agent1 =
-                new PeerDiscoveryAgent(
-                        vertx,
-                        SECP256K1.KeyPair.generate(),
-                        agentConfig,
-                        () -> true,
-                        new PeerBlacklist(),
-                        new NodeWhitelistController(PermissioningConfiguration.createDefault()));
-        try {
-            agent1.start(BROADCAST_TCP_PORT).get(5, TimeUnit.SECONDS);
-        } catch (final Exception ex) {
-            throw new AssertionError("Could not initialize discovery agent", ex);
-        }
-        BytesValue id1 = agent1.getAdvertisedPeer().getId();
-
-        final PeerDiscoveryAgent agent2 =
-                new PeerDiscoveryAgent(
-                        vertx,
-                        SECP256K1.KeyPair.generate(),
-                        agentConfig,
-                        () -> true,
-                        new PeerBlacklist(),
-                        new NodeWhitelistController(PermissioningConfiguration.createDefault()));
-        try {
-            agent2.start(BROADCAST_TCP_PORT).get(5, TimeUnit.SECONDS);
-        } catch (final Exception ex) {
-            throw new AssertionError("Could not initialize discovery agent", ex);
-        }
-        BytesValue id2 = agent2.getAdvertisedPeer().getId();
-
-        final PeerDiscoveryAgent agent3 =
-                new PeerDiscoveryAgent(
-                        vertx,
-                        SECP256K1.KeyPair.generate(),
-                        agentConfig,
-                        () -> true,
-                        new PeerBlacklist(),
-                        new NodeWhitelistController(PermissioningConfiguration.createDefault()));
-        try {
-            agent3.start(BROADCAST_TCP_PORT).get(5, TimeUnit.SECONDS);
-        } catch (final Exception ex) {
-            throw new AssertionError("Could not initialize discovery agent", ex);
-        }
-        BytesValue id3 = agent3.getAdvertisedPeer().getId();
-
-        final PeerDiscoveryAgent agent4 =
-                new PeerDiscoveryAgent(
-                        vertx,
-                        SECP256K1.KeyPair.generate(),
-                        agentConfig,
-                        () -> true,
-                        new PeerBlacklist(),
-                        new NodeWhitelistController(PermissioningConfiguration.createDefault()));
-        try {
-            agent4.start(BROADCAST_TCP_PORT).get(5, TimeUnit.SECONDS);
-        } catch (final Exception ex) {
-            throw new AssertionError("Could not initialize discovery agent", ex);
-        }
-        BytesValue id4 = agent4.getAdvertisedPeer().getId();
-
-        final BytesValue[] otherPeersIds = new BytesValue[] {id0, id1, id2, id3, id4};
-
-        await()
-                .atMost(5, TimeUnit.SECONDS)
-                .untilAsserted(
-                        () ->
-                                assertThat(bootstrapAgent.getPeers())
-                                        .extracting(Peer::getId)
-                                        .containsExactlyInAnyOrder(otherPeersIds));
-
-        assertThat(bootstrapAgent.getPeers())
-                .allMatch(p -> p.getStatus() == PeerDiscoveryStatus.BONDED);
-
-        // This agent will bootstrap off the bootstrap peer, will add all nodes returned by the latter,
-        // and will
-        // bond with them, ultimately adding all 7 nodes in the network to its table.
-        final DiscoveryConfiguration testConfig = new DiscoveryConfiguration();
-        testConfig.setBootstrapPeers(singletonList(bootstrapAgent.getAdvertisedPeer()));
-        testConfig.setBindPort(0);
-
-        final PeerDiscoveryAgent testAgent =
-                new PeerDiscoveryAgent(
-                        vertx,
-                        SECP256K1.KeyPair.generate(),
-                        testConfig,
-                        () -> true,
-                        new PeerBlacklist(),
-                        new NodeWhitelistController(PermissioningConfiguration.createDefault()));
-        try {
-            testAgent.start(BROADCAST_TCP_PORT).get(5, TimeUnit.SECONDS);
-        } catch (final Exception ex) {
-            throw new AssertionError("Could not initialize discovery agent", ex);
-        }
-
-        await()
-                .atMost(5, TimeUnit.SECONDS)
-                .untilAsserted(() -> assertThat(testAgent.getPeers()).hasSize(6));
+    final PeerDiscoveryAgent bootstrapAgent =
+        new PeerDiscoveryAgent(
+            vertx,
+            SECP256K1.KeyPair.generate(),
+            bootstrapConfig,
+            () -> true,
+            new PeerBlacklist(),
+            new NodeWhitelistController(PermissioningConfiguration.createDefault()));
+    try {
+      bootstrapAgent.start().get(5, TimeUnit.SECONDS);
+    } catch (final Exception ex) {
+      throw new AssertionError("Could not initialize discovery agent", ex);
     }
+
+    // Start other five agents, pointing to the one above as a bootstrap peer.
+    final DiscoveryConfiguration agentConfig = new DiscoveryConfiguration();
+    agentConfig.setBootstrapPeers(singletonList(bootstrapAgent.getAdvertisedPeer()));
+    agentConfig.setBindPort(0);
+
+    final PeerDiscoveryAgent agent0 =
+        new PeerDiscoveryAgent(
+            vertx,
+            SECP256K1.KeyPair.generate(),
+            agentConfig,
+            () -> true,
+            new PeerBlacklist(),
+            new NodeWhitelistController(PermissioningConfiguration.createDefault()));
+    try {
+      agent0.start().get(5, TimeUnit.SECONDS);
+    } catch (final Exception ex) {
+      throw new AssertionError("Could not initialize discovery agent", ex);
+    }
+    BytesValue id0 = agent0.getAdvertisedPeer().getId();
+
+    final PeerDiscoveryAgent agent1 =
+        new PeerDiscoveryAgent(
+            vertx,
+            SECP256K1.KeyPair.generate(),
+            agentConfig,
+            () -> true,
+            new PeerBlacklist(),
+            new NodeWhitelistController(PermissioningConfiguration.createDefault()));
+    try {
+      agent1.start().get(5, TimeUnit.SECONDS);
+    } catch (final Exception ex) {
+      throw new AssertionError("Could not initialize discovery agent", ex);
+    }
+    BytesValue id1 = agent1.getAdvertisedPeer().getId();
+
+    final PeerDiscoveryAgent agent2 =
+        new PeerDiscoveryAgent(
+            vertx,
+            SECP256K1.KeyPair.generate(),
+            agentConfig,
+            () -> true,
+            new PeerBlacklist(),
+            new NodeWhitelistController(PermissioningConfiguration.createDefault()));
+    try {
+      agent2.start().get(5, TimeUnit.SECONDS);
+    } catch (final Exception ex) {
+      throw new AssertionError("Could not initialize discovery agent", ex);
+    }
+    BytesValue id2 = agent2.getAdvertisedPeer().getId();
+
+    final PeerDiscoveryAgent agent3 =
+        new PeerDiscoveryAgent(
+            vertx,
+            SECP256K1.KeyPair.generate(),
+            agentConfig,
+            () -> true,
+            new PeerBlacklist(),
+            new NodeWhitelistController(PermissioningConfiguration.createDefault()));
+    try {
+      agent3.start().get(5, TimeUnit.SECONDS);
+    } catch (final Exception ex) {
+      throw new AssertionError("Could not initialize discovery agent", ex);
+    }
+    BytesValue id3 = agent3.getAdvertisedPeer().getId();
+
+    final PeerDiscoveryAgent agent4 =
+        new PeerDiscoveryAgent(
+            vertx,
+            SECP256K1.KeyPair.generate(),
+            agentConfig,
+            () -> true,
+            new PeerBlacklist(),
+            new NodeWhitelistController(PermissioningConfiguration.createDefault()));
+    try {
+      agent4.start().get(5, TimeUnit.SECONDS);
+    } catch (final Exception ex) {
+      throw new AssertionError("Could not initialize discovery agent", ex);
+    }
+    BytesValue id4 = agent4.getAdvertisedPeer().getId();
+
+    final BytesValue[] otherPeersIds = new BytesValue[] {id0, id1, id2, id3, id4};
+
+    await()
+        .atMost(5, TimeUnit.SECONDS)
+        .untilAsserted(
+            () ->
+                assertThat(bootstrapAgent.getPeers())
+                    .extracting(Peer::getId)
+                    .containsExactlyInAnyOrder(otherPeersIds));
+
+    assertThat(bootstrapAgent.getPeers())
+        .allMatch(p -> p.getStatus() == PeerDiscoveryStatus.BONDED);
+
+    // This agent will bootstrap off the bootstrap peer, will add all nodes returned by the latter,
+    // and will
+    // bond with them, ultimately adding all 7 nodes in the network to its table.
+    final DiscoveryConfiguration testConfig = new DiscoveryConfiguration();
+    testConfig.setBootstrapPeers(singletonList(bootstrapAgent.getAdvertisedPeer()));
+    testConfig.setBindPort(0);
+
+    final PeerDiscoveryAgent testAgent =
+        new PeerDiscoveryAgent(
+            vertx,
+            SECP256K1.KeyPair.generate(),
+            testConfig,
+            () -> true,
+            new PeerBlacklist(),
+            new NodeWhitelistController(PermissioningConfiguration.createDefault()));
+    try {
+      testAgent.start().get(5, TimeUnit.SECONDS);
+    } catch (final Exception ex) {
+      throw new AssertionError("Could not initialize discovery agent", ex);
+    }
+
+    await()
+        .atMost(5, TimeUnit.SECONDS)
+        .untilAsserted(() -> assertThat(testAgent.getPeers()).hasSize(6));
+  }
 }

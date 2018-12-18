@@ -137,7 +137,7 @@ public abstract class AbstractPeerDiscoveryTest {
             blacklist,
             new NodeWhitelistController(PermissioningConfiguration.createDefault()));
     try {
-      agent.start(BROADCAST_TCP_PORT).get(5, TimeUnit.SECONDS);
+      agent.start().get(5, TimeUnit.SECONDS);
     } catch (final Exception ex) {
       throw new AssertionError("Could not initialize discovery agent", ex);
     }
