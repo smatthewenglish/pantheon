@@ -181,7 +181,7 @@ public class PeerDiscoveryController {
   }
 
   /**
-   * Cancels outbound FIND_NEIGHBORS requests that have no completed within the fixed 30 second
+   * Cancels outbound FIND_NEIGHBORS requests that have not completed within the fixed 30 second
    * interval.
    */
   private void initiateFindNeighboursTimeoutCounter() {
