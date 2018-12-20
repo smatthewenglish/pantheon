@@ -106,6 +106,8 @@ class RecursivePeerRefreshState {
         executeFindNodeRequest(peer);
       }
     }
+    // The lookup terminates when the initiator has queried
+    // and gotten responses from the k closest nodes it has seen.
   }
 
   void onNeighboursPacketReceived(
