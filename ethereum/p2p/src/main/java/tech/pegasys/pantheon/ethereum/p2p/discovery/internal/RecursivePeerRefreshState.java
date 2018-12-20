@@ -22,6 +22,7 @@ import tech.pegasys.pantheon.ethereum.p2p.permissioning.NodeWhitelistController;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
 
@@ -33,8 +34,8 @@ class RecursivePeerRefreshState {
   private final NeighborFinder neighborFinder;
   private final List<PeerDistance> anteList;
   private final List<OutstandingRequest> outstandingRequestList;
-  private final List<BytesValue> dispatchedFindNeighbours;
-  private final List<BytesValue> dispatchedBond;
+  private final LinkedHashSet<BytesValue> dispatchedFindNeighbours;
+  private final LinkedHashSet<BytesValue> dispatchedBond;
 
   RecursivePeerRefreshState(
       final BytesValue target,
@@ -49,8 +50,8 @@ class RecursivePeerRefreshState {
     this.neighborFinder = neighborFinder;
     this.anteList = new ArrayList<>();
     this.outstandingRequestList = new ArrayList<>();
-    this.dispatchedFindNeighbours = new ArrayList<>();
-    this.dispatchedBond = new ArrayList<>();
+    this.dispatchedFindNeighbours = new LinkedHashSet<>();
+    this.dispatchedBond = new LinkedHashSet<>();
   }
 
   void kickstartBootstrapPeers(final List<DiscoveryPeer> bootstrapPeers) {
