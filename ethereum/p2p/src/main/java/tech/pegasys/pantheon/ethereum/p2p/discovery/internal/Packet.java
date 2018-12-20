@@ -172,15 +172,7 @@ public class Packet {
     return "Packet{"
         + "type="
         + type
-        + ", data="
-        + data
-        + ", hash="
-        + hash
-        + ", signature="
-        + signature
-        + ", publicKey="
-        + publicKey
-        + '}';
+        +'}';
   }
 
   private static BytesValue encodeSignature(final SECP256K1.Signature signature) {
