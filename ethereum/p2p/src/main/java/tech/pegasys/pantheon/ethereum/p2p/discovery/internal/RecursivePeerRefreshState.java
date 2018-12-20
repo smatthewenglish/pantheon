@@ -58,8 +58,12 @@ class RecursivePeerRefreshState {
     for (DiscoveryPeer bootstrapPeer : bootstrapPeers) {
       final BytesValue peerId = bootstrapPeer.getId();
       outstandingRequestList.add(new OutstandingRequest(bootstrapPeer));
+
+      bondingAgent.performBonding(bootstrapPeer);
+      dispatchedBond.add(bootstrapPeer.getId());
+
       dispatchedFindNeighbours.add(peerId);
-      bondingAgent.performBonding(bootstrapPeer, true);
+      neighborFinder.issueFindNodeRequest(bootstrapPeer, target);
     }
   }
 
@@ -104,14 +108,15 @@ class RecursivePeerRefreshState {
     }
   }
 
-  void onNeighboursPacketReceived(final NeighborsPacketData neighboursPacket, final Peer peer) {
+  void onNeighboursPacketReceived(
+      final NeighborsPacketData neighboursPacket, final DiscoveryPeer peer) {
     if (outstandingRequestList.contains(new OutstandingRequest(peer))) {
       final List<DiscoveryPeer> receivedPeerList = neighboursPacket.getNodes();
       for (DiscoveryPeer receivedPeer : receivedPeerList) {
         if (!dispatchedBond.contains(receivedPeer.getId())
             && !peerBlacklist.contains(receivedPeer)
             && peerWhitelist.contains(receivedPeer)) {
-          bondingAgent.performBonding(receivedPeer, false);
+          bondingAgent.performBonding(receivedPeer);
           dispatchedBond.add(receivedPeer.getId());
           anteList.add(new PeerDistance(receivedPeer, distance(target, receivedPeer.getId())));
         }
@@ -230,8 +235,7 @@ class RecursivePeerRefreshState {
      * Initiates a bonding PING-PONG cycle with a peer.
      *
      * @param peer The targeted peer.
-     * @param bootstrap Whether this is a bootstrap interaction.
      */
-    void performBonding(final DiscoveryPeer peer, final boolean bootstrap);
+    void performBonding(final DiscoveryPeer peer);
   }
 }

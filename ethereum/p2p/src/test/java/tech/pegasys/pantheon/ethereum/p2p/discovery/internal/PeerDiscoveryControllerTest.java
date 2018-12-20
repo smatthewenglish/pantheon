@@ -629,8 +629,8 @@ public class PeerDiscoveryControllerTest {
         MockPacketDataFactory.mockNeighborsPacket(discoPeer, otherPeer, otherPeer2);
     controller.onMessage(neighborsPacket, discoPeer);
 
-    verify(controller, times(0)).bond(otherPeer, false);
-    verify(controller, times(1)).bond(otherPeer2, false);
+    verify(controller, times(0)).bond(otherPeer);
+    verify(controller, times(1)).bond(otherPeer2);
   }
 
   @Test
@@ -975,8 +975,8 @@ public class PeerDiscoveryControllerTest {
         MockPacketDataFactory.mockNeighborsPacket(discoPeer, otherPeer, otherPeer2);
     controller.onMessage(neighborsPacket, discoPeer);
 
-    verify(controller, times(0)).bond(otherPeer, false);
-    verify(controller, times(1)).bond(otherPeer2, false);
+    verify(controller, times(0)).bond(otherPeer);
+    verify(controller, times(1)).bond(otherPeer2);
   }
 
   @Test
