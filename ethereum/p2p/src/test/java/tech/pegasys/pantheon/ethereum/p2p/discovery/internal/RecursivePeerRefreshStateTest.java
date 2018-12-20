@@ -81,9 +81,11 @@ public class RecursivePeerRefreshStateTest {
 
   @Before
   public void setup() throws Exception {
-    JsonNode peers =
+    final JsonNode peers =
         MAPPER.readTree(RecursivePeerRefreshStateTest.class.getResource("/peers.json"));
-    recursivePeerRefreshState = new RecursivePeerRefreshState(target, bondingAgent, neighborFinder);
+    recursivePeerRefreshState = new RecursivePeerRefreshState(target,
+            new PeerBlacklist(),
+            new NodeWhitelistController(PermissioningConfiguration.createDefault()), bondingAgent, neighborFinder);
 
     peer_000 = (TestPeer) generatePeer(peers);
 
@@ -151,8 +153,8 @@ public class RecursivePeerRefreshStateTest {
   @Test
   public void shouldEstablishRelativeDistanceValues() {
     for (int i = 0; i < aggregatePeerList.size() - 1; i++) {
-      int nodeOrdinalRank = aggregatePeerList.get(i).getOrdinalRank();
-      int neighborOrdinalRank = aggregatePeerList.get(i + 1).getOrdinalRank();
+      final int nodeOrdinalRank = aggregatePeerList.get(i).getOrdinalRank();
+      final int neighborOrdinalRank = aggregatePeerList.get(i + 1).getOrdinalRank();
       assertThat(nodeOrdinalRank).isLessThan(neighborOrdinalRank);
     }
   }
@@ -188,9 +190,7 @@ public class RecursivePeerRefreshStateTest {
 
     recursivePeerRefreshState.onNeighboursPacketReceived(
         neighborsPacketData_000,
-        peer_000,
-        new PeerBlacklist(),
-        new NodeWhitelistController(PermissioningConfiguration.createDefault()));
+        peer_000);
     assertThat(recursivePeerRefreshState.getOutstandingRequestList().size()).isLessThanOrEqualTo(3);
 
     verify(bondingAgent).performBonding(peer_010, false);
@@ -205,9 +205,7 @@ public class RecursivePeerRefreshStateTest {
 
     recursivePeerRefreshState.onNeighboursPacketReceived(
         neighborsPacketData_011,
-        peer_011,
-        new PeerBlacklist(),
-        new NodeWhitelistController(PermissioningConfiguration.createDefault()));
+        peer_011);
     assertThat(recursivePeerRefreshState.getOutstandingRequestList().size()).isLessThanOrEqualTo(3);
 
     verify(bondingAgent).performBonding(peer_120, false);
@@ -217,9 +215,7 @@ public class RecursivePeerRefreshStateTest {
 
     recursivePeerRefreshState.onNeighboursPacketReceived(
         neighborsPacketData_012,
-        peer_012,
-        new PeerBlacklist(),
-        new NodeWhitelistController(PermissioningConfiguration.createDefault()));
+        peer_012);
     assertThat(recursivePeerRefreshState.getOutstandingRequestList().size()).isLessThanOrEqualTo(3);
 
     verify(bondingAgent).performBonding(peer_220, false);
@@ -229,9 +225,7 @@ public class RecursivePeerRefreshStateTest {
 
     recursivePeerRefreshState.onNeighboursPacketReceived(
         neighborsPacketData_013,
-        peer_013,
-        new PeerBlacklist(),
-        new NodeWhitelistController(PermissioningConfiguration.createDefault()));
+        peer_013);
     assertThat(recursivePeerRefreshState.getOutstandingRequestList().size()).isLessThanOrEqualTo(3);
 
     verify(bondingAgent).performBonding(peer_320, false);
@@ -254,9 +248,7 @@ public class RecursivePeerRefreshStateTest {
 
     recursivePeerRefreshState.onNeighboursPacketReceived(
         neighborsPacketData_000,
-        peer_000,
-        new PeerBlacklist(),
-        new NodeWhitelistController(PermissioningConfiguration.createDefault()));
+        peer_000);
     assertThat(recursivePeerRefreshState.getOutstandingRequestList().size()).isLessThanOrEqualTo(3);
 
     recursivePeerRefreshState.executeTimeoutEvaluation();
@@ -273,14 +265,14 @@ public class RecursivePeerRefreshStateTest {
   }
 
   private DiscoveryPeer generatePeer(final JsonNode peer) {
-    int parent = peer.get("parent").asInt();
-    int tier = peer.get("tier").asInt();
-    int identifier = peer.get("identifier").asInt();
-    int ordinalRank = peer.get("ordinalRank").asInt();
-    BytesValue id = BytesValue.fromHexString(peer.get("id").asText());
+    final int parent = peer.get("parent").asInt();
+    final int tier = peer.get("tier").asInt();
+    final int identifier = peer.get("identifier").asInt();
+    final int ordinalRank = peer.get("ordinalRank").asInt();
+    final BytesValue id = BytesValue.fromHexString(peer.get("id").asText());
     List<DiscoveryPeer> peerTable = new ArrayList<>();
     if (peer.get("peerTable") != null) {
-      JsonNode peers = peer.get("peerTable");
+      final JsonNode peers = peer.get("peerTable");
       for (JsonNode element : peers) {
         peerTable.add(generatePeer(element));
       }

@@ -154,7 +154,8 @@ public class PeerDiscoveryController {
     bootstrapNodes.stream().filter(nodeWhitelist::contains).forEach(peerTable::tryAdd);
 
     recursivePeerRefreshState =
-        new RecursivePeerRefreshState(Peer.randomId(), this::bond, this::findNodes);
+        new RecursivePeerRefreshState(
+            Peer.randomId(), peerBlacklist, nodeWhitelist, this::bond, this::findNodes);
     recursivePeerRefreshState.kickstartBootstrapPeers(
         bootstrapNodes.stream().filter(nodeWhitelist::contains).collect(Collectors.toList()));
     initiateFindNeighboursTimeoutCounter();
@@ -246,10 +247,7 @@ public class PeerDiscoveryController {
         break;
       case NEIGHBORS:
         recursivePeerRefreshState.onNeighboursPacketReceived(
-            packet.getPacketData(NeighborsPacketData.class).orElse(null),
-            peer,
-            peerBlacklist,
-            nodeWhitelist);
+            packet.getPacketData(NeighborsPacketData.class).orElse(null), peer);
         break;
       case FIND_NEIGHBORS:
         if (!peerKnown || peerBlacklisted) {

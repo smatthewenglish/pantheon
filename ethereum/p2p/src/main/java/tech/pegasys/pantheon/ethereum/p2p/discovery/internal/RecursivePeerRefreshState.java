@@ -25,9 +25,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-public class RecursivePeerRefreshState {
-  private final int CONCURRENT_REQUEST_LIMIT = 3;
+class RecursivePeerRefreshState {
   private final BytesValue target;
+  private final PeerBlacklist peerBlacklist;
+  private final NodeWhitelistController peerWhitelist;
   private final BondingAgent bondingAgent;
   private final NeighborFinder neighborFinder;
   private final List<PeerDistance> anteList;
@@ -35,11 +36,15 @@ public class RecursivePeerRefreshState {
   private final List<BytesValue> dispatchedFindNeighbours;
   private final List<BytesValue> dispatchedBond;
 
-  public RecursivePeerRefreshState(
+  RecursivePeerRefreshState(
       final BytesValue target,
+      final PeerBlacklist peerBlacklist,
+      final NodeWhitelistController peerWhitelist,
       final BondingAgent bondingAgent,
       final NeighborFinder neighborFinder) {
     this.target = target;
+    this.peerBlacklist = peerBlacklist;
+    this.peerWhitelist = peerWhitelist;
     this.bondingAgent = bondingAgent;
     this.neighborFinder = neighborFinder;
     this.anteList = new ArrayList<>();
@@ -98,17 +103,13 @@ public class RecursivePeerRefreshState {
     }
   }
 
-  void onNeighboursPacketReceived(
-      final NeighborsPacketData neighboursPacket,
-      final Peer peer,
-      final PeerBlacklist peerBlacklist,
-      final NodeWhitelistController nodeWhitelist) {
+  void onNeighboursPacketReceived(final NeighborsPacketData neighboursPacket, final Peer peer) {
     if (outstandingRequestList.contains(new OutstandingRequest(peer))) {
       final List<DiscoveryPeer> receivedPeerList = neighboursPacket.getNodes();
       for (DiscoveryPeer receivedPeer : receivedPeerList) {
         if (!dispatchedBond.contains(receivedPeer.getId())
             && !peerBlacklist.contains(receivedPeer)
-            && nodeWhitelist.contains(receivedPeer)) {
+            && peerWhitelist.contains(receivedPeer)) {
           bondingAgent.performBonding(receivedPeer, false);
           dispatchedBond.add(receivedPeer.getId());
           anteList.add(new PeerDistance(receivedPeer, distance(target, receivedPeer.getId())));
@@ -134,9 +135,10 @@ public class RecursivePeerRefreshState {
   }
 
   private void queryNearestNodes() {
+    final int concurrentRequestLimit = 3;
     if (outstandingRequestList.isEmpty()) {
       final List<DiscoveryPeer> queryCandidates =
-          determineFindNodeCandidates(CONCURRENT_REQUEST_LIMIT);
+          determineFindNodeCandidates(concurrentRequestLimit);
       initiatePeerRefreshCycle(queryCandidates);
     }
   }
