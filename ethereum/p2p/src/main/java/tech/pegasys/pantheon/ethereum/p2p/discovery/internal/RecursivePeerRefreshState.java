@@ -145,7 +145,7 @@ public class RecursivePeerRefreshState {
   }
 
   List<OutstandingRequest> getOutstandingRequestList() {
-    return this.outstandingRequestList;
+    return outstandingRequestList;
   }
 
   static class PeerDistance {
