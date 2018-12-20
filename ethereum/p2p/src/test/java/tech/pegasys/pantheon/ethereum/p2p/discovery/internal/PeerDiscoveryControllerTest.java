@@ -501,10 +501,6 @@ public class PeerDiscoveryControllerTest {
 
     controller.start();
 
-    final RecursivePeerRefreshState recursivePeerRefreshState =
-        controller.getRecursivePeerRefreshState();
-    recursivePeerRefreshState.addToOutstandingRequestList(peers[0]);
-
     await()
         .atMost(5, TimeUnit.SECONDS)
         .untilAsserted(
