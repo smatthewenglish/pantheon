@@ -370,7 +370,7 @@ public class PeerDiscoveryController {
     final Consumer<PeerInteractionState> action =
         interaction -> agent.sendPacket(peer, PacketType.FIND_NEIGHBORS, data);
     final PeerInteractionState interaction =
-        new PeerInteractionState(action, PacketType.NEIGHBORS, filter -> true, true, false);
+        new PeerInteractionState(action, PacketType.NEIGHBORS, packet -> true, true, false);
     interaction.execute(0);
   }
 
