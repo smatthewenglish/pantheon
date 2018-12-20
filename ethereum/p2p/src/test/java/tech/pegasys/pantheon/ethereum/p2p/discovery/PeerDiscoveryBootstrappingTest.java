@@ -133,10 +133,6 @@ public class PeerDiscoveryBootstrappingTest extends AbstractPeerDiscoveryTest {
                 0,
                 LOOPBACK_IP_ADDR,
                 ar -> {
-                    if (!ar.succeeded()) {
-                        result0.completeExceptionally(ar.cause());
-                        return;
-                    }
                     final DatagramSocket socket = ar.result();
                     socket.handler(p -> arrayBlockingQueue0.add(Packet.decode(p.data())));
                     final DiscoveryPeer peer = new DiscoveryPeer(peerId0, LOOPBACK_IP_ADDR, socket.localAddress().port(), socket.localAddress().port());
@@ -156,10 +152,6 @@ public class PeerDiscoveryBootstrappingTest extends AbstractPeerDiscoveryTest {
                 0,
                 LOOPBACK_IP_ADDR,
                 ar -> {
-                    if (!ar.succeeded()) {
-                        result1.completeExceptionally(ar.cause());
-                        return;
-                    }
                     final DatagramSocket socket = ar.result();
                     socket.handler(p -> arrayBlockingQueue1.add(Packet.decode(p.data())));
                     final DiscoveryPeer peer = new DiscoveryPeer(peerId1, LOOPBACK_IP_ADDR, socket.localAddress().port(), socket.localAddress().port());
@@ -179,10 +171,6 @@ public class PeerDiscoveryBootstrappingTest extends AbstractPeerDiscoveryTest {
                 0,
                 LOOPBACK_IP_ADDR,
                 ar -> {
-                    if (!ar.succeeded()) {
-                        result2.completeExceptionally(ar.cause());
-                        return;
-                    }
                     final DatagramSocket socket = ar.result();
                     socket.handler(p -> arrayBlockingQueue2.add(Packet.decode(p.data())));
                     final DiscoveryPeer peer = new DiscoveryPeer(peerId2, LOOPBACK_IP_ADDR, socket.localAddress().port(), socket.localAddress().port());
