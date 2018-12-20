@@ -37,6 +37,8 @@ class RecursivePeerRefreshState {
   private final LinkedHashSet<BytesValue> dispatchedFindNeighbours;
   private final LinkedHashSet<BytesValue> dispatchedBond;
 
+  private List<DiscoveryPeer> bootstrapPeers;
+
   RecursivePeerRefreshState(
       final BytesValue target,
       final PeerBlacklist peerBlacklist,
@@ -55,16 +57,22 @@ class RecursivePeerRefreshState {
   }
 
   void kickstartBootstrapPeers(final List<DiscoveryPeer> bootstrapPeers) {
-    for (DiscoveryPeer bootstrapPeer : bootstrapPeers) {
-      final BytesValue peerId = bootstrapPeer.getId();
-      outstandingRequestList.add(new OutstandingRequest(bootstrapPeer));
+    this.bootstrapPeers = bootstrapPeers;
 
+    for (DiscoveryPeer bootstrapPeer : bootstrapPeers) {
+      outstandingRequestList.add(new OutstandingRequest(bootstrapPeer));
       bondingAgent.performBonding(bootstrapPeer);
       dispatchedBond.add(bootstrapPeer.getId());
-
-      dispatchedFindNeighbours.add(peerId);
-      neighborFinder.issueFindNodeRequest(bootstrapPeer, target);
     }
+  }
+
+  void onPongPacketReceived(final DiscoveryPeer peer) {
+    if (bootstrapPeers.contains(peer)) {
+      dispatchedFindNeighbours.add(peer.getId());
+      neighborFinder.issueFindNodeRequest(peer, target);
+    }
+    // TODO: move 'addToPeerTable()' in here...
+    anteList.add(new PeerDistance(peer, distance(target, peer.getId())));
   }
 
   /**
@@ -120,7 +128,6 @@ class RecursivePeerRefreshState {
             && peerWhitelist.contains(receivedPeer)) {
           bondingAgent.performBonding(receivedPeer);
           dispatchedBond.add(receivedPeer.getId());
-          anteList.add(new PeerDistance(receivedPeer, distance(target, receivedPeer.getId())));
         }
       }
       outstandingRequestList.remove(new OutstandingRequest(peer));

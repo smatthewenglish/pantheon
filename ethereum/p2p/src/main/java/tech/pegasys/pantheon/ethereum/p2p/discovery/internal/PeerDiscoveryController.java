@@ -234,6 +234,7 @@ public class PeerDiscoveryController {
         break;
       case PONG:
         matchInteraction(packet).ifPresent(interaction -> addToPeerTable(peer));
+        recursivePeerRefreshState.onPongPacketReceived(peer);
         break;
       case NEIGHBORS:
         recursivePeerRefreshState.onNeighboursPacketReceived(

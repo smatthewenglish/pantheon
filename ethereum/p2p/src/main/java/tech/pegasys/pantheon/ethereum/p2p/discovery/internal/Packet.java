@@ -169,10 +169,7 @@ public class Packet {
 
   @Override
   public String toString() {
-    return "Packet{"
-        + "type="
-        + type
-        +'}';
+    return "Packet{" + "type=" + type + '}';
   }
 
   private static BytesValue encodeSignature(final SECP256K1.Signature signature) {
