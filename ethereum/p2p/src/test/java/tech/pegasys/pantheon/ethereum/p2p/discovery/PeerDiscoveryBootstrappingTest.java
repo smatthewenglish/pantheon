@@ -118,9 +118,6 @@ public class PeerDiscoveryBootstrappingTest extends AbstractPeerDiscoveryTest {
         final int TEST_SOCKET_START_TIMEOUT_SECS = 5;
         final int BROADCAST_TCP_PORT = 12356;
 
-        final List<DiscoveryTestSocket> discoveryTestSocketList = new CopyOnWriteArrayList<>();
-        //List<PeerDiscoveryAgent> peerDiscoveryAgentList = new CopyOnWriteArrayList<>();
-
         // Start three test peers.
 
         /* * */
@@ -140,7 +137,6 @@ public class PeerDiscoveryBootstrappingTest extends AbstractPeerDiscoveryTest {
                     result0.complete(discoveryTestSocket);
                 });
         final DiscoveryTestSocket discoveryTestSocket0 = result0.get(TEST_SOCKET_START_TIMEOUT_SECS, TimeUnit.SECONDS);
-        discoveryTestSocketList.add(discoveryTestSocket0);
         final DiscoveryPeer discoveryPeer0 = discoveryTestSocket0.getPeer();
         /* * */
         final ArrayBlockingQueue<Packet> arrayBlockingQueue1 = new ArrayBlockingQueue<>(100);
@@ -159,7 +155,6 @@ public class PeerDiscoveryBootstrappingTest extends AbstractPeerDiscoveryTest {
                     result1.complete(discoveryTestSocket);
                 });
         final DiscoveryTestSocket discoveryTestSocket1 = result1.get(TEST_SOCKET_START_TIMEOUT_SECS, TimeUnit.SECONDS);
-        discoveryTestSocketList.add(discoveryTestSocket1);
         final DiscoveryPeer discoveryPeer1 = discoveryTestSocket1.getPeer();
         /* * */
         final ArrayBlockingQueue<Packet> arrayBlockingQueue2 = new ArrayBlockingQueue<>(100);
@@ -178,7 +173,6 @@ public class PeerDiscoveryBootstrappingTest extends AbstractPeerDiscoveryTest {
                     result2.complete(discoveryTestSocket);
                 });
         final DiscoveryTestSocket discoveryTestSocket2 = result2.get(TEST_SOCKET_START_TIMEOUT_SECS, TimeUnit.SECONDS);
-        discoveryTestSocketList.add(discoveryTestSocket2);
         final DiscoveryPeer discoveryPeer2 = discoveryTestSocket2.getPeer();
 
 
@@ -186,9 +180,6 @@ public class PeerDiscoveryBootstrappingTest extends AbstractPeerDiscoveryTest {
 
 
         // Start five agents.
-        //startDiscoveryAgents(5, bootstrapPeers);
-
-
         final DiscoveryConfiguration discoveryConfiguration0 = new DiscoveryConfiguration();
         discoveryConfiguration0.setBootstrapPeers(discoveryPeerList);
         discoveryConfiguration0.setBindPort(0);
@@ -255,7 +246,6 @@ public class PeerDiscoveryBootstrappingTest extends AbstractPeerDiscoveryTest {
         peerDiscoveryAgent4.start(BROADCAST_TCP_PORT).get(5, TimeUnit.SECONDS);
 
 
-
         final BytesValue id0 = peerDiscoveryAgent0.getAdvertisedPeer().getId();
         final BytesValue id1 = peerDiscoveryAgent1.getAdvertisedPeer().getId();
         final BytesValue id2 = peerDiscoveryAgent2.getAdvertisedPeer().getId();
@@ -263,87 +253,60 @@ public class PeerDiscoveryBootstrappingTest extends AbstractPeerDiscoveryTest {
         final BytesValue id4 = peerDiscoveryAgent4.getAdvertisedPeer().getId();
         final List<BytesValue> peerDiscoveryAgentIdList = Arrays.asList(id0, id1, id2, id3, id4);
 
-
-
-        final List<Packet> packetList0 = Stream.generate(discoveryTestSocket0::compulsoryPoll).limit(arrayBlockingQueue0.size()).collect(toList());
-        int count0 = 0;
+        final List<Packet> packetList0 = Stream.generate(discoveryTestSocket0::compulsoryPoll).limit(5).collect(toList());
+        assertThat(discoveryTestSocket0.getIncomingPackets().size()).isEqualTo(0);
         final List<BytesValue> idList0 = new ArrayList<>();
         for (Packet packet : packetList0) {
-            //System.out.println("packet" + count0 + ": " + packet);
             idList0.add(packet.getNodeId());
-            count0++;
+
+            // Assert that the packet was a Find Neighbors one.
+            assertThat(packet.getType()).isEqualTo(PacketType.PING);
+
+            // Assert on the content of the packet data.
+            final PingPacketData ping = packet.getPacketData(PingPacketData.class).get();
+            assertThat(ping.getExpiration())
+                    .isGreaterThanOrEqualTo(System.currentTimeMillis() / 1000 - 10000);
+            assertThat(ping.getTo()).isEqualTo(discoveryTestSocket0.getPeer().getEndpoint());
         }
-        //System.out.println(discoveryTestSocket0.getIncomingPackets().size());
+        assertThat(idList0).containsExactlyInAnyOrderElementsOf(peerDiscoveryAgentIdList);
 
+        /* * */
 
-
-        int countA = 0;
-        for (BytesValue id : idList0) {
-            System.out.println("* id" + countA + ": " + id);
-            countA++;
-        }
-        System.out.println("---");
-        int countB = 0;
-        for (BytesValue id : peerDiscoveryAgentIdList) {
-            System.out.println("~ id" + countB + ": " + id);
-            countB++;
-        }
-
-
-
-        System.out.println("---");
-
-
-        final List<Packet> packetList1 = Stream.generate(discoveryTestSocket1::compulsoryPoll).limit(arrayBlockingQueue1.size()).collect(toList());
-        int count1 = 0;
+        final List<Packet> packetList1 = Stream.generate(discoveryTestSocket1::compulsoryPoll).limit(5).collect(toList());
+        assertThat(discoveryTestSocket1.getIncomingPackets().size()).isEqualTo(0);
+        final List<BytesValue> idList1 = new ArrayList<>();
         for (Packet packet : packetList1) {
-            //System.out.println("packet" + count1 + ": " + packet);
-            count1++;
+            idList1.add(packet.getNodeId());
+
+            // Assert that the packet was a Find Neighbors one.
+            assertThat(packet.getType()).isEqualTo(PacketType.PING);
+
+            // Assert on the content of the packet data.
+            final PingPacketData ping = packet.getPacketData(PingPacketData.class).get();
+            assertThat(ping.getExpiration())
+                    .isGreaterThanOrEqualTo(System.currentTimeMillis() / 1000 - 10000);
+            assertThat(ping.getTo()).isEqualTo(discoveryTestSocket1.getPeer().getEndpoint());
         }
-        //System.out.println(discoveryTestSocket1.getIncomingPackets().size());
-        //System.out.println("---");
+        assertThat(idList1).containsExactlyInAnyOrderElementsOf(peerDiscoveryAgentIdList);
 
+        /* * */
 
-        final List<Packet> packetList2 = Stream.generate(discoveryTestSocket2::compulsoryPoll).limit(arrayBlockingQueue2.size()).collect(toList());
-        int count2 = 0;
+        final List<Packet> packetList2 = Stream.generate(discoveryTestSocket2::compulsoryPoll).limit(5).collect(toList());
+        assertThat(discoveryTestSocket2.getIncomingPackets().size()).isEqualTo(0);
+        final List<BytesValue> idList2 = new ArrayList<>();
         for (Packet packet : packetList2) {
-            //System.out.println("packet" + count2 + ": " + packet);
-            count2++;
+            idList2.add(packet.getNodeId());
+
+            // Assert that the packet was a Find Neighbors one.
+            assertThat(packet.getType()).isEqualTo(PacketType.PING);
+
+            // Assert on the content of the packet data.
+            final PingPacketData ping = packet.getPacketData(PingPacketData.class).get();
+            assertThat(ping.getExpiration())
+                    .isGreaterThanOrEqualTo(System.currentTimeMillis() / 1000 - 10000);
+            assertThat(ping.getTo()).isEqualTo(discoveryTestSocket2.getPeer().getEndpoint());
         }
-        //System.out.println(discoveryTestSocket2.getIncomingPackets().size());
-
-
-//        // Assert that all test peers received a Find Neighbors packet.
-//        for (final DiscoveryTestSocket discoveryTestSocket : discoveryTestSocketList) {
-//            // Five messages per peer (sent by each of the five agents).
-//            final List<Packet> packets = Stream.generate(discoveryTestSocket::compulsoryPoll).limit(5).collect(toList());
-//
-//            // No more messages left.
-//            assertThat(discoveryTestSocket.getIncomingPackets().size()).isEqualTo(0);
-//
-//            // Assert that the node IDs we received belong to the test agents.
-//            final List<BytesValue> peerIds = packets.stream().map(Packet::getNodeId).collect(toList());
-//            final List<BytesValue> nodeIds =
-//                    agents
-//                            .stream()
-//                            .map(PeerDiscoveryAgent::getAdvertisedPeer)
-//                            .map(Peer::getId)
-//                            .collect(toList());
-//
-//            assertThat(peerIds).containsExactlyInAnyOrderElementsOf(nodeIds);
-//
-//            // Traverse all received packets.
-//            for (final Packet packet : packets) {
-//                // Assert that the packet was a Find Neighbors one.
-//                assertThat(packet.getType()).isEqualTo(PacketType.PING);
-//
-//                // Assert on the content of the packet data.
-//                final PingPacketData ping = packet.getPacketData(PingPacketData.class).get();
-//                assertThat(ping.getExpiration())
-//                        .isGreaterThanOrEqualTo(System.currentTimeMillis() / 1000 - 10000);
-//                assertThat(ping.getTo()).isEqualTo(discoveryTestSocket.getPeer().getEndpoint());
-//            }
-//        }
+        assertThat(idList2).containsExactlyInAnyOrderElementsOf(peerDiscoveryAgentIdList);
     }
 
     @Test
