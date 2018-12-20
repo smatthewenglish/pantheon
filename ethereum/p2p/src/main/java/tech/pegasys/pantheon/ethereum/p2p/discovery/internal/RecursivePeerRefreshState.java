@@ -33,11 +33,12 @@ class RecursivePeerRefreshState {
   private final BondingAgent bondingAgent;
   private final NeighborFinder neighborFinder;
   private final List<PeerDistance> anteList;
-  private final List<OutstandingRequest> outstandingRequestList;
+
+  private final List<OutstandingRequest> outstandingBondingRequestList;
+  private final List<OutstandingRequest> outstandingNeighboursRequestList;
+
   private final LinkedHashSet<BytesValue> dispatchedFindNeighbours;
   private final LinkedHashSet<BytesValue> dispatchedBond;
-
-  private List<DiscoveryPeer> bootstrapPeers;
 
   RecursivePeerRefreshState(
       final BytesValue target,
@@ -51,28 +52,29 @@ class RecursivePeerRefreshState {
     this.bondingAgent = bondingAgent;
     this.neighborFinder = neighborFinder;
     this.anteList = new ArrayList<>();
-    this.outstandingRequestList = new ArrayList<>();
-    this.dispatchedFindNeighbours = new LinkedHashSet<>();
+
+    this.outstandingBondingRequestList = new ArrayList<>();
+    this.outstandingNeighboursRequestList = new ArrayList<>();
+
     this.dispatchedBond = new LinkedHashSet<>();
+    this.dispatchedFindNeighbours = new LinkedHashSet<>();
   }
 
   void kickstartBootstrapPeers(final List<DiscoveryPeer> bootstrapPeers) {
-    this.bootstrapPeers = bootstrapPeers;
-
     for (DiscoveryPeer bootstrapPeer : bootstrapPeers) {
-      outstandingRequestList.add(new OutstandingRequest(bootstrapPeer));
       bondingAgent.performBonding(bootstrapPeer);
       dispatchedBond.add(bootstrapPeer.getId());
+      outstandingBondingRequestList.add(new OutstandingRequest(bootstrapPeer));
     }
   }
 
   void onPongPacketReceived(final DiscoveryPeer peer) {
-    if (bootstrapPeers.contains(peer)) {
-      dispatchedFindNeighbours.add(peer.getId());
-      neighborFinder.issueFindNodeRequest(peer, target);
-    }
-    // TODO: move 'addToPeerTable()' in here...
+    /* * */
+    outstandingBondingRequestList.remove(new OutstandingRequest(peer));
     anteList.add(new PeerDistance(peer, distance(target, peer.getId())));
+    if (outstandingBondingRequestList.isEmpty()) {
+      queryNearestNodes();
+    }
   }
 
   /**
@@ -81,25 +83,28 @@ class RecursivePeerRefreshState {
    * once encountered are deemed eligible for eviction if they have not been dispatched before the
    * next invocation of the method.
    */
-  void executeTimeoutEvaluation() {
-    for (int i = 0; i < outstandingRequestList.size(); i++) {
-      if (outstandingRequestList.get(i).getEvaluation()) {
+  void neighboursTimeoutEvaluation() {
+    for (int i = 0; i < outstandingNeighboursRequestList.size(); i++) {
+      if (outstandingNeighboursRequestList.get(i).getEvaluation()) {
         final List<DiscoveryPeer> queryCandidates = determineFindNodeCandidates(anteList.size());
         for (DiscoveryPeer candidate : queryCandidates) {
           if (!dispatchedFindNeighbours.contains(candidate.getId())
-              && !outstandingRequestList.contains(new OutstandingRequest(candidate))) {
-            outstandingRequestList.remove(i);
+              && !outstandingNeighboursRequestList.contains(new OutstandingRequest(candidate))) {
+            outstandingNeighboursRequestList.remove(i);
             executeFindNodeRequest(candidate);
           }
         }
       }
-      outstandingRequestList.get(i).setEvaluation();
+      outstandingNeighboursRequestList.get(i).setEvaluation();
     }
   }
 
+  /** TODO: Implement this... */
+  void bondingTimeoutEvaluation() {}
+
   private void executeFindNodeRequest(final DiscoveryPeer peer) {
     final BytesValue peerId = peer.getId();
-    outstandingRequestList.add(new OutstandingRequest(peer));
+    outstandingNeighboursRequestList.add(new OutstandingRequest(peer));
     dispatchedFindNeighbours.add(peerId);
     neighborFinder.issueFindNodeRequest(peer, target);
   }
@@ -120,18 +125,18 @@ class RecursivePeerRefreshState {
 
   void onNeighboursPacketReceived(
       final NeighborsPacketData neighboursPacket, final DiscoveryPeer peer) {
-    if (outstandingRequestList.contains(new OutstandingRequest(peer))) {
+    if (outstandingNeighboursRequestList.contains(new OutstandingRequest(peer))) {
       final List<DiscoveryPeer> receivedPeerList = neighboursPacket.getNodes();
       for (DiscoveryPeer receivedPeer : receivedPeerList) {
         if (!dispatchedBond.contains(receivedPeer.getId())
             && !peerBlacklist.contains(receivedPeer)
             && peerWhitelist.contains(receivedPeer)) {
           bondingAgent.performBonding(receivedPeer);
+          outstandingBondingRequestList.add(new OutstandingRequest(receivedPeer));
           dispatchedBond.add(receivedPeer.getId());
         }
       }
-      outstandingRequestList.remove(new OutstandingRequest(peer));
-      queryNearestNodes();
+      outstandingNeighboursRequestList.remove(new OutstandingRequest(peer));
     }
   }
 
@@ -151,19 +156,15 @@ class RecursivePeerRefreshState {
 
   private void queryNearestNodes() {
     final int concurrentRequestLimit = 3;
-    if (outstandingRequestList.isEmpty()) {
+    if (outstandingNeighboursRequestList.isEmpty()) {
       final List<DiscoveryPeer> queryCandidates =
           determineFindNodeCandidates(concurrentRequestLimit);
       initiatePeerRefreshCycle(queryCandidates);
     }
   }
 
-  void addToOutstandingRequestList(final Peer peer) {
-    this.outstandingRequestList.add(new OutstandingRequest(peer));
-  }
-
-  List<OutstandingRequest> getOutstandingRequestList() {
-    return outstandingRequestList;
+  List<OutstandingRequest> getOutstandingNeighboursRequestList() {
+    return outstandingNeighboursRequestList;
   }
 
   static class PeerDistance {

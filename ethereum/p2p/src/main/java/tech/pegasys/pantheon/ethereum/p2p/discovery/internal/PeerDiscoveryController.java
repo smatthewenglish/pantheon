@@ -188,7 +188,9 @@ public class PeerDiscoveryController {
   private void initiateFindNeighboursTimeoutCounter() {
     final int timeoutTaskDelay = 30000;
     vertx.setPeriodic(
-        timeoutTaskDelay, handler -> recursivePeerRefreshState.executeTimeoutEvaluation());
+        timeoutTaskDelay, handler -> recursivePeerRefreshState.neighboursTimeoutEvaluation());
+    vertx.setPeriodic(
+        timeoutTaskDelay, handler -> recursivePeerRefreshState.bondingTimeoutEvaluation());
   }
 
   /**
