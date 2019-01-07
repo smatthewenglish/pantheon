@@ -21,6 +21,7 @@ import static org.mockito.Mockito.verify;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.DiscoveryPeer;
 import tech.pegasys.pantheon.ethereum.p2p.peers.Endpoint;
 import tech.pegasys.pantheon.ethereum.p2p.peers.PeerBlacklist;
+import tech.pegasys.pantheon.ethereum.p2p.permissioning.NodeWhitelistController;
 import tech.pegasys.pantheon.ethereum.permissioning.PermissioningConfiguration;
 import tech.pegasys.pantheon.util.bytes.Bytes32;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
@@ -33,9 +34,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Before;
 import org.junit.Test;
-
-import tech.pegasys.pantheon.ethereum.permissioning.PermissioningConfiguration;
-import tech.pegasys.pantheon.ethereum.p2p.permissioning.NodeWhitelistController;
 
 public class RecursivePeerRefreshStateTest {
   private static final ObjectMapper MAPPER = new ObjectMapper();
@@ -86,7 +84,12 @@ public class RecursivePeerRefreshStateTest {
     final JsonNode peers =
         MAPPER.readTree(RecursivePeerRefreshStateTest.class.getResource("/peers.json"));
     recursivePeerRefreshState =
-        new RecursivePeerRefreshState(target, new PeerBlacklist(), new NodeWhitelistController(PermissioningConfiguration.createDefault()), bondingAgent, neighborFinder);
+        new RecursivePeerRefreshState(
+            target,
+            new PeerBlacklist(),
+            new NodeWhitelistController(PermissioningConfiguration.createDefault()),
+            bondingAgent,
+            neighborFinder);
 
     peer_000 = (TestPeer) generatePeer(peers);
 
@@ -210,7 +213,8 @@ public class RecursivePeerRefreshStateTest {
     verify(neighborFinder).issueFindNodeRequest(peer_013, target);
 
     recursivePeerRefreshState.onNeighboursPacketReceived(neighborsPacketData_011, peer_011);
-    assertThat(recursivePeerRefreshState.getOutstandingNeighboursRequestList().size()).isLessThanOrEqualTo(3);
+    assertThat(recursivePeerRefreshState.getOutstandingNeighboursRequestList().size())
+        .isLessThanOrEqualTo(3);
 
     verify(bondingAgent).performBonding(peer_120);
     verify(bondingAgent).performBonding(peer_121);
@@ -223,7 +227,8 @@ public class RecursivePeerRefreshStateTest {
     recursivePeerRefreshState.onPongPacketReceived(peer_123);
 
     recursivePeerRefreshState.onNeighboursPacketReceived(neighborsPacketData_012, peer_012);
-    assertThat(recursivePeerRefreshState.getOutstandingNeighboursRequestList().size()).isLessThanOrEqualTo(3);
+    assertThat(recursivePeerRefreshState.getOutstandingNeighboursRequestList().size())
+        .isLessThanOrEqualTo(3);
 
     verify(bondingAgent).performBonding(peer_220);
     verify(bondingAgent).performBonding(peer_221);
@@ -236,7 +241,8 @@ public class RecursivePeerRefreshStateTest {
     recursivePeerRefreshState.onPongPacketReceived(peer_223);
 
     recursivePeerRefreshState.onNeighboursPacketReceived(neighborsPacketData_013, peer_013);
-    assertThat(recursivePeerRefreshState.getOutstandingNeighboursRequestList().size()).isLessThanOrEqualTo(3);
+    assertThat(recursivePeerRefreshState.getOutstandingNeighboursRequestList().size())
+        .isLessThanOrEqualTo(3);
 
     verify(bondingAgent).performBonding(peer_320);
     verify(bondingAgent).performBonding(peer_321);
@@ -263,7 +269,8 @@ public class RecursivePeerRefreshStateTest {
     verify(bondingAgent).performBonding(peer_000);
 
     recursivePeerRefreshState.onNeighboursPacketReceived(neighborsPacketData_000, peer_000);
-    assertThat(recursivePeerRefreshState.getOutstandingNeighboursRequestList().size()).isLessThanOrEqualTo(3);
+    assertThat(recursivePeerRefreshState.getOutstandingNeighboursRequestList().size())
+        .isLessThanOrEqualTo(3);
 
     recursivePeerRefreshState.neighboursTimeoutEvaluation();
 

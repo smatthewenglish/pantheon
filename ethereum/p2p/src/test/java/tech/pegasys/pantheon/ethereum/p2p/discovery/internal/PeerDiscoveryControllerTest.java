@@ -392,7 +392,8 @@ public class PeerDiscoveryControllerTest {
                         p -> p.equals(peers[2]) && p.getStatus() == PeerDiscoveryStatus.BONDED)
                     .hasSize(1));
 
-    // Simulate bonding and neighbors packet from the second bootstrap peer, with peer[2] reported in
+    // Simulate bonding and neighbors packet from the second bootstrap peer, with peer[2] reported
+    // in
     // the peer list.
     pongPacket = Packet.create(PacketType.PONG, packetData, keyPairs[1]);
     controller.onMessage(pongPacket, peers[1]);

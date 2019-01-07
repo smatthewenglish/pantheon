@@ -12,36 +12,35 @@
  */
 package tech.pegasys.pantheon.ethereum.p2p.discovery;
 
+import static io.vertx.core.Vertx.vertx;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
+import tech.pegasys.pantheon.crypto.SECP256K1;
+import tech.pegasys.pantheon.ethereum.p2p.config.DiscoveryConfiguration;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.Packet;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PacketType;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PingPacketData;
 import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
+import tech.pegasys.pantheon.ethereum.p2p.peers.PeerBlacklist;
+import tech.pegasys.pantheon.ethereum.p2p.permissioning.NodeWhitelistController;
+import tech.pegasys.pantheon.ethereum.permissioning.PermissioningConfiguration;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
-import org.junit.Test;
-
-import static io.vertx.core.Vertx.vertx;
-import tech.pegasys.pantheon.crypto.SECP256K1;
-import tech.pegasys.pantheon.ethereum.p2p.config.DiscoveryConfiguration;
-import tech.pegasys.pantheon.ethereum.p2p.config.PermissioningConfiguration;
-import tech.pegasys.pantheon.ethereum.p2p.peers.PeerBlacklist;
-import tech.pegasys.pantheon.ethereum.p2p.permissioning.NodeWhitelistController;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.CompletableFuture;
 import io.vertx.core.Vertx;
 import io.vertx.core.datagram.DatagramSocket;
+import org.junit.Test;
 
 public class PeerDiscoveryBootstrappingTest extends AbstractPeerDiscoveryTest {
 
@@ -127,25 +126,25 @@ public class PeerDiscoveryBootstrappingTest extends AbstractPeerDiscoveryTest {
     final CompletableFuture<DiscoveryTestSocket> result0 = new CompletableFuture<>();
     // Test packet handler which feeds the received packet into a Future we later consume from.
     vertx
-            .createDatagramSocket()
-            .listen(
-                    0,
-                    LOOPBACK_IP_ADDR,
-                    ar -> {
-                      final DatagramSocket socket = ar.result();
-                      socket.handler(p -> arrayBlockingQueue0.add(Packet.decode(p.data())));
-                      final DiscoveryPeer peer =
-                              new DiscoveryPeer(
-                                      peerId0,
-                                      LOOPBACK_IP_ADDR,
-                                      socket.localAddress().port(),
-                                      socket.localAddress().port());
-                      final DiscoveryTestSocket discoveryTestSocket =
-                              new DiscoveryTestSocket(peer, keyPair0, arrayBlockingQueue0, socket);
-                      result0.complete(discoveryTestSocket);
-                    });
+        .createDatagramSocket()
+        .listen(
+            0,
+            LOOPBACK_IP_ADDR,
+            ar -> {
+              final DatagramSocket socket = ar.result();
+              socket.handler(p -> arrayBlockingQueue0.add(Packet.decode(p.data())));
+              final DiscoveryPeer peer =
+                  new DiscoveryPeer(
+                      peerId0,
+                      LOOPBACK_IP_ADDR,
+                      socket.localAddress().port(),
+                      socket.localAddress().port());
+              final DiscoveryTestSocket discoveryTestSocket =
+                  new DiscoveryTestSocket(peer, keyPair0, arrayBlockingQueue0, socket);
+              result0.complete(discoveryTestSocket);
+            });
     final DiscoveryTestSocket discoveryTestSocket0 =
-            result0.get(TEST_SOCKET_START_TIMEOUT_SECS, TimeUnit.SECONDS);
+        result0.get(TEST_SOCKET_START_TIMEOUT_SECS, TimeUnit.SECONDS);
     final DiscoveryPeer discoveryPeer0 = discoveryTestSocket0.getPeer();
     /* * */
     final ArrayBlockingQueue<Packet> arrayBlockingQueue1 = new ArrayBlockingQueue<>(100);
@@ -154,25 +153,25 @@ public class PeerDiscoveryBootstrappingTest extends AbstractPeerDiscoveryTest {
     final CompletableFuture<DiscoveryTestSocket> result1 = new CompletableFuture<>();
     // Test packet handler which feeds the received packet into a Future we later consume from.
     vertx
-            .createDatagramSocket()
-            .listen(
-                    0,
-                    LOOPBACK_IP_ADDR,
-                    ar -> {
-                      final DatagramSocket socket = ar.result();
-                      socket.handler(p -> arrayBlockingQueue1.add(Packet.decode(p.data())));
-                      final DiscoveryPeer peer =
-                              new DiscoveryPeer(
-                                      peerId1,
-                                      LOOPBACK_IP_ADDR,
-                                      socket.localAddress().port(),
-                                      socket.localAddress().port());
-                      final DiscoveryTestSocket discoveryTestSocket =
-                              new DiscoveryTestSocket(peer, keyPair1, arrayBlockingQueue1, socket);
-                      result1.complete(discoveryTestSocket);
-                    });
+        .createDatagramSocket()
+        .listen(
+            0,
+            LOOPBACK_IP_ADDR,
+            ar -> {
+              final DatagramSocket socket = ar.result();
+              socket.handler(p -> arrayBlockingQueue1.add(Packet.decode(p.data())));
+              final DiscoveryPeer peer =
+                  new DiscoveryPeer(
+                      peerId1,
+                      LOOPBACK_IP_ADDR,
+                      socket.localAddress().port(),
+                      socket.localAddress().port());
+              final DiscoveryTestSocket discoveryTestSocket =
+                  new DiscoveryTestSocket(peer, keyPair1, arrayBlockingQueue1, socket);
+              result1.complete(discoveryTestSocket);
+            });
     final DiscoveryTestSocket discoveryTestSocket1 =
-            result1.get(TEST_SOCKET_START_TIMEOUT_SECS, TimeUnit.SECONDS);
+        result1.get(TEST_SOCKET_START_TIMEOUT_SECS, TimeUnit.SECONDS);
     final DiscoveryPeer discoveryPeer1 = discoveryTestSocket1.getPeer();
     /* * */
     final ArrayBlockingQueue<Packet> arrayBlockingQueue2 = new ArrayBlockingQueue<>(100);
@@ -181,94 +180,94 @@ public class PeerDiscoveryBootstrappingTest extends AbstractPeerDiscoveryTest {
     final CompletableFuture<DiscoveryTestSocket> result2 = new CompletableFuture<>();
     // Test packet handler which feeds the received packet into a Future we later consume from.
     vertx
-            .createDatagramSocket()
-            .listen(
-                    0,
-                    LOOPBACK_IP_ADDR,
-                    ar -> {
-                      final DatagramSocket socket = ar.result();
-                      socket.handler(p -> arrayBlockingQueue2.add(Packet.decode(p.data())));
-                      final DiscoveryPeer peer =
-                              new DiscoveryPeer(
-                                      peerId2,
-                                      LOOPBACK_IP_ADDR,
-                                      socket.localAddress().port(),
-                                      socket.localAddress().port());
-                      final DiscoveryTestSocket discoveryTestSocket =
-                              new DiscoveryTestSocket(peer, keyPair2, arrayBlockingQueue2, socket);
-                      result2.complete(discoveryTestSocket);
-                    });
+        .createDatagramSocket()
+        .listen(
+            0,
+            LOOPBACK_IP_ADDR,
+            ar -> {
+              final DatagramSocket socket = ar.result();
+              socket.handler(p -> arrayBlockingQueue2.add(Packet.decode(p.data())));
+              final DiscoveryPeer peer =
+                  new DiscoveryPeer(
+                      peerId2,
+                      LOOPBACK_IP_ADDR,
+                      socket.localAddress().port(),
+                      socket.localAddress().port());
+              final DiscoveryTestSocket discoveryTestSocket =
+                  new DiscoveryTestSocket(peer, keyPair2, arrayBlockingQueue2, socket);
+              result2.complete(discoveryTestSocket);
+            });
     final DiscoveryTestSocket discoveryTestSocket2 =
-            result2.get(TEST_SOCKET_START_TIMEOUT_SECS, TimeUnit.SECONDS);
+        result2.get(TEST_SOCKET_START_TIMEOUT_SECS, TimeUnit.SECONDS);
     final DiscoveryPeer discoveryPeer2 = discoveryTestSocket2.getPeer();
 
     final List<DiscoveryPeer> discoveryPeerList =
-            Arrays.asList(discoveryPeer0, discoveryPeer1, discoveryPeer2);
+        Arrays.asList(discoveryPeer0, discoveryPeer1, discoveryPeer2);
 
     // Start five agents.
     final DiscoveryConfiguration discoveryConfiguration0 = new DiscoveryConfiguration();
     discoveryConfiguration0.setBootstrapPeers(discoveryPeerList);
     discoveryConfiguration0.setBindPort(0);
     final PeerDiscoveryAgent peerDiscoveryAgent0 =
-            new PeerDiscoveryAgent(
-                    vertx,
-                    SECP256K1.KeyPair.generate(),
-                    discoveryConfiguration0,
-                    () -> true,
-                    new PeerBlacklist(),
-                    new NodeWhitelistController(PermissioningConfiguration.createDefault()));
+        new PeerDiscoveryAgent(
+            vertx,
+            SECP256K1.KeyPair.generate(),
+            discoveryConfiguration0,
+            () -> true,
+            new PeerBlacklist(),
+            new NodeWhitelistController(PermissioningConfiguration.createDefault()));
     peerDiscoveryAgent0.start(BROADCAST_TCP_PORT).get(5, TimeUnit.SECONDS);
 
     final DiscoveryConfiguration discoveryConfiguration1 = new DiscoveryConfiguration();
     discoveryConfiguration1.setBootstrapPeers(discoveryPeerList);
     discoveryConfiguration1.setBindPort(0);
     final PeerDiscoveryAgent peerDiscoveryAgent1 =
-            new PeerDiscoveryAgent(
-                    vertx,
-                    SECP256K1.KeyPair.generate(),
-                    discoveryConfiguration1,
-                    () -> true,
-                    new PeerBlacklist(),
-                    new NodeWhitelistController(PermissioningConfiguration.createDefault()));
+        new PeerDiscoveryAgent(
+            vertx,
+            SECP256K1.KeyPair.generate(),
+            discoveryConfiguration1,
+            () -> true,
+            new PeerBlacklist(),
+            new NodeWhitelistController(PermissioningConfiguration.createDefault()));
     peerDiscoveryAgent1.start(BROADCAST_TCP_PORT).get(5, TimeUnit.SECONDS);
 
     final DiscoveryConfiguration discoveryConfiguration2 = new DiscoveryConfiguration();
     discoveryConfiguration2.setBootstrapPeers(discoveryPeerList);
     discoveryConfiguration2.setBindPort(0);
     final PeerDiscoveryAgent peerDiscoveryAgent2 =
-            new PeerDiscoveryAgent(
-                    vertx,
-                    SECP256K1.KeyPair.generate(),
-                    discoveryConfiguration2,
-                    () -> true,
-                    new PeerBlacklist(),
-                    new NodeWhitelistController(PermissioningConfiguration.createDefault()));
+        new PeerDiscoveryAgent(
+            vertx,
+            SECP256K1.KeyPair.generate(),
+            discoveryConfiguration2,
+            () -> true,
+            new PeerBlacklist(),
+            new NodeWhitelistController(PermissioningConfiguration.createDefault()));
     peerDiscoveryAgent2.start(BROADCAST_TCP_PORT).get(5, TimeUnit.SECONDS);
 
     final DiscoveryConfiguration discoveryConfiguration3 = new DiscoveryConfiguration();
     discoveryConfiguration3.setBootstrapPeers(discoveryPeerList);
     discoveryConfiguration3.setBindPort(0);
     final PeerDiscoveryAgent peerDiscoveryAgent3 =
-            new PeerDiscoveryAgent(
-                    vertx,
-                    SECP256K1.KeyPair.generate(),
-                    discoveryConfiguration3,
-                    () -> true,
-                    new PeerBlacklist(),
-                    new NodeWhitelistController(PermissioningConfiguration.createDefault()));
+        new PeerDiscoveryAgent(
+            vertx,
+            SECP256K1.KeyPair.generate(),
+            discoveryConfiguration3,
+            () -> true,
+            new PeerBlacklist(),
+            new NodeWhitelistController(PermissioningConfiguration.createDefault()));
     peerDiscoveryAgent3.start(BROADCAST_TCP_PORT).get(5, TimeUnit.SECONDS);
 
     final DiscoveryConfiguration discoveryConfiguration4 = new DiscoveryConfiguration();
     discoveryConfiguration4.setBootstrapPeers(discoveryPeerList);
     discoveryConfiguration4.setBindPort(0);
     final PeerDiscoveryAgent peerDiscoveryAgent4 =
-            new PeerDiscoveryAgent(
-                    vertx,
-                    SECP256K1.KeyPair.generate(),
-                    discoveryConfiguration4,
-                    () -> true,
-                    new PeerBlacklist(),
-                    new NodeWhitelistController(PermissioningConfiguration.createDefault()));
+        new PeerDiscoveryAgent(
+            vertx,
+            SECP256K1.KeyPair.generate(),
+            discoveryConfiguration4,
+            () -> true,
+            new PeerBlacklist(),
+            new NodeWhitelistController(PermissioningConfiguration.createDefault()));
     peerDiscoveryAgent4.start(BROADCAST_TCP_PORT).get(5, TimeUnit.SECONDS);
 
     final BytesValue id0 = peerDiscoveryAgent0.getAdvertisedPeer().getId();
@@ -279,7 +278,7 @@ public class PeerDiscoveryBootstrappingTest extends AbstractPeerDiscoveryTest {
     final List<BytesValue> peerDiscoveryAgentIdList = Arrays.asList(id0, id1, id2, id3, id4);
 
     final List<Packet> packetList0 =
-            Stream.generate(discoveryTestSocket0::compulsoryPoll).limit(5).collect(toList());
+        Stream.generate(discoveryTestSocket0::compulsoryPoll).limit(5).collect(toList());
     assertThat(discoveryTestSocket0.getIncomingPackets().size()).isEqualTo(0);
     final List<BytesValue> idList0 = new ArrayList<>();
     for (Packet packet : packetList0) {
@@ -291,7 +290,7 @@ public class PeerDiscoveryBootstrappingTest extends AbstractPeerDiscoveryTest {
       // Assert on the content of the packet data.
       final PingPacketData ping = packet.getPacketData(PingPacketData.class).get();
       assertThat(ping.getExpiration())
-              .isGreaterThanOrEqualTo(System.currentTimeMillis() / 1000 - 10000);
+          .isGreaterThanOrEqualTo(System.currentTimeMillis() / 1000 - 10000);
       assertThat(ping.getTo()).isEqualTo(discoveryTestSocket0.getPeer().getEndpoint());
     }
     assertThat(idList0).containsExactlyInAnyOrderElementsOf(peerDiscoveryAgentIdList);
@@ -299,7 +298,7 @@ public class PeerDiscoveryBootstrappingTest extends AbstractPeerDiscoveryTest {
     /* * */
 
     final List<Packet> packetList1 =
-            Stream.generate(discoveryTestSocket1::compulsoryPoll).limit(5).collect(toList());
+        Stream.generate(discoveryTestSocket1::compulsoryPoll).limit(5).collect(toList());
     assertThat(discoveryTestSocket1.getIncomingPackets().size()).isEqualTo(0);
     final List<BytesValue> idList1 = new ArrayList<>();
     for (Packet packet : packetList1) {
@@ -311,7 +310,7 @@ public class PeerDiscoveryBootstrappingTest extends AbstractPeerDiscoveryTest {
       // Assert on the content of the packet data.
       final PingPacketData ping = packet.getPacketData(PingPacketData.class).get();
       assertThat(ping.getExpiration())
-              .isGreaterThanOrEqualTo(System.currentTimeMillis() / 1000 - 10000);
+          .isGreaterThanOrEqualTo(System.currentTimeMillis() / 1000 - 10000);
       assertThat(ping.getTo()).isEqualTo(discoveryTestSocket1.getPeer().getEndpoint());
     }
     assertThat(idList1).containsExactlyInAnyOrderElementsOf(peerDiscoveryAgentIdList);
@@ -319,7 +318,7 @@ public class PeerDiscoveryBootstrappingTest extends AbstractPeerDiscoveryTest {
     /* * */
 
     final List<Packet> packetList2 =
-            Stream.generate(discoveryTestSocket2::compulsoryPoll).limit(5).collect(toList());
+        Stream.generate(discoveryTestSocket2::compulsoryPoll).limit(5).collect(toList());
     assertThat(discoveryTestSocket2.getIncomingPackets().size()).isEqualTo(0);
     final List<BytesValue> idList2 = new ArrayList<>();
     for (Packet packet : packetList2) {
@@ -331,7 +330,7 @@ public class PeerDiscoveryBootstrappingTest extends AbstractPeerDiscoveryTest {
       // Assert on the content of the packet data.
       final PingPacketData ping = packet.getPacketData(PingPacketData.class).get();
       assertThat(ping.getExpiration())
-              .isGreaterThanOrEqualTo(System.currentTimeMillis() / 1000 - 10000);
+          .isGreaterThanOrEqualTo(System.currentTimeMillis() / 1000 - 10000);
       assertThat(ping.getTo()).isEqualTo(discoveryTestSocket2.getPeer().getEndpoint());
     }
     assertThat(idList2).containsExactlyInAnyOrderElementsOf(peerDiscoveryAgentIdList);
@@ -387,20 +386,19 @@ public class PeerDiscoveryBootstrappingTest extends AbstractPeerDiscoveryTest {
     discoveryConfiguration_0.setBindPort(0);
 
     final PeerDiscoveryAgent peerDiscoveryAgent_0 =
-
-            new PeerDiscoveryAgent(
-                    vertx,
-                    SECP256K1.KeyPair.generate(),
-                    discoveryConfiguration_0,
-                    () -> true,
-                    peerBlacklist,
-                    new NodeWhitelistController(PermissioningConfiguration.createDefault()));
+        new PeerDiscoveryAgent(
+            vertx,
+            SECP256K1.KeyPair.generate(),
+            discoveryConfiguration_0,
+            () -> true,
+            peerBlacklist,
+            new NodeWhitelistController(PermissioningConfiguration.createDefault()));
     peerDiscoveryAgent_0.start(BROADCAST_TCP_PORT).get(5, TimeUnit.SECONDS);
     final BytesValue id_0 = peerDiscoveryAgent_0.getAdvertisedPeer().getId();
 
     await()
-            .atMost(5, TimeUnit.SECONDS)
-            .untilAsserted(() -> assertThat(peerDiscoveryAgent_0.getPeers()).hasSize(0));
+        .atMost(5, TimeUnit.SECONDS)
+        .untilAsserted(() -> assertThat(peerDiscoveryAgent_0.getPeers()).hasSize(0));
 
     // Start another agent, pointing to the above agent as a bootstrap peer.
     final DiscoveryConfiguration discoveryConfiguration_1 = new DiscoveryConfiguration();
@@ -410,23 +408,23 @@ public class PeerDiscoveryBootstrappingTest extends AbstractPeerDiscoveryTest {
     discoveryConfiguration_1.setBindPort(0);
 
     final PeerDiscoveryAgent peerDiscoveryAgent_1 =
-            new PeerDiscoveryAgent(
-                    vertx,
-                    SECP256K1.KeyPair.generate(),
-                    discoveryConfiguration_1,
-                    () -> true,
-                    new PeerBlacklist(),
-                    new NodeWhitelistController(PermissioningConfiguration.createDefault()));
+        new PeerDiscoveryAgent(
+            vertx,
+            SECP256K1.KeyPair.generate(),
+            discoveryConfiguration_1,
+            () -> true,
+            new PeerBlacklist(),
+            new NodeWhitelistController(PermissioningConfiguration.createDefault()));
 
     peerDiscoveryAgent_1.start(BROADCAST_TCP_PORT).get(5, TimeUnit.SECONDS);
     final BytesValue id_1 = peerDiscoveryAgent_1.getAdvertisedPeer().getId();
 
     await()
-            .atMost(5, TimeUnit.SECONDS)
-            .untilAsserted(() -> assertThat(peerDiscoveryAgent_0.getPeers()).hasSize(1));
+        .atMost(5, TimeUnit.SECONDS)
+        .untilAsserted(() -> assertThat(peerDiscoveryAgent_0.getPeers()).hasSize(1));
     await()
-            .atMost(5, TimeUnit.SECONDS)
-            .untilAsserted(() -> assertThat(peerDiscoveryAgent_1.getPeers()).hasSize(1));
+        .atMost(5, TimeUnit.SECONDS)
+        .untilAsserted(() -> assertThat(peerDiscoveryAgent_1.getPeers()).hasSize(1));
 
     // This agent will bootstrap off the bootstrap peer, will add all nodes
     // returned by the latter, and will bond with them, ultimately adding all
@@ -438,20 +436,19 @@ public class PeerDiscoveryBootstrappingTest extends AbstractPeerDiscoveryTest {
     discoveryConfiguration_TEST.setBindPort(0);
 
     final PeerDiscoveryAgent peerDiscoveryAgent_TEST =
-            new PeerDiscoveryAgent(
-                    vertx,
-                    SECP256K1.KeyPair.generate(),
-                    discoveryConfiguration_TEST,
-                    () -> true,
-                    peerBlacklist,
-                    new NodeWhitelistController(PermissioningConfiguration.createDefault()));
+        new PeerDiscoveryAgent(
+            vertx,
+            SECP256K1.KeyPair.generate(),
+            discoveryConfiguration_TEST,
+            () -> true,
+            peerBlacklist,
+            new NodeWhitelistController(PermissioningConfiguration.createDefault()));
     peerDiscoveryAgent_TEST.start(BROADCAST_TCP_PORT).get(5, TimeUnit.SECONDS);
 
     await()
-            .atMost(5, TimeUnit.SECONDS)
-            .untilAsserted(() -> assertThat(peerDiscoveryAgent_TEST.getPeers()).hasSize(2));
+        .atMost(5, TimeUnit.SECONDS)
+        .untilAsserted(() -> assertThat(peerDiscoveryAgent_TEST.getPeers()).hasSize(2));
 
     vertx.close();
   }
-
 }
