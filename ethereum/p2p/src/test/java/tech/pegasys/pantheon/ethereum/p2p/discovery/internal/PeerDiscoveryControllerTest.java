@@ -305,8 +305,6 @@ public class PeerDiscoveryControllerTest {
             });
 
     assertThat(captor.getValue()).isInstanceOf(FindNeighborsPacketData.class);
-    final FindNeighborsPacketData data = (FindNeighborsPacketData) captor.getValue();
-    assertThat(data.getTarget()).isEqualTo(peer.getId());
     assertThat(controller.getPeers()).hasSize(1);
     assertThat(controller.getPeers().stream().findFirst().get().getStatus()).isEqualTo(PeerDiscoveryStatus.BONDED);
   }

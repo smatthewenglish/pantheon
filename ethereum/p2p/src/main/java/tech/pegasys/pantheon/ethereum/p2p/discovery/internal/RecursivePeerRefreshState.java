@@ -58,8 +58,6 @@ class RecursivePeerRefreshState {
     this.neighbourFinder = neighborFinder;
     this.anteList = new ArrayList<>();
 
-    System.out.println("TARGET: " + target.toString());
-
     this.outstandingBondingRequestList = new ArrayList<>();
     this.outstandingNeighboursRequestList = new ArrayList<>();
 
