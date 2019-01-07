@@ -258,9 +258,8 @@ public class PeerDiscoveryControllerTest {
     final SECP256K1.KeyPair[] keyPairs = PeerDiscoveryTestHelper.generateKeyPairs(1);
     final DiscoveryPeer[] peers = PeerDiscoveryTestHelper.generateDiscoveryPeers(keyPairs);
 
-    // Mock the creation of the PING packet, so that we can control the hash, which gets validated
-    // when
-    // processing the PONG.
+    // Mock the creation of the PING packet, so that we can control the hash,
+    // which gets validated when processing the PONG.
     final PingPacketData mockPing =
         PingPacketData.create(peer.getEndpoint(), peers[0].getEndpoint());
     final Packet mockPacket = Packet.create(PacketType.PING, mockPing, keyPairs[0]);
@@ -291,8 +290,7 @@ public class PeerDiscoveryControllerTest {
             });
 
     // Simulate a PONG message from peer[0].
-    final PongPacketData packetData =
-        PongPacketData.create(peer.getEndpoint(), mockPacket.getHash());
+    final PongPacketData packetData = PongPacketData.create(peer.getEndpoint(), mockPacket.getHash());
     final Packet pongPacket = Packet.create(PacketType.PONG, packetData, keyPairs[0]);
     controller.onMessage(pongPacket, peers[0]);
 
@@ -310,8 +308,7 @@ public class PeerDiscoveryControllerTest {
     final FindNeighborsPacketData data = (FindNeighborsPacketData) captor.getValue();
     assertThat(data.getTarget()).isEqualTo(peer.getId());
     assertThat(controller.getPeers()).hasSize(1);
-    assertThat(controller.getPeers().stream().findFirst().get().getStatus())
-        .isEqualTo(PeerDiscoveryStatus.BONDED);
+    assertThat(controller.getPeers().stream().findFirst().get().getStatus()).isEqualTo(PeerDiscoveryStatus.BONDED);
   }
 
   @Test
@@ -320,16 +317,16 @@ public class PeerDiscoveryControllerTest {
     final SECP256K1.KeyPair[] keyPairs = PeerDiscoveryTestHelper.generateKeyPairs(3);
     final DiscoveryPeer[] peers = PeerDiscoveryTestHelper.generateDiscoveryPeers(keyPairs);
 
-    // Mock the creation of the PING packet, so that we can control the hash, which gets validated
-    // when
-    // processing the PONG.
+    // Mock the creation of the PING packet, so that we can control the hash,
+    // which gets validated when processing the PONG.
     final PingPacketData mockPing =
         PingPacketData.create(peer.getEndpoint(), peers[0].getEndpoint());
     final Packet mockPacket = Packet.create(PacketType.PING, mockPing, keyPairs[0]);
+
     when(agent.sendPacket(any(), eq(PacketType.PING), any())).then((invocation) -> mockPacket);
 
-    // Initialize the peer controller, setting a high controller refresh interval and a high timeout
-    // threshold, to avoid retries
+    // Initialize the peer controller, setting a high controller refresh
+    // interval and a high timeout threshold, to avoid retries
     // getting in the way of this test.
     controller =
         new PeerDiscoveryController(
@@ -392,9 +389,8 @@ public class PeerDiscoveryControllerTest {
                         p -> p.equals(peers[2]) && p.getStatus() == PeerDiscoveryStatus.BONDED)
                     .hasSize(1));
 
-    // Simulate bonding and neighbors packet from the second bootstrap peer, with peer[2] reported
-    // in
-    // the peer list.
+    // Simulate bonding and neighbors packet from the second bootstrap peer,
+    // with peer[2] reported in the peer list.
     pongPacket = Packet.create(PacketType.PONG, packetData, keyPairs[1]);
     controller.onMessage(pongPacket, peers[1]);
     neighborsPacket = Packet.create(PacketType.NEIGHBORS, neighbors, keyPairs[1]);

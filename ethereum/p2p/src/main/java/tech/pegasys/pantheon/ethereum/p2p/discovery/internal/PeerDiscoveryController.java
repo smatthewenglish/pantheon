@@ -31,11 +31,9 @@ import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -100,8 +98,8 @@ public class PeerDiscoveryController {
   private final Collection<DiscoveryPeer> bootstrapNodes;
 
   /* A tracker for inflight interactions and the state machine of a peer. */
-  private final Map<BytesValue, PeerInteractionState> inflightInteractions =
-      new ConcurrentHashMap<>();
+  //    private final Map<BytesValue, PeerInteractionState> inflightInteractions =
+  //            new ConcurrentHashMap<>();
 
   private final AtomicBoolean started = new AtomicBoolean(false);
 
@@ -176,8 +174,8 @@ public class PeerDiscoveryController {
 
     tableRefreshTimerId.ifPresent(vertx::cancelTimer);
     tableRefreshTimerId = OptionalLong.empty();
-    inflightInteractions.values().forEach(PeerInteractionState::cancelTimers);
-    inflightInteractions.clear();
+    //        inflightInteractions.values().forEach(PeerInteractionState::cancelTimers);
+    //        inflightInteractions.clear();
     return CompletableFuture.completedFuture(null);
   }
 
@@ -235,12 +233,8 @@ public class PeerDiscoveryController {
         }
         break;
       case PONG:
-        matchInteraction(packet)
-            .ifPresent(
-                interaction -> {
-                  addToPeerTable(peer);
-                  recursivePeerRefreshState.onPongPacketReceived(peer);
-                });
+        addToPeerTable(peer);
+        recursivePeerRefreshState.onPongPacketReceived(peer);
         break;
       case NEIGHBORS:
         recursivePeerRefreshState.onNeighboursPacketReceived(
@@ -292,15 +286,15 @@ public class PeerDiscoveryController {
     dispatchEvent(peerBondedObservers, event);
   }
 
-  private Optional<PeerInteractionState> matchInteraction(final Packet packet) {
-    final PeerInteractionState interaction = inflightInteractions.get(packet.getNodeId());
-    if (interaction == null || !interaction.test(packet)) {
-      return Optional.empty();
-    }
-    interaction.cancelTimers();
-    inflightInteractions.remove(packet.getNodeId());
-    return Optional.of(interaction);
-  }
+  //    private Optional<PeerInteractionState> matchInteraction(final Packet packet) {
+  //        final PeerInteractionState interaction = inflightInteractions.get(packet.getNodeId());
+  //        if (interaction == null || !interaction.test(packet)) {
+  //            return Optional.empty();
+  //        }
+  //        interaction.cancelTimers();
+  //        inflightInteractions.remove(packet.getNodeId());
+  //        return Optional.of(interaction);
+  //    }
 
   private void refreshTableIfRequired() {
     final long now = System.currentTimeMillis();
@@ -371,8 +365,8 @@ public class PeerDiscoveryController {
   }
 
   /**
-   * Dispatches a new tracked interaction with a peer, adding it to the {@link
-   * #inflightInteractions} map and executing the action for the first time.
+   * Dispatches a new tracked interaction with a peer, adding it to the inflightInteractions map and
+   * executing the action for the first time.
    *
    * <p>If a previous inflightInteractions interaction existed, we cancel any associated timers.
    *
@@ -380,10 +374,10 @@ public class PeerDiscoveryController {
    * @param state The state.
    */
   private void dispatchInteraction(final Peer peer, final PeerInteractionState state) {
-    final PeerInteractionState previous = inflightInteractions.put(peer.getId(), state);
-    if (previous != null) {
-      previous.cancelTimers();
-    }
+    //        final PeerInteractionState previous = inflightInteractions.put(peer.getId(), state);
+    //        if (previous != null) {
+    //            previous.cancelTimers();
+    //        }
     state.execute(0);
   }
 
