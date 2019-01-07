@@ -268,9 +268,16 @@ public class RecursivePeerRefreshStateTest {
     verify(neighborFinder, never()).issueFindNodeRequest(peer_000, target);
     verify(bondingAgent).performBonding(peer_000);
 
+    recursivePeerRefreshState.onPongPacketReceived(peer_000);
+
     recursivePeerRefreshState.onNeighboursPacketReceived(neighborsPacketData_000, peer_000);
     assertThat(recursivePeerRefreshState.getOutstandingNeighboursRequestList().size())
         .isLessThanOrEqualTo(3);
+
+    recursivePeerRefreshState.onPongPacketReceived(peer_010);
+    recursivePeerRefreshState.onPongPacketReceived(peer_011);
+    recursivePeerRefreshState.onPongPacketReceived(peer_012);
+    recursivePeerRefreshState.onPongPacketReceived(peer_013);
 
     recursivePeerRefreshState.neighboursTimeoutEvaluation();
 

@@ -35,7 +35,7 @@ class RecursivePeerRefreshState {
   private final NodeWhitelistController peerWhitelist;
 
   private final BondingAgent bondingAgent;
-  private final NeighborFinder neighborFinder;
+  private final NeighborFinder neighbourFinder;
 
   private final List<PeerDistance> anteList;
 
@@ -55,7 +55,7 @@ class RecursivePeerRefreshState {
     this.peerBlacklist = peerBlacklist;
     this.peerWhitelist = peerWhitelist;
     this.bondingAgent = bondingAgent;
-    this.neighborFinder = neighborFinder;
+    this.neighbourFinder = neighborFinder;
     this.anteList = new ArrayList<>();
 
     this.outstandingBondingRequestList = new ArrayList<>();
@@ -96,7 +96,6 @@ class RecursivePeerRefreshState {
               && !outstandingNeighboursRequestList.contains(new OutstandingRequest(candidate))) {
             outstandingNeighboursRequestList.remove(i);
             executeFindNodeRequest(candidate);
-            outstandingNeighboursRequestList.get(i).setEvaluation();
           }
         }
       }
@@ -108,10 +107,9 @@ class RecursivePeerRefreshState {
   void bondingTimeoutEvaluation() {}
 
   private void executeFindNodeRequest(final DiscoveryPeer peer) {
-    final BytesValue peerId = peer.getId();
     outstandingNeighboursRequestList.add(new OutstandingRequest(peer));
-    dispatchedFindNeighbours.add(peerId);
-    neighborFinder.issueFindNodeRequest(peer, target);
+    dispatchedFindNeighbours.add(peer.getId());
+    neighbourFinder.issueFindNodeRequest(peer, target);
   }
 
   /**
@@ -137,7 +135,6 @@ class RecursivePeerRefreshState {
             && !peerBlacklist.contains(receivedPeer)
             && peerWhitelist.contains(receivedPeer)) {
           bondingAgent.performBonding(receivedPeer);
-          anteList.add(new PeerDistance(receivedPeer, distance(target, receivedPeer.getId())));
           outstandingBondingRequestList.add(new OutstandingRequest(receivedPeer));
           dispatchedBond.add(receivedPeer.getId());
         }
@@ -161,13 +158,11 @@ class RecursivePeerRefreshState {
   }
 
   private void queryNearestNodes() {
+    final int concurrentRequestLimit = 3;
     if (outstandingNeighboursRequestList.isEmpty()) {
-      final int concurrentRequestLimit = 3;
-      if (outstandingNeighboursRequestList.isEmpty()) {
-        final List<DiscoveryPeer> queryCandidates =
-            determineFindNodeCandidates(concurrentRequestLimit);
-        initiatePeerRefreshCycle(queryCandidates);
-      }
+      final List<DiscoveryPeer> queryCandidates =
+          determineFindNodeCandidates(concurrentRequestLimit);
+      initiatePeerRefreshCycle(queryCandidates);
     }
   }
 
