@@ -286,9 +286,7 @@ public class PeerDiscoveryControllerTest {
     await()
         .atMost(2, TimeUnit.SECONDS)
         .untilAsserted(
-            () -> {
-              verify(agent, times(1)).sendPacket(eq(peers[0]), eq(PacketType.PING), any());
-            });
+            () -> verify(agent, times(1)).sendPacket(eq(peers[0]), eq(PacketType.PING), any()));
 
     // Simulate a PONG message from peer[0].
     final PongPacketData packetData =
@@ -301,10 +299,8 @@ public class PeerDiscoveryControllerTest {
     await()
         .atMost(2, TimeUnit.SECONDS)
         .untilAsserted(
-            () -> {
-              verify(agent, times(1))
-                  .sendPacket(eq(peers[0]), eq(PacketType.FIND_NEIGHBORS), captor.capture());
-            });
+            () -> verify(agent, times(1))
+                .sendPacket(eq(peers[0]), eq(PacketType.FIND_NEIGHBORS), captor.capture()));
 
     assertThat(captor.getValue()).isInstanceOf(FindNeighborsPacketData.class);
     final FindNeighborsPacketData data = (FindNeighborsPacketData) captor.getValue();

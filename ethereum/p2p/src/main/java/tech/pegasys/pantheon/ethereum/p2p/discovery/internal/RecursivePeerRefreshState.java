@@ -69,7 +69,6 @@ class RecursivePeerRefreshState {
   }
 
   void onPongPacketReceived(final DiscoveryPeer peer) {
-    /* * */
     outstandingBondingRequestList.remove(new OutstandingRequest(peer));
     anteList.add(new PeerDistance(peer, distance(target, peer.getId())));
     if (outstandingBondingRequestList.isEmpty()) {
