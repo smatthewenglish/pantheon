@@ -188,13 +188,12 @@ public class PeerDiscoveryControllerTest {
     final Packet packet = Packet.create(PacketType.PONG, packetData, keyPairs[0]);
     controller.onMessage(packet, peers[0]);
 
-    // Ensure that the peer controller is now sending FIND_NEIGHBORS messages for this peer.
+    // Ensure that the peer controller is now sending FIND_NEIGHBORS messages for this peer. TODO: fix this line... SME
     await()
         .atMost(3, TimeUnit.SECONDS)
         .untilAsserted(
             () ->
-                verify(agent, atLeast(3))
-                    .sendPacket(eq(peers[0]), eq(PacketType.FIND_NEIGHBORS), any()));
+                verify(agent, atLeast(3)).sendPacket(eq(peers[0]), eq(PacketType.FIND_NEIGHBORS), any()));
 
     assertThat(
             controller
