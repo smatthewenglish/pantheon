@@ -364,7 +364,7 @@ public class PeerDiscoveryControllerTest {
     Packet neighborsPacket = Packet.create(PacketType.NEIGHBORS, neighbors, keyPairs[0]);
     controller.onMessage(neighborsPacket, peers[0]);
 
-    // Assert that we're bonding with the third peer.
+    // Assert that we're bonding with peer[2].
     await()
         .atMost(1, TimeUnit.SECONDS)
         .untilAsserted(
@@ -392,7 +392,7 @@ public class PeerDiscoveryControllerTest {
                         p -> p.equals(peers[2]) && p.getStatus() == PeerDiscoveryStatus.BONDED)
                     .hasSize(1));
 
-    // Simulate bonding and neighbors packet from the second boostrap peer, with peer[2] reported in
+    // Simulate bonding and neighbors packet from the second bootstrap peer, with peer[2] reported in
     // the peer list.
     pongPacket = Packet.create(PacketType.PONG, packetData, keyPairs[1]);
     controller.onMessage(pongPacket, peers[1]);
@@ -544,7 +544,7 @@ public class PeerDiscoveryControllerTest {
     final Packet pongPacket = MockPacketDataFactory.mockPongPacket(otherPeer, pingPacket.getHash());
     controller.onMessage(pongPacket, otherPeer);
 
-    // Blaclist otherPeer2 before sending return pong
+    // Blacklist otherPeer2 before sending return pong
     blacklist.add(otherPeer2);
     final Packet pongPacket2 =
         MockPacketDataFactory.mockPongPacket(otherPeer2, pingPacket2.getHash());
@@ -623,8 +623,8 @@ public class PeerDiscoveryControllerTest {
         MockPacketDataFactory.mockNeighborsPacket(discoPeer, otherPeer, otherPeer2);
     controller.onMessage(neighborsPacket, discoPeer);
 
-    verify(controller, times(0)).bond(otherPeer, false);
-    verify(controller, times(1)).bond(otherPeer2, false);
+    verify(controller, times(0)).bond(otherPeer);
+    verify(controller, times(1)).bond(otherPeer2);
   }
 
   @Test
@@ -969,8 +969,8 @@ public class PeerDiscoveryControllerTest {
         MockPacketDataFactory.mockNeighborsPacket(discoPeer, otherPeer, otherPeer2);
     controller.onMessage(neighborsPacket, discoPeer);
 
-    verify(controller, times(0)).bond(otherPeer, false);
-    verify(controller, times(1)).bond(otherPeer2, false);
+    verify(controller, times(0)).bond(otherPeer);
+    verify(controller, times(1)).bond(otherPeer2);
   }
 
   @Test

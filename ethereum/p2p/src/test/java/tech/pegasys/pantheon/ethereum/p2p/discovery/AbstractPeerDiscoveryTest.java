@@ -87,7 +87,7 @@ public abstract class AbstractPeerDiscoveryTest {
   }
 
   /**
-   * Starts multiple discovery agents with the provided boostrap peers.
+   * Starts multiple discovery agents with the provided bootstrap peers.
    *
    * @param count the number of agents to start
    * @param bootstrapPeers the list of bootstrap peers
