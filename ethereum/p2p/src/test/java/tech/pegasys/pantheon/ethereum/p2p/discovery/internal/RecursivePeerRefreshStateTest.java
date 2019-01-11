@@ -442,21 +442,41 @@ public class RecursivePeerRefreshStateTest {
     IterationParticipant peerD = new IterationParticipant(peer_012, distance(target, peer_012.getId()));
     IterationParticipant peerE = new IterationParticipant(peer_013, distance(target, peer_013.getId()));
 
-    SortedMap<BytesValue, IterationParticipant> iterationParticipantMap = new TreeMap<>();
+    SortedMap<BytesValue, IterationParticipant> iterationParticipantMap0 = new TreeMap<>();
 
-    iterationParticipantMap.put(peer_000.getId(), peerA);
-    iterationParticipantMap.put(peer_011.getId(), peerC);
-    iterationParticipantMap.put(peer_013.getId(), peerE);
-    iterationParticipantMap.put(peer_010.getId(), peerB);
-    iterationParticipantMap.put(peer_012.getId(), peerD);
+    iterationParticipantMap0.put(peer_000.getId(), peerA);
+    iterationParticipantMap0.put(peer_011.getId(), peerC);
+    iterationParticipantMap0.put(peer_013.getId(), peerE);
+    iterationParticipantMap0.put(peer_010.getId(), peerB);
+    iterationParticipantMap0.put(peer_012.getId(), peerD);
 
-
-    for (Object obj : iterationParticipantMap.entrySet()) {
+    for (Object obj : iterationParticipantMap0.entrySet()) {
       Map.Entry<BytesValue, IterationParticipant> entry = (Map.Entry) obj;
       System.out.print("Key: " + entry.getKey());
       System.out.println(", Value: " + entry.getValue());
     }
 
+    System.out.println("-------");
+
+    SortedMap<BytesValue, IterationParticipant> iterationParticipantMap1 = putFirstEntries(3, iterationParticipantMap0);
+
+    for (Object obj : iterationParticipantMap1.entrySet()) {
+      Map.Entry<BytesValue, IterationParticipant> entry = (Map.Entry) obj;
+      System.out.print("Key: " + entry.getKey());
+      System.out.println(", Value: " + entry.getValue());
+    }
+
+  }
+
+  public static SortedMap<BytesValue, IterationParticipant> putFirstEntries(int max, SortedMap<BytesValue, IterationParticipant> source) {
+    int count = 0;
+    TreeMap<BytesValue, IterationParticipant> target = new TreeMap<>();
+    for (Map.Entry<BytesValue, IterationParticipant> entry:source.entrySet()) {
+      if (count >= max) break;
+      target.put(entry.getKey(), entry.getValue());
+      count++;
+    }
+    return target;
   }
 
 }
