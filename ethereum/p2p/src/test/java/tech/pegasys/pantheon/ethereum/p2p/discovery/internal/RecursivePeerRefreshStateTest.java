@@ -39,444 +39,463 @@ import org.junit.Before;
 import org.junit.Test;
 
 public class RecursivePeerRefreshStateTest {
-  private static final ObjectMapper MAPPER = new ObjectMapper();
+    private static final ObjectMapper MAPPER = new ObjectMapper();
 
-  private RecursivePeerRefreshState recursivePeerRefreshState;
+    private RecursivePeerRefreshState recursivePeerRefreshState;
 
-  private final BytesValue target =
-      BytesValue.fromHexString(
-          "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000");
+    private final BytesValue target =
+            BytesValue.fromHexString(
+                    "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000");
 
-  private final RecursivePeerRefreshState.BondingAgent bondingAgent =
-      mock(RecursivePeerRefreshState.BondingAgent.class);
-  private final RecursivePeerRefreshState.NeighborFinder neighborFinder =
-      mock(RecursivePeerRefreshState.NeighborFinder.class);
+    private final RecursivePeerRefreshState.BondingAgent bondingAgent =
+            mock(RecursivePeerRefreshState.BondingAgent.class);
+    private final RecursivePeerRefreshState.NeighborFinder neighborFinder =
+            mock(RecursivePeerRefreshState.NeighborFinder.class);
 
-  private final List<TestPeer> aggregatePeerList = new ArrayList<>();
+    private final List<TestPeer> aggregatePeerList = new ArrayList<>();
 
-  private NeighborsPacketData neighborsPacketData_000;
-  private NeighborsPacketData neighborsPacketData_010;
-  private NeighborsPacketData neighborsPacketData_011;
-  private NeighborsPacketData neighborsPacketData_012;
-  private NeighborsPacketData neighborsPacketData_013;
+    private NeighborsPacketData neighborsPacketData_000;
+    private NeighborsPacketData neighborsPacketData_010;
+    private NeighborsPacketData neighborsPacketData_011;
+    private NeighborsPacketData neighborsPacketData_012;
+    private NeighborsPacketData neighborsPacketData_013;
 
-  private TestPeer peer_000;
-  private TestPeer peer_010;
-  private TestPeer peer_020;
-  private TestPeer peer_021;
-  private TestPeer peer_022;
-  private TestPeer peer_023;
-  private TestPeer peer_011;
-  private TestPeer peer_120;
-  private TestPeer peer_121;
-  private TestPeer peer_122;
-  private TestPeer peer_123;
-  private TestPeer peer_012;
-  private TestPeer peer_220;
-  private TestPeer peer_221;
-  private TestPeer peer_222;
-  private TestPeer peer_223;
-  private TestPeer peer_013;
-  private TestPeer peer_320;
-  private TestPeer peer_321;
-  private TestPeer peer_322;
-  private TestPeer peer_323;
+    private TestPeer peer_000;
+    private TestPeer peer_010;
+    private TestPeer peer_020;
+    private TestPeer peer_021;
+    private TestPeer peer_022;
+    private TestPeer peer_023;
+    private TestPeer peer_011;
+    private TestPeer peer_120;
+    private TestPeer peer_121;
+    private TestPeer peer_122;
+    private TestPeer peer_123;
+    private TestPeer peer_012;
+    private TestPeer peer_220;
+    private TestPeer peer_221;
+    private TestPeer peer_222;
+    private TestPeer peer_223;
+    private TestPeer peer_013;
+    private TestPeer peer_320;
+    private TestPeer peer_321;
+    private TestPeer peer_322;
+    private TestPeer peer_323;
 
-  @Before
-  public void setup() throws Exception {
-    JsonNode peers =
-        MAPPER.readTree(RecursivePeerRefreshStateTest.class.getResource("/peers.json"));
-    recursivePeerRefreshState =
-        new RecursivePeerRefreshState(target, new PeerBlacklist(), bondingAgent, neighborFinder);
+    @Before
+    public void setup() throws Exception {
+        JsonNode peers =
+                MAPPER.readTree(RecursivePeerRefreshStateTest.class.getResource("/peers.json"));
+        recursivePeerRefreshState =
+                new RecursivePeerRefreshState(target, new PeerBlacklist(), bondingAgent, neighborFinder);
 
-    peer_000 = (TestPeer) generatePeer(peers);
+        peer_000 = (TestPeer) generatePeer(peers);
 
-    peer_010 = (TestPeer) peer_000.getPeerTable().get(0);
+        peer_010 = (TestPeer) peer_000.getPeerTable().get(0);
 
-    peer_020 = (TestPeer) peer_010.getPeerTable().get(0);
-    peer_021 = (TestPeer) peer_010.getPeerTable().get(1);
-    peer_022 = (TestPeer) peer_010.getPeerTable().get(2);
-    peer_023 = (TestPeer) peer_010.getPeerTable().get(3);
+        peer_020 = (TestPeer) peer_010.getPeerTable().get(0);
+        peer_021 = (TestPeer) peer_010.getPeerTable().get(1);
+        peer_022 = (TestPeer) peer_010.getPeerTable().get(2);
+        peer_023 = (TestPeer) peer_010.getPeerTable().get(3);
 
-    peer_011 = (TestPeer) peer_000.getPeerTable().get(1);
+        peer_011 = (TestPeer) peer_000.getPeerTable().get(1);
 
-    peer_120 = (TestPeer) peer_011.getPeerTable().get(0);
-    peer_121 = (TestPeer) peer_011.getPeerTable().get(1);
-    peer_122 = (TestPeer) peer_011.getPeerTable().get(2);
-    peer_123 = (TestPeer) peer_011.getPeerTable().get(3);
+        peer_120 = (TestPeer) peer_011.getPeerTable().get(0);
+        peer_121 = (TestPeer) peer_011.getPeerTable().get(1);
+        peer_122 = (TestPeer) peer_011.getPeerTable().get(2);
+        peer_123 = (TestPeer) peer_011.getPeerTable().get(3);
 
-    peer_012 = (TestPeer) peer_000.getPeerTable().get(2);
+        peer_012 = (TestPeer) peer_000.getPeerTable().get(2);
 
-    peer_220 = (TestPeer) peer_012.getPeerTable().get(0);
-    peer_221 = (TestPeer) peer_012.getPeerTable().get(1);
-    peer_222 = (TestPeer) peer_012.getPeerTable().get(2);
-    peer_223 = (TestPeer) peer_012.getPeerTable().get(3);
+        peer_220 = (TestPeer) peer_012.getPeerTable().get(0);
+        peer_221 = (TestPeer) peer_012.getPeerTable().get(1);
+        peer_222 = (TestPeer) peer_012.getPeerTable().get(2);
+        peer_223 = (TestPeer) peer_012.getPeerTable().get(3);
 
-    peer_013 = (TestPeer) peer_000.getPeerTable().get(3);
+        peer_013 = (TestPeer) peer_000.getPeerTable().get(3);
 
-    peer_320 = (TestPeer) peer_013.getPeerTable().get(0);
-    peer_321 = (TestPeer) peer_013.getPeerTable().get(1);
-    peer_322 = (TestPeer) peer_013.getPeerTable().get(2);
-    peer_323 = (TestPeer) peer_013.getPeerTable().get(3);
+        peer_320 = (TestPeer) peer_013.getPeerTable().get(0);
+        peer_321 = (TestPeer) peer_013.getPeerTable().get(1);
+        peer_322 = (TestPeer) peer_013.getPeerTable().get(2);
+        peer_323 = (TestPeer) peer_013.getPeerTable().get(3);
 
-    neighborsPacketData_000 = NeighborsPacketData.create(peer_000.getPeerTable());
-    neighborsPacketData_010 = NeighborsPacketData.create(peer_010.getPeerTable());
-    neighborsPacketData_011 = NeighborsPacketData.create(peer_011.getPeerTable());
-    neighborsPacketData_012 = NeighborsPacketData.create(peer_012.getPeerTable());
-    neighborsPacketData_013 = NeighborsPacketData.create(peer_013.getPeerTable());
+        neighborsPacketData_000 = NeighborsPacketData.create(peer_000.getPeerTable());
+        neighborsPacketData_010 = NeighborsPacketData.create(peer_010.getPeerTable());
+        neighborsPacketData_011 = NeighborsPacketData.create(peer_011.getPeerTable());
+        neighborsPacketData_012 = NeighborsPacketData.create(peer_012.getPeerTable());
+        neighborsPacketData_013 = NeighborsPacketData.create(peer_013.getPeerTable());
 
-    addPeersToAggregateListByOrdinalRank();
-  }
-
-  private void addPeersToAggregateListByOrdinalRank() {
-    aggregatePeerList.add(peer_323); // 1
-    aggregatePeerList.add(peer_011); // 2
-    aggregatePeerList.add(peer_012); // 3
-    aggregatePeerList.add(peer_013); // 4
-    aggregatePeerList.add(peer_020); // 5
-    aggregatePeerList.add(peer_021); // 6
-    aggregatePeerList.add(peer_022); // 7
-    aggregatePeerList.add(peer_023); // 8
-    aggregatePeerList.add(peer_120); // 9
-    aggregatePeerList.add(peer_121); // 10
-    aggregatePeerList.add(peer_122); // 11
-    aggregatePeerList.add(peer_123); // 12
-    aggregatePeerList.add(peer_220); // 13
-    aggregatePeerList.add(peer_221); // 14
-    aggregatePeerList.add(peer_222); // 15
-    aggregatePeerList.add(peer_223); // 16
-    aggregatePeerList.add(peer_320); // 17
-    aggregatePeerList.add(peer_321); // 18
-    aggregatePeerList.add(peer_322); // 19
-    aggregatePeerList.add(peer_010); // 20
-    aggregatePeerList.add(peer_000); // 21
-  }
-
-  @Test
-  public void shouldEstablishRelativeDistanceValues() {
-    for (int i = 0; i < aggregatePeerList.size() - 1; i++) {
-      int nodeOrdinalRank = aggregatePeerList.get(i).getOrdinalRank();
-      int neighborOrdinalRank = aggregatePeerList.get(i + 1).getOrdinalRank();
-      assertThat(nodeOrdinalRank).isLessThan(neighborOrdinalRank);
-    }
-  }
-
-  @Test
-  public void shouldConfirmPeersMatchCorrespondingPackets() {
-    assertThat(matchPeerToCorrespondingPacketData(peer_000, neighborsPacketData_000)).isTrue();
-    assertThat(matchPeerToCorrespondingPacketData(peer_010, neighborsPacketData_010)).isTrue();
-    assertThat(matchPeerToCorrespondingPacketData(peer_011, neighborsPacketData_011)).isTrue();
-    assertThat(matchPeerToCorrespondingPacketData(peer_012, neighborsPacketData_012)).isTrue();
-    assertThat(matchPeerToCorrespondingPacketData(peer_013, neighborsPacketData_013)).isTrue();
-  }
-
-  private boolean matchPeerToCorrespondingPacketData(
-      final TestPeer peer, final NeighborsPacketData neighborsPacketData) {
-    for (TestPeer neighbour :
-        neighborsPacketData.getNodes().stream().map(p -> (TestPeer) p).collect(toList())) {
-      if (neighbour.getParent() != peer.getIdentifier()) {
-        return false;
-      }
-      if (neighbour.getTier() != peer.getTier() + 1) {
-        return false;
-      }
-    }
-    return true;
-  }
-
-  @Test
-  public void shouldIssueRequestToPeerWithLesserDistanceGreaterHops() {
-    recursivePeerRefreshState.kickstartBootstrapPeers(Collections.singletonList(peer_000));
-
-    verify(bondingAgent).performBonding(peer_000, true);
-    verify(neighborFinder).issueFindNodeRequest(peer_000, target);
-
-    recursivePeerRefreshState.onNeighboursPacketReceived(neighborsPacketData_000, peer_000);
-    assertThat(recursivePeerRefreshState.getOutstandingRequestList().size()).isLessThanOrEqualTo(3);
-
-    verify(bondingAgent).performBonding(peer_010, false);
-    verify(bondingAgent).performBonding(peer_011, false);
-    verify(bondingAgent).performBonding(peer_012, false);
-    verify(bondingAgent).performBonding(peer_013, false);
-
-    verify(neighborFinder, never()).issueFindNodeRequest(peer_010, target);
-    verify(neighborFinder).issueFindNodeRequest(peer_011, target);
-    verify(neighborFinder).issueFindNodeRequest(peer_012, target);
-    verify(neighborFinder).issueFindNodeRequest(peer_013, target);
-
-    recursivePeerRefreshState.onNeighboursPacketReceived(neighborsPacketData_011, peer_011);
-    assertThat(recursivePeerRefreshState.getOutstandingRequestList().size()).isLessThanOrEqualTo(3);
-
-    verify(bondingAgent).performBonding(peer_120, false);
-    verify(bondingAgent).performBonding(peer_121, false);
-    verify(bondingAgent).performBonding(peer_122, false);
-    verify(bondingAgent).performBonding(peer_123, false);
-
-    recursivePeerRefreshState.onNeighboursPacketReceived(neighborsPacketData_012, peer_012);
-    assertThat(recursivePeerRefreshState.getOutstandingRequestList().size()).isLessThanOrEqualTo(3);
-
-    verify(bondingAgent).performBonding(peer_220, false);
-    verify(bondingAgent).performBonding(peer_221, false);
-    verify(bondingAgent).performBonding(peer_222, false);
-    verify(bondingAgent).performBonding(peer_223, false);
-
-    recursivePeerRefreshState.onNeighboursPacketReceived(neighborsPacketData_013, peer_013);
-    assertThat(recursivePeerRefreshState.getOutstandingRequestList().size()).isLessThanOrEqualTo(3);
-
-    verify(bondingAgent).performBonding(peer_320, false);
-    verify(bondingAgent).performBonding(peer_321, false);
-    verify(bondingAgent).performBonding(peer_322, false);
-    verify(bondingAgent).performBonding(peer_323, false);
-
-    verify(neighborFinder, never()).issueFindNodeRequest(peer_320, target);
-    verify(neighborFinder, never()).issueFindNodeRequest(peer_321, target);
-    verify(neighborFinder, never()).issueFindNodeRequest(peer_322, target);
-    verify(neighborFinder).issueFindNodeRequest(peer_323, target);
-  }
-
-  @Test
-  public void shouldIssueRequestToPeerWithGreaterDistanceOnExpirationOfLowerDistancePeerRequest() {
-    recursivePeerRefreshState.kickstartBootstrapPeers(Collections.singletonList(peer_000));
-    recursivePeerRefreshState.executeTimeoutEvaluation();
-
-    verify(bondingAgent).performBonding(peer_000, true);
-    verify(neighborFinder).issueFindNodeRequest(peer_000, target);
-
-    recursivePeerRefreshState.onNeighboursPacketReceived(neighborsPacketData_000, peer_000);
-    assertThat(recursivePeerRefreshState.getOutstandingRequestList().size()).isLessThanOrEqualTo(3);
-
-    recursivePeerRefreshState.executeTimeoutEvaluation();
-
-    verify(neighborFinder, never()).issueFindNodeRequest(peer_010, target);
-    verify(neighborFinder).issueFindNodeRequest(peer_011, target);
-    verify(neighborFinder).issueFindNodeRequest(peer_012, target);
-    verify(neighborFinder).issueFindNodeRequest(peer_013, target);
-
-    recursivePeerRefreshState.executeTimeoutEvaluation();
-    assertThat(recursivePeerRefreshState.getOutstandingRequestList().size()).isLessThanOrEqualTo(3);
-
-    verify(neighborFinder).issueFindNodeRequest(peer_010, target);
-  }
-
-  private DiscoveryPeer generatePeer(final JsonNode peer) {
-    int parent = peer.get("parent").asInt();
-    int tier = peer.get("tier").asInt();
-    int identifier = peer.get("identifier").asInt();
-    int ordinalRank = peer.get("ordinalRank").asInt();
-    BytesValue id = BytesValue.fromHexString(peer.get("id").asText());
-    List<DiscoveryPeer> peerTable = new ArrayList<>();
-    if (peer.get("peerTable") != null) {
-      JsonNode peers = peer.get("peerTable");
-      for (JsonNode element : peers) {
-        peerTable.add(generatePeer(element));
-      }
-    } else {
-      peerTable = Collections.emptyList();
-    }
-    return new TestPeer(parent, tier, identifier, ordinalRank, id, peerTable);
-  }
-
-  static class TestPeer extends DiscoveryPeer {
-    int parent;
-    int tier;
-    int identifier;
-    int ordinalRank;
-    List<DiscoveryPeer> peerTable;
-
-    TestPeer(
-        final int parent,
-        final int tier,
-        final int identifier,
-        final int ordinalRank,
-        final BytesValue id,
-        final List<DiscoveryPeer> peerTable) {
-      super(id, "0.0.0.0", 1, 1);
-      this.parent = parent;
-      this.tier = tier;
-      this.identifier = identifier;
-      this.ordinalRank = ordinalRank;
-      this.peerTable = peerTable;
+        addPeersToAggregateListByOrdinalRank();
     }
 
-    int getParent() {
-      return parent;
+    private void addPeersToAggregateListByOrdinalRank() {
+        aggregatePeerList.add(peer_323); // 1
+        aggregatePeerList.add(peer_011); // 2
+        aggregatePeerList.add(peer_012); // 3
+        aggregatePeerList.add(peer_013); // 4
+        aggregatePeerList.add(peer_020); // 5
+        aggregatePeerList.add(peer_021); // 6
+        aggregatePeerList.add(peer_022); // 7
+        aggregatePeerList.add(peer_023); // 8
+        aggregatePeerList.add(peer_120); // 9
+        aggregatePeerList.add(peer_121); // 10
+        aggregatePeerList.add(peer_122); // 11
+        aggregatePeerList.add(peer_123); // 12
+        aggregatePeerList.add(peer_220); // 13
+        aggregatePeerList.add(peer_221); // 14
+        aggregatePeerList.add(peer_222); // 15
+        aggregatePeerList.add(peer_223); // 16
+        aggregatePeerList.add(peer_320); // 17
+        aggregatePeerList.add(peer_321); // 18
+        aggregatePeerList.add(peer_322); // 19
+        aggregatePeerList.add(peer_010); // 20
+        aggregatePeerList.add(peer_000); // 21
     }
 
-    int getTier() {
-      return tier;
+    @Test
+    public void shouldEstablishRelativeDistanceValues() {
+        for (int i = 0; i < aggregatePeerList.size() - 1; i++) {
+            int nodeOrdinalRank = aggregatePeerList.get(i).getOrdinalRank();
+            int neighborOrdinalRank = aggregatePeerList.get(i + 1).getOrdinalRank();
+            assertThat(nodeOrdinalRank).isLessThan(neighborOrdinalRank);
+        }
     }
 
-    int getIdentifier() {
-      return identifier;
+    @Test
+    public void shouldConfirmPeersMatchCorrespondingPackets() {
+        assertThat(matchPeerToCorrespondingPacketData(peer_000, neighborsPacketData_000)).isTrue();
+        assertThat(matchPeerToCorrespondingPacketData(peer_010, neighborsPacketData_010)).isTrue();
+        assertThat(matchPeerToCorrespondingPacketData(peer_011, neighborsPacketData_011)).isTrue();
+        assertThat(matchPeerToCorrespondingPacketData(peer_012, neighborsPacketData_012)).isTrue();
+        assertThat(matchPeerToCorrespondingPacketData(peer_013, neighborsPacketData_013)).isTrue();
     }
 
-    int getOrdinalRank() {
-      return ordinalRank;
+    private boolean matchPeerToCorrespondingPacketData(
+            final TestPeer peer, final NeighborsPacketData neighborsPacketData) {
+        for (TestPeer neighbour :
+                neighborsPacketData.getNodes().stream().map(p -> (TestPeer) p).collect(toList())) {
+            if (neighbour.getParent() != peer.getIdentifier()) {
+                return false;
+            }
+            if (neighbour.getTier() != peer.getTier() + 1) {
+                return false;
+            }
+        }
+        return true;
     }
 
-    List<DiscoveryPeer> getPeerTable() {
-      return peerTable;
+    @Test
+    public void shouldIssueRequestToPeerWithLesserDistanceGreaterHops() {
+        recursivePeerRefreshState.kickstartBootstrapPeers(Collections.singletonList(peer_000));
+
+        verify(bondingAgent).performBonding(peer_000, true);
+        verify(neighborFinder).issueFindNodeRequest(peer_000, target);
+
+        recursivePeerRefreshState.onNeighboursPacketReceived(neighborsPacketData_000, peer_000);
+        assertThat(recursivePeerRefreshState.getOutstandingRequestList().size()).isLessThanOrEqualTo(3);
+
+        verify(bondingAgent).performBonding(peer_010, false);
+        verify(bondingAgent).performBonding(peer_011, false);
+        verify(bondingAgent).performBonding(peer_012, false);
+        verify(bondingAgent).performBonding(peer_013, false);
+
+        verify(neighborFinder, never()).issueFindNodeRequest(peer_010, target);
+        verify(neighborFinder).issueFindNodeRequest(peer_011, target);
+        verify(neighborFinder).issueFindNodeRequest(peer_012, target);
+        verify(neighborFinder).issueFindNodeRequest(peer_013, target);
+
+        recursivePeerRefreshState.onNeighboursPacketReceived(neighborsPacketData_011, peer_011);
+        assertThat(recursivePeerRefreshState.getOutstandingRequestList().size()).isLessThanOrEqualTo(3);
+
+        verify(bondingAgent).performBonding(peer_120, false);
+        verify(bondingAgent).performBonding(peer_121, false);
+        verify(bondingAgent).performBonding(peer_122, false);
+        verify(bondingAgent).performBonding(peer_123, false);
+
+        recursivePeerRefreshState.onNeighboursPacketReceived(neighborsPacketData_012, peer_012);
+        assertThat(recursivePeerRefreshState.getOutstandingRequestList().size()).isLessThanOrEqualTo(3);
+
+        verify(bondingAgent).performBonding(peer_220, false);
+        verify(bondingAgent).performBonding(peer_221, false);
+        verify(bondingAgent).performBonding(peer_222, false);
+        verify(bondingAgent).performBonding(peer_223, false);
+
+        recursivePeerRefreshState.onNeighboursPacketReceived(neighborsPacketData_013, peer_013);
+        assertThat(recursivePeerRefreshState.getOutstandingRequestList().size()).isLessThanOrEqualTo(3);
+
+        verify(bondingAgent).performBonding(peer_320, false);
+        verify(bondingAgent).performBonding(peer_321, false);
+        verify(bondingAgent).performBonding(peer_322, false);
+        verify(bondingAgent).performBonding(peer_323, false);
+
+        verify(neighborFinder, never()).issueFindNodeRequest(peer_320, target);
+        verify(neighborFinder, never()).issueFindNodeRequest(peer_321, target);
+        verify(neighborFinder, never()).issueFindNodeRequest(peer_322, target);
+        verify(neighborFinder).issueFindNodeRequest(peer_323, target);
     }
 
-    @Override
-    public Bytes32 keccak256() {
-      return null;
+    @Test
+    public void shouldIssueRequestToPeerWithGreaterDistanceOnExpirationOfLowerDistancePeerRequest() {
+        recursivePeerRefreshState.kickstartBootstrapPeers(Collections.singletonList(peer_000));
+        recursivePeerRefreshState.executeTimeoutEvaluation();
+
+        verify(bondingAgent).performBonding(peer_000, true);
+        verify(neighborFinder).issueFindNodeRequest(peer_000, target);
+
+        recursivePeerRefreshState.onNeighboursPacketReceived(neighborsPacketData_000, peer_000);
+        assertThat(recursivePeerRefreshState.getOutstandingRequestList().size()).isLessThanOrEqualTo(3);
+
+        recursivePeerRefreshState.executeTimeoutEvaluation();
+
+        verify(neighborFinder, never()).issueFindNodeRequest(peer_010, target);
+        verify(neighborFinder).issueFindNodeRequest(peer_011, target);
+        verify(neighborFinder).issueFindNodeRequest(peer_012, target);
+        verify(neighborFinder).issueFindNodeRequest(peer_013, target);
+
+        recursivePeerRefreshState.executeTimeoutEvaluation();
+        assertThat(recursivePeerRefreshState.getOutstandingRequestList().size()).isLessThanOrEqualTo(3);
+
+        verify(neighborFinder).issueFindNodeRequest(peer_010, target);
     }
 
-    @Override
-    public Endpoint getEndpoint() {
-      return null;
+    private DiscoveryPeer generatePeer(final JsonNode peer) {
+        int parent = peer.get("parent").asInt();
+        int tier = peer.get("tier").asInt();
+        int identifier = peer.get("identifier").asInt();
+        int ordinalRank = peer.get("ordinalRank").asInt();
+        BytesValue id = BytesValue.fromHexString(peer.get("id").asText());
+        List<DiscoveryPeer> peerTable = new ArrayList<>();
+        if (peer.get("peerTable") != null) {
+            JsonNode peers = peer.get("peerTable");
+            for (JsonNode element : peers) {
+                peerTable.add(generatePeer(element));
+            }
+        } else {
+            peerTable = Collections.emptyList();
+        }
+        return new TestPeer(parent, tier, identifier, ordinalRank, id, peerTable);
     }
 
-    @Override
-    public String toString() {
-      return parent + "." + tier + "." + identifier;
-    }
-  }
+    static class TestPeer extends DiscoveryPeer {
+        int parent;
+        int tier;
+        int identifier;
+        int ordinalRank;
+        List<DiscoveryPeer> peerTable;
 
-  public class IterationParticipant implements Comparable<IterationParticipant> {
-    DiscoveryPeer peer;
-    Integer distance;
+        TestPeer(
+                final int parent,
+                final int tier,
+                final int identifier,
+                final int ordinalRank,
+                final BytesValue id,
+                final List<DiscoveryPeer> peerTable) {
+            super(id, "0.0.0.0", 1, 1);
+            this.parent = parent;
+            this.tier = tier;
+            this.identifier = identifier;
+            this.ordinalRank = ordinalRank;
+            this.peerTable = peerTable;
+        }
 
-    boolean bondEvaluated;
-    boolean bondQueried;
-    boolean bondResponded;
+        int getParent() {
+            return parent;
+        }
 
-    boolean neighbourEvaluated;
-    boolean neighbourQueried;
-    boolean neighbourResponded;
+        int getTier() {
+            return tier;
+        }
 
-    @Override
-    public int compareTo(final IterationParticipant o) {
-      if (this.distance > o.distance)
-        return 1;
-      return -1;
-    }
+        int getIdentifier() {
+            return identifier;
+        }
 
-    public IterationParticipant(final DiscoveryPeer peer, final Integer distance) {
-      this.peer = peer;
-      this.distance = distance;
+        int getOrdinalRank() {
+            return ordinalRank;
+        }
 
-      this.bondEvaluated = false;
-      this.bondQueried = false;
-      this.bondResponded = false;
+        List<DiscoveryPeer> getPeerTable() {
+            return peerTable;
+        }
 
-      this.neighbourEvaluated = false;
-      this.neighbourQueried = false;
-      this.neighbourResponded = false;
-    }
+        @Override
+        public Bytes32 keccak256() {
+            return null;
+        }
 
-    DiscoveryPeer getPeer() {
-      return peer;
-    }
+        @Override
+        public Endpoint getEndpoint() {
+            return null;
+        }
 
-    public Integer getDistance() {
-      return distance;
-    }
-
-    void setBondQueried() {
-      this.bondQueried = true;
-    }
-
-    void setBondResponded() {
-      this.bondResponded = true;
-    }
-
-    void setBondEvaluation() {
-      this.bondEvaluated = true;
-    }
-
-    boolean getBondQueried() {
-      return bondQueried;
+        @Override
+        public String toString() {
+            return parent + "." + tier + "." + identifier;
+        }
     }
 
-    boolean getBondResponded() {
-      return bondResponded;
+    public class IterationParticipant implements Comparable<IterationParticipant> {
+        DiscoveryPeer peer;
+        Integer distance;
+
+        boolean bondEvaluated;
+        boolean bondQueried;
+        boolean bondResponded;
+
+        boolean neighbourEvaluated;
+        boolean neighbourQueried;
+        boolean neighbourResponded;
+
+        @Override
+        public int compareTo(final IterationParticipant o) {
+            if (this.distance > o.distance)
+                return 1;
+            return -1;
+        }
+
+        public IterationParticipant(final DiscoveryPeer peer, final Integer distance) {
+            this.peer = peer;
+            this.distance = distance;
+
+            this.bondEvaluated = false;
+            this.bondQueried = false;
+            this.bondResponded = false;
+
+            this.neighbourEvaluated = false;
+            this.neighbourQueried = false;
+            this.neighbourResponded = false;
+        }
+
+        DiscoveryPeer getPeer() {
+            return peer;
+        }
+
+        public Integer getDistance() {
+            return distance;
+        }
+
+        void setBondQueried() {
+            this.bondQueried = true;
+        }
+
+        void setBondResponded() {
+            this.bondResponded = true;
+        }
+
+        void setBondEvaluation() {
+            this.bondEvaluated = true;
+        }
+
+        boolean getBondQueried() {
+            return bondQueried;
+        }
+
+        boolean getBondResponded() {
+            return bondResponded;
+        }
+
+        boolean getBondEvaluation() {
+            return bondEvaluated;
+        }
+
+        void setNeighbourQueried() {
+            this.neighbourQueried = true;
+        }
+
+        void setNeighbourResponded() {
+            this.neighbourResponded = true;
+        }
+
+        void setNeighbourEvaluation() {
+            this.neighbourEvaluated = true;
+        }
+
+        boolean getNeighbourEvaluation() {
+            return neighbourEvaluated;
+        }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            final IterationParticipant that = (IterationParticipant) o;
+            return Objects.equals(peer.getId(), that.peer.getId());
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(peer.getId());
+        }
+
+        @Override
+        public String toString() {
+            return peer + ": " + distance;
+        }
     }
 
-    boolean getBondEvaluation() {
-      return bondEvaluated;
+    @Test
+    public void testSort() {
+
+        IterationParticipant peerA = new IterationParticipant(peer_000, distance(target, peer_000.getId()));
+        IterationParticipant peerB = new IterationParticipant(peer_010, distance(target, peer_010.getId()));
+        IterationParticipant peerC = new IterationParticipant(peer_011, distance(target, peer_011.getId()));
+        IterationParticipant peerD = new IterationParticipant(peer_012, distance(target, peer_012.getId()));
+        IterationParticipant peerE = new IterationParticipant(peer_013, distance(target, peer_013.getId()));
+
+        SortedMap<BytesValue, IterationParticipant> iterationParticipantMap0 = new TreeMap<>();
+
+        iterationParticipantMap0.put(peer_000.getId(), peerA);
+        iterationParticipantMap0.put(peer_011.getId(), peerC);
+        iterationParticipantMap0.put(peer_013.getId(), peerE);
+        iterationParticipantMap0.put(peer_010.getId(), peerB);
+        iterationParticipantMap0.put(peer_012.getId(), peerD);
+
+        for (Object obj : iterationParticipantMap0.entrySet()) {
+            Map.Entry<BytesValue, IterationParticipant> entry = (Map.Entry) obj;
+            System.out.print("Key: " + entry.getKey());
+            System.out.println(", Value: " + entry.getValue());
+        }
+        System.out.println("-------");
+
+        SortedMap<BytesValue, IterationParticipant> iterationParticipantMap1 = putFirstEntries(3, iterationParticipantMap0);
+
+        for (Object obj : iterationParticipantMap1.entrySet()) {
+            Map.Entry<BytesValue, IterationParticipant> entry = (Map.Entry) obj;
+            System.out.print("Key: " + entry.getKey());
+            System.out.println(", Value: " + entry.getValue());
+        }
+        System.out.println("-------");
+
+        List<DiscoveryPeer> iterationParticipantList = alpha(3, iterationParticipantMap0);
+
+        for (DiscoveryPeer discoveryPeer : iterationParticipantList) {
+            System.out.println(discoveryPeer);
+        }
+
     }
 
-    void setNeighbourQueried() {
-      this.neighbourQueried = true;
+    //
+
+    private List<DiscoveryPeer> alpha(int max, SortedMap<BytesValue, IterationParticipant> source) {
+        int count = 0;
+        List<DiscoveryPeer> target = new ArrayList<>();
+        for (Map.Entry<BytesValue, IterationParticipant> entry : source.entrySet()) {
+            if (count >= max) break;
+            target.add(entry.getValue().getPeer());
+            count++;
+        }
+        return target;
     }
 
-    void setNeighbourResponded() {
-      this.neighbourResponded = true;
+    private SortedMap<BytesValue, IterationParticipant> putFirstEntries(int max, SortedMap<BytesValue, IterationParticipant> source) {
+        int count = 0;
+        TreeMap<BytesValue, IterationParticipant> target = new TreeMap<>();
+        for (Map.Entry<BytesValue, IterationParticipant> entry : source.entrySet()) {
+            if (count >= max) break;
+            target.put(entry.getKey(), entry.getValue());
+            count++;
+        }
+        return target;
     }
-
-    void setNeighbourEvaluation() {
-      this.neighbourEvaluated = true;
-    }
-
-    boolean getNeighbourEvaluation() {
-      return neighbourEvaluated;
-    }
-
-    @Override
-    public boolean equals(final Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-      final IterationParticipant that = (IterationParticipant) o;
-      return Objects.equals(peer.getId(), that.peer.getId());
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hash(peer.getId());
-    }
-
-    @Override
-    public String toString() {
-      return peer + ": " + distance;
-    }
-  }
-
-  @Test
-  public void testSort() {
-
-    IterationParticipant peerA = new IterationParticipant(peer_000, distance(target, peer_000.getId()));
-    IterationParticipant peerB = new IterationParticipant(peer_010, distance(target, peer_010.getId()));
-    IterationParticipant peerC = new IterationParticipant(peer_011, distance(target, peer_011.getId()));
-    IterationParticipant peerD = new IterationParticipant(peer_012, distance(target, peer_012.getId()));
-    IterationParticipant peerE = new IterationParticipant(peer_013, distance(target, peer_013.getId()));
-
-    SortedMap<BytesValue, IterationParticipant> iterationParticipantMap0 = new TreeMap<>();
-
-    iterationParticipantMap0.put(peer_000.getId(), peerA);
-    iterationParticipantMap0.put(peer_011.getId(), peerC);
-    iterationParticipantMap0.put(peer_013.getId(), peerE);
-    iterationParticipantMap0.put(peer_010.getId(), peerB);
-    iterationParticipantMap0.put(peer_012.getId(), peerD);
-
-    for (Object obj : iterationParticipantMap0.entrySet()) {
-      Map.Entry<BytesValue, IterationParticipant> entry = (Map.Entry) obj;
-      System.out.print("Key: " + entry.getKey());
-      System.out.println(", Value: " + entry.getValue());
-    }
-
-    System.out.println("-------");
-
-    SortedMap<BytesValue, IterationParticipant> iterationParticipantMap1 = putFirstEntries(3, iterationParticipantMap0);
-
-    for (Object obj : iterationParticipantMap1.entrySet()) {
-      Map.Entry<BytesValue, IterationParticipant> entry = (Map.Entry) obj;
-      System.out.print("Key: " + entry.getKey());
-      System.out.println(", Value: " + entry.getValue());
-    }
-
-  }
-
-  public static SortedMap<BytesValue, IterationParticipant> putFirstEntries(int max, SortedMap<BytesValue, IterationParticipant> source) {
-    int count = 0;
-    TreeMap<BytesValue, IterationParticipant> target = new TreeMap<>();
-    for (Map.Entry<BytesValue, IterationParticipant> entry:source.entrySet()) {
-      if (count >= max) break;
-      target.put(entry.getKey(), entry.getValue());
-      count++;
-    }
-    return target;
-  }
 
 }
