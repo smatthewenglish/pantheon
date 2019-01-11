@@ -17,6 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PeerDistanceCalculator.distance;
 
 import tech.pegasys.pantheon.ethereum.p2p.discovery.DiscoveryPeer;
 import tech.pegasys.pantheon.ethereum.p2p.peers.Endpoint;
@@ -27,6 +28,10 @@ import tech.pegasys.pantheon.util.bytes.BytesValue;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.SortedMap;
+import java.util.TreeMap;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -328,4 +333,130 @@ public class RecursivePeerRefreshStateTest {
       return parent + "." + tier + "." + identifier;
     }
   }
+
+  public class IterationParticipant implements Comparable<IterationParticipant> {
+    DiscoveryPeer peer;
+    Integer distance;
+
+    boolean bondEvaluated;
+    boolean bondQueried;
+    boolean bondResponded;
+
+    boolean neighbourEvaluated;
+    boolean neighbourQueried;
+    boolean neighbourResponded;
+
+    @Override
+    public int compareTo(final IterationParticipant o) {
+      if (this.distance > o.distance)
+        return 1;
+      return -1;
+    }
+
+    public IterationParticipant(final DiscoveryPeer peer, final Integer distance) {
+      this.peer = peer;
+      this.distance = distance;
+
+      this.bondEvaluated = false;
+      this.bondQueried = false;
+      this.bondResponded = false;
+
+      this.neighbourEvaluated = false;
+      this.neighbourQueried = false;
+      this.neighbourResponded = false;
+    }
+
+    DiscoveryPeer getPeer() {
+      return peer;
+    }
+
+    public Integer getDistance() {
+      return distance;
+    }
+
+    void setBondQueried() {
+      this.bondQueried = true;
+    }
+
+    void setBondResponded() {
+      this.bondResponded = true;
+    }
+
+    void setBondEvaluation() {
+      this.bondEvaluated = true;
+    }
+
+    boolean getBondQueried() {
+      return bondQueried;
+    }
+
+    boolean getBondResponded() {
+      return bondResponded;
+    }
+
+    boolean getBondEvaluation() {
+      return bondEvaluated;
+    }
+
+    void setNeighbourQueried() {
+      this.neighbourQueried = true;
+    }
+
+    void setNeighbourResponded() {
+      this.neighbourResponded = true;
+    }
+
+    void setNeighbourEvaluation() {
+      this.neighbourEvaluated = true;
+    }
+
+    boolean getNeighbourEvaluation() {
+      return neighbourEvaluated;
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      final IterationParticipant that = (IterationParticipant) o;
+      return Objects.equals(peer.getId(), that.peer.getId());
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(peer.getId());
+    }
+
+    @Override
+    public String toString() {
+      return peer + ": " + distance;
+    }
+  }
+
+  @Test
+  public void testSort() {
+
+    IterationParticipant peerA = new IterationParticipant(peer_000, distance(target, peer_000.getId()));
+    IterationParticipant peerB = new IterationParticipant(peer_010, distance(target, peer_010.getId()));
+    IterationParticipant peerC = new IterationParticipant(peer_011, distance(target, peer_011.getId()));
+    IterationParticipant peerD = new IterationParticipant(peer_012, distance(target, peer_012.getId()));
+    IterationParticipant peerE = new IterationParticipant(peer_013, distance(target, peer_013.getId()));
+
+    SortedMap<BytesValue, IterationParticipant> iterationParticipantMap = new TreeMap<>();
+
+    iterationParticipantMap.put(peer_000.getId(), peerA);
+    iterationParticipantMap.put(peer_011.getId(), peerC);
+    iterationParticipantMap.put(peer_013.getId(), peerE);
+    iterationParticipantMap.put(peer_010.getId(), peerB);
+    iterationParticipantMap.put(peer_012.getId(), peerD);
+
+
+    for (Object obj : iterationParticipantMap.entrySet()) {
+      Map.Entry<BytesValue, IterationParticipant> entry = (Map.Entry) obj;
+      System.out.print("Key: " + entry.getKey());
+      System.out.println(", Value: " + entry.getValue());
+    }
+
+  }
+
 }
