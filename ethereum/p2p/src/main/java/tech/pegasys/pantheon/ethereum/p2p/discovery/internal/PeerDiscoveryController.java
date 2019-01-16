@@ -188,6 +188,10 @@ public class PeerDiscoveryController {
    * @param sender The sender.
    */
   public void onMessage(final Packet packet, final DiscoveryPeer sender) {
+
+    System.out.println("16");
+
+
     LOG.trace(
         "<<< Received {} discovery packet from {} ({}): {}",
         packet.getType(),
@@ -232,9 +236,11 @@ public class PeerDiscoveryController {
         recursivePeerRefreshState.onPongPacketReceived(peer);
         break;
       case NEIGHBORS:
+
+        System.out.println("NEIGHBORS");
+
         peer.setStatus(DiscoveryPeerStatus.RECEIVED_NEIGHBOURS_FROM);
-        recursivePeerRefreshState.onNeighboursPacketReceived(
-            peer, packet.getPacketData(NeighborsPacketData.class).orElse(null));
+        recursivePeerRefreshState.onNeighboursPacketReceived(peer, packet.getPacketData(NeighborsPacketData.class).orElse(null));
         break;
       case FIND_NEIGHBORS:
         if (!peerKnown) {
@@ -298,9 +304,11 @@ public class PeerDiscoveryController {
    * @param peer The targeted peer.
    */
   void dispatchPing(final DiscoveryPeer peer) {
+
+    System.out.println("---> sending out a ping...");
+
     peer.setFirstDiscovered(System.currentTimeMillis());
-    final PingPacketData pingPacketData =
-        PingPacketData.create(localPeer.getEndpoint(), peer.getEndpoint());
+    final PingPacketData pingPacketData = PingPacketData.create(localPeer.getEndpoint(), peer.getEndpoint());
     sendPacket(peer, PacketType.PING, pingPacketData);
     peer.setStatus(DiscoveryPeerStatus.DISPATCHED_PING_TO);
   }
@@ -312,13 +320,18 @@ public class PeerDiscoveryController {
    * @param target the target node ID to find
    */
   private void dispatchFindNeighbours(final DiscoveryPeer peer, final BytesValue target) {
+
+    System.out.println("!!!!!!!  sending out a FIND NEIGHBOURS");
+
     final FindNeighborsPacketData findNeighborsPacketData = FindNeighborsPacketData.create(target);
     sendPacket(peer, PacketType.FIND_NEIGHBORS, findNeighborsPacketData);
     peer.setStatus(DiscoveryPeerStatus.DISPATCHED_FIND_NEIGHBOURS_TO);
   }
 
-  private void respondToPing(
-      final DiscoveryPeer peer, final PingPacketData packetData, final BytesValue pingHash) {
+  private void respondToPing(final DiscoveryPeer peer, final PingPacketData packetData, final BytesValue pingHash) {
+
+    System.out.println("---> sending out a PONG...");
+
     final PongPacketData pongPacketData = PongPacketData.create(packetData.getFrom(), pingHash);
     sendPacket(peer, PacketType.PONG, pongPacketData);
     peer.setStatus(DiscoveryPeerStatus.DISPATCHED_PONG_TO);
@@ -341,8 +354,7 @@ public class PeerDiscoveryController {
   }
 
   // Dispatches an event to a set of observers.
-  private <T extends PeerDiscoveryEvent> void dispatchEvent(
-      final Subscribers<Consumer<T>> observers, final T event) {
+  private <T extends PeerDiscoveryEvent> void dispatchEvent(final Subscribers<Consumer<T>> observers, final T event) {
     observers.forEach(observer -> observer.accept(event));
   }
 

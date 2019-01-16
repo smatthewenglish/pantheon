@@ -47,6 +47,9 @@ public class MockPeerDiscoveryAgent extends PeerDiscoveryAgent {
   public void processIncomingPacket(final MockPeerDiscoveryAgent fromAgent, final Packet packet) {
     // Cycle packet through encode / decode to make clone of any data
     // This ensures that any data passed between agents is not shared
+
+    System.out.println("packet 19-2000 B: " + packet.getType());
+
     final Packet packetClone = Packet.decode(packet.encode());
     incomingPackets.add(new IncomingPacket(fromAgent, packetClone));
     handleIncomingPacket(fromAgent.getAdvertisedPeer().getEndpoint(), packetClone);
@@ -81,6 +84,9 @@ public class MockPeerDiscoveryAgent extends PeerDiscoveryAgent {
           new Exception(
               "Attempt to send to unknown peer.  Agents must be constructed through PeerDiscoveryTestHelper."));
     } else {
+
+      System.out.println("packet 19-2000 A: " + packet.getType());
+
       toAgent.processIncomingPacket(this, packet);
       result.complete(null);
     }
