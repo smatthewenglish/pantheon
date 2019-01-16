@@ -16,11 +16,12 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PeerTable.AddResult.Outcome;
 
+import tech.pegasys.pantheon.crypto.SECP256K1;
+import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.DiscoveryPeer;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.DiscoveryPeerStatus;
-import tech.pegasys.pantheon.ethereum.p2p.discovery.PeerDiscoveryAgent;
+import tech.pegasys.pantheon.ethereum.p2p.discovery.PeerDiscoveryEvent;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.PeerDiscoveryEvent.PeerBondedEvent;
-import tech.pegasys.pantheon.ethereum.p2p.discovery.PeerDiscoveryEvent.PeerDroppedEvent;
 import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
 import tech.pegasys.pantheon.ethereum.p2p.peers.PeerBlacklist;
 import tech.pegasys.pantheon.ethereum.p2p.permissioning.NodeWhitelistController;
@@ -36,7 +37,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-import io.vertx.core.Vertx;
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -88,14 +89,17 @@ public class PeerDiscoveryController {
 
   private static final Logger LOG = LogManager.getLogger();
   private static final long REFRESH_CHECK_INTERVAL_MILLIS = MILLISECONDS.convert(30, SECONDS);
-  private final Vertx vertx;
+  protected final TimerUtil timerUtil;
   private final PeerTable peerTable;
 
   private final Collection<DiscoveryPeer> bootstrapNodes;
 
   private final AtomicBoolean started = new AtomicBoolean(false);
 
-  private final PeerDiscoveryAgent agent;
+  private final SECP256K1.KeyPair keypair;
+  // The peer representation of this node
+  private final DiscoveryPeer localPeer;
+  private final OutboundMessageHandler outboundMessageHandler;
   private final PeerBlacklist peerBlacklist;
   private final NodeWhitelistController nodeWhitelist;
 
@@ -108,32 +112,35 @@ public class PeerDiscoveryController {
   private OptionalLong tableRefreshTimerId = OptionalLong.empty();
 
   // Observers for "peer bonded" discovery events.
-  private final Subscribers<Consumer<PeerBondedEvent>> peerBondedObservers = new Subscribers<>();
-
-  // Observers for "peer dropped" discovery events.
-  private final Subscribers<Consumer<PeerDroppedEvent>> peerDroppedObservers = new Subscribers<>();
+  private final Subscribers<Consumer<PeerBondedEvent>> peerBondedObservers;
 
   private RecursivePeerRefreshState recursivePeerRefreshState;
 
   private final BytesValue target = Peer.randomId();
 
   public PeerDiscoveryController(
-          final Vertx vertx,
-          final PeerDiscoveryAgent agent,
-          final PeerTable peerTable,
-          final Collection<DiscoveryPeer> bootstrapNodes,
-          final long tableRefreshIntervalMs,
-          final PeerRequirement peerRequirement,
-          final PeerBlacklist peerBlacklist,
-          final NodeWhitelistController nodeWhitelist) {
-    this.vertx = vertx;
-    this.agent = agent;
+      final KeyPair keypair,
+      final DiscoveryPeer localPeer,
+      final PeerTable peerTable,
+      final Collection<DiscoveryPeer> bootstrapNodes,
+      final OutboundMessageHandler outboundMessageHandler,
+      final TimerUtil timerUtil,
+      final long tableRefreshIntervalMs,
+      final PeerRequirement peerRequirement,
+      final PeerBlacklist peerBlacklist,
+      final NodeWhitelistController nodeWhitelist,
+      final Subscribers<Consumer<PeerBondedEvent>> peerBondedObservers) {
+    this.timerUtil = timerUtil;
+    this.keypair = keypair;
+    this.localPeer = localPeer;
     this.bootstrapNodes = bootstrapNodes;
     this.peerTable = peerTable;
     this.tableRefreshIntervalMs = tableRefreshIntervalMs;
     this.peerRequirement = peerRequirement;
     this.peerBlacklist = peerBlacklist;
     this.nodeWhitelist = nodeWhitelist;
+    this.outboundMessageHandler = outboundMessageHandler;
+    this.peerBondedObservers = peerBondedObservers;
   }
 
   public BytesValue getTarget() {
@@ -144,27 +151,19 @@ public class PeerDiscoveryController {
     if (!started.compareAndSet(false, true)) {
       throw new IllegalStateException("The peer table had already been started");
     }
-    bootstrapNodes
-            .stream()
-            .filter(nodeWhitelist::contains)
-            .forEach(
-                    bootstrapPeer -> {
-                      bootstrapPeer.setFirstDiscovered(System.currentTimeMillis());
-                      bootstrapPeer.setLastSeen(System.currentTimeMillis());
-                      peerTable.tryAdd(bootstrapPeer);
-                    });
 
+    bootstrapNodes.stream().filter(nodeWhitelist::contains).forEach(peerTable::tryAdd);
     recursivePeerRefreshState =
-            new RecursivePeerRefreshState(
-                    target, peerBlacklist, nodeWhitelist, this::dispatchPing, this::dispatchFindNeighbours);
+        new RecursivePeerRefreshState(
+            target, peerBlacklist, nodeWhitelist, this::dispatchPing, this::dispatchFindNeighbours);
     recursivePeerRefreshState.kickstartBootstrapPeers(
-            bootstrapNodes.stream().filter(nodeWhitelist::contains).collect(Collectors.toList()));
+        bootstrapNodes.stream().filter(nodeWhitelist::contains).collect(Collectors.toList()));
     recursivePeerRefreshState.start();
 
     final long timerId =
-            vertx.setPeriodic(
-                    Math.min(REFRESH_CHECK_INTERVAL_MILLIS, tableRefreshIntervalMs),
-                    (l) -> refreshTableIfRequired());
+        timerUtil.setPeriodic(
+            Math.min(REFRESH_CHECK_INTERVAL_MILLIS, tableRefreshIntervalMs),
+            () -> refreshTableIfRequired());
     tableRefreshTimerId = OptionalLong.of(timerId);
 
     return CompletableFuture.completedFuture(null);
@@ -174,7 +173,8 @@ public class PeerDiscoveryController {
     if (!started.compareAndSet(true, false)) {
       return CompletableFuture.completedFuture(null);
     }
-    tableRefreshTimerId.ifPresent(vertx::cancelTimer);
+
+    tableRefreshTimerId.ifPresent(timerUtil::cancelTimer);
     tableRefreshTimerId = OptionalLong.empty();
     return CompletableFuture.completedFuture(null);
   }
@@ -192,13 +192,16 @@ public class PeerDiscoveryController {
    */
   public void onMessage(final Packet packet, final DiscoveryPeer sender) {
     LOG.trace(
-            "<<< Received {} discovery packet from {} ({}): {}",
-            packet.getType(),
-            sender.getEndpoint(),
-            sender.getId().slice(0, 16),
-            packet);
+        "<<< Received {} discovery packet from {} ({}): {}",
+        packet.getType(),
+        sender.getEndpoint(),
+        sender.getId().slice(0, 16),
+        packet);
     // Message from self. This should not happen.
-    if (sender.getId().equals(agent.getAdvertisedPeer().getId())) {
+    if (sender.getId().equals(localPeer.getId())) {
+      return;
+    }
+    if (!nodeWhitelist.isPermitted(sender)) {
       return;
     }
     // Load the peer from the table, or use the instance that comes in.
@@ -206,9 +209,11 @@ public class PeerDiscoveryController {
     final DiscoveryPeer peer = maybeKnownPeer.orElse(sender);
     final boolean peerKnown = maybeKnownPeer.isPresent();
     final boolean peerBlacklisted = peerBlacklist.contains(peer);
-    if (!nodeWhitelist.contains(sender) || peerBlacklisted) {
+
+    if (peerBlacklisted) {
       return;
     }
+
     final long now = System.currentTimeMillis();
     if (peer.getFirstDiscovered() == 0) {
       peer.setFirstDiscovered(now);
@@ -224,6 +229,7 @@ public class PeerDiscoveryController {
         }
         break;
       case PONG:
+        notifyPeerBonded(peer, now);
         peer.setStatus(DiscoveryPeerStatus.RECEIVED_PONG_FROM);
         addToPeerTable(peer);
         recursivePeerRefreshState.onPongPacketReceived(peer);
@@ -231,15 +237,14 @@ public class PeerDiscoveryController {
       case NEIGHBORS:
         peer.setStatus(DiscoveryPeerStatus.RECEIVED_NEIGHBOURS_FROM);
         recursivePeerRefreshState.onNeighboursPacketReceived(
-                peer, packet.getPacketData(NeighborsPacketData.class).orElse(null));
+            peer, packet.getPacketData(NeighborsPacketData.class).orElse(null));
         break;
       case FIND_NEIGHBORS:
-        peer.setStatus(DiscoveryPeerStatus.DISPATCHED_NEIGHBOURS_TO);
         if (!peerKnown) {
           break;
         }
         final FindNeighborsPacketData findNeighborsPacketData =
-                packet.getPacketData(FindNeighborsPacketData.class).get();
+            packet.getPacketData(FindNeighborsPacketData.class).get();
         respondToFindNeighbors(peer, findNeighborsPacketData);
         break;
     }
@@ -280,6 +285,16 @@ public class PeerDiscoveryController {
     lastRefreshTime = System.currentTimeMillis();
   }
 
+  private void sendPacket(final DiscoveryPeer peer, final PacketType type, final PacketData data) {
+    final Packet packet = createPacket(type, data);
+    outboundMessageHandler.send(peer, packet);
+  }
+
+  @VisibleForTesting
+  Packet createPacket(final PacketType type, final PacketData data) {
+    return Packet.create(type, data, keypair);
+  }
+
   /**
    * Initiates a bonding PING-PONG cycle with a peer.
    *
@@ -288,8 +303,8 @@ public class PeerDiscoveryController {
   void dispatchPing(final DiscoveryPeer peer) {
     peer.setFirstDiscovered(System.currentTimeMillis());
     final PingPacketData pingPacketData =
-            PingPacketData.create(agent.getAdvertisedPeer().getEndpoint(), peer.getEndpoint());
-    agent.sendPacket(peer, PacketType.PING, pingPacketData);
+        PingPacketData.create(localPeer.getEndpoint(), peer.getEndpoint());
+    sendPacket(peer, PacketType.PING, pingPacketData);
     peer.setStatus(DiscoveryPeerStatus.DISPATCHED_PING_TO);
   }
 
@@ -301,24 +316,37 @@ public class PeerDiscoveryController {
    */
   private void dispatchFindNeighbours(final DiscoveryPeer peer, final BytesValue target) {
     final FindNeighborsPacketData findNeighborsPacketData = FindNeighborsPacketData.create(target);
-    agent.sendPacket(peer, PacketType.FIND_NEIGHBORS, findNeighborsPacketData);
+    sendPacket(peer, PacketType.FIND_NEIGHBORS, findNeighborsPacketData);
     peer.setStatus(DiscoveryPeerStatus.DISPATCHED_FIND_NEIGHBOURS_TO);
   }
 
   private void respondToPing(
-          final DiscoveryPeer peer, final PingPacketData packetData, final BytesValue pingHash) {
+      final DiscoveryPeer peer, final PingPacketData packetData, final BytesValue pingHash) {
     final PongPacketData pongPacketData = PongPacketData.create(packetData.getFrom(), pingHash);
-    agent.sendPacket(peer, PacketType.PONG, pongPacketData);
+    sendPacket(peer, PacketType.PONG, pongPacketData);
     peer.setStatus(DiscoveryPeerStatus.DISPATCHED_PONG_TO);
+    notifyPeerBonded(peer, System.currentTimeMillis());
   }
 
   private void respondToFindNeighbors(
-          final DiscoveryPeer peer, final FindNeighborsPacketData packetData) {
+      final DiscoveryPeer peer, final FindNeighborsPacketData packetData) {
     // TODO: for now return 16 peers. Other implementations calculate how many
     // peers they can fit in a 1280-byte payload.
     final List<DiscoveryPeer> peers = peerTable.nearestPeers(packetData.getTarget(), 16);
     final NeighborsPacketData neighborsPacketData = NeighborsPacketData.create(peers);
-    agent.sendPacket(peer, PacketType.NEIGHBORS, neighborsPacketData);
+    sendPacket(peer, PacketType.NEIGHBORS, neighborsPacketData);
+    peer.setStatus(DiscoveryPeerStatus.DISPATCHED_NEIGHBOURS_TO);
+  }
+
+  private void notifyPeerBonded(final DiscoveryPeer peer, final long now) {
+    final PeerBondedEvent event = new PeerBondedEvent(peer, now);
+    dispatchEvent(peerBondedObservers, event);
+  }
+
+  // Dispatches an event to a set of observers.
+  private <T extends PeerDiscoveryEvent> void dispatchEvent(
+      final Subscribers<Consumer<T>> observers, final T event) {
+    observers.forEach(observer -> observer.accept(event));
   }
 
   /**

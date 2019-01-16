@@ -18,41 +18,41 @@ import java.util.List;
 /** The bonded of a {@link DiscoveryPeer}, in relation to the peer discovery state machine. */
 public enum DiscoveryPeerStatus {
 
-    /**
-     * Represents a newly discovered {@link DiscoveryPeer}, prior to commencing the bonding exchange.
-     */
-    KNOWN,
+  /**
+   * Represents a newly discovered {@link DiscoveryPeer}, prior to commencing the bonding exchange.
+   */
+  KNOWN,
 
-    DISPATCHED_PING_TO,
+  DISPATCHED_PING_TO,
 
-    RECEIVED_PING_FROM,
+  RECEIVED_PING_FROM,
 
-    DISPATCHED_PONG_TO,
+  DISPATCHED_PONG_TO,
 
-    RECEIVED_PONG_FROM,
+  RECEIVED_PONG_FROM,
 
-    DISPATCHED_FIND_NEIGHBOURS_TO, // We are asking for their neighbours.
+  DISPATCHED_FIND_NEIGHBOURS_TO, // We are asking for their neighbours.
 
-    RECEIVED_FIND_NEIGHBOURS_FROM, // They are asking for our neighbours.
+  RECEIVED_FIND_NEIGHBOURS_FROM, // They are asking for our neighbours.
 
-    DISPATCHED_NEIGHBOURS_TO, // We are sending them our neighbours.
+  DISPATCHED_NEIGHBOURS_TO, // We are sending them our neighbours.
 
-    RECEIVED_NEIGHBOURS_FROM; // They are sending up their neighbours.
+  RECEIVED_NEIGHBOURS_FROM; // They are sending up their neighbours.
 
-    @Override
-    public String toString() {
-        return name().toLowerCase();
-    }
+  @Override
+  public String toString() {
+    return name().toLowerCase();
+  }
 
-    public static class Lifecycle {
-        public static final List<DiscoveryPeerStatus> bonded =
-                Arrays.asList(
-                        DiscoveryPeerStatus.DISPATCHED_PING_TO,
-                        DiscoveryPeerStatus.DISPATCHED_PONG_TO,
-                        DiscoveryPeerStatus.RECEIVED_PONG_FROM,
-                        DiscoveryPeerStatus.DISPATCHED_FIND_NEIGHBOURS_TO,
-                        DiscoveryPeerStatus.RECEIVED_FIND_NEIGHBOURS_FROM,
-                        DiscoveryPeerStatus.DISPATCHED_NEIGHBOURS_TO,
-                        DiscoveryPeerStatus.RECEIVED_NEIGHBOURS_FROM);
-    }
+  public static class Lifecycle {
+    public static final List<DiscoveryPeerStatus> bonded =
+        Arrays.asList(
+            DiscoveryPeerStatus.DISPATCHED_PING_TO,
+            DiscoveryPeerStatus.DISPATCHED_PONG_TO,
+            DiscoveryPeerStatus.RECEIVED_PONG_FROM,
+            DiscoveryPeerStatus.DISPATCHED_FIND_NEIGHBOURS_TO,
+            DiscoveryPeerStatus.RECEIVED_FIND_NEIGHBOURS_FROM,
+            DiscoveryPeerStatus.DISPATCHED_NEIGHBOURS_TO,
+            DiscoveryPeerStatus.RECEIVED_NEIGHBOURS_FROM);
+  }
 }
