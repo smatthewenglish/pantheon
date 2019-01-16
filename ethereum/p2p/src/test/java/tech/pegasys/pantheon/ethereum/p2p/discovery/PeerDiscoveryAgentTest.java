@@ -13,6 +13,7 @@
 package tech.pegasys.pantheon.ethereum.p2p.discovery;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 
 import tech.pegasys.pantheon.ethereum.p2p.api.MessageData;
 import tech.pegasys.pantheon.ethereum.p2p.api.PeerConnection;
@@ -33,6 +34,7 @@ import java.net.SocketAddress;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import org.junit.Test;
@@ -59,10 +61,9 @@ public class PeerDiscoveryAgentTest {
   }
 
   @Test
-  public void neighborsPacketLimited() {
+  public void neighborsPacketLimited() throws InterruptedException {
     // Start 20 agents with no bootstrap peers.
-    final List<MockPeerDiscoveryAgent> otherAgents =
-        helper.startDiscoveryAgents(20, Collections.emptyList());
+    final List<MockPeerDiscoveryAgent> otherAgents = helper.startDiscoveryAgents(20, Collections.emptyList());
     final List<DiscoveryPeer> otherPeers =
         otherAgents
             .stream()
@@ -72,7 +73,9 @@ public class PeerDiscoveryAgentTest {
     // Start another peer pointing to those 20 agents.
     final MockPeerDiscoveryAgent agent = helper.startDiscoveryAgent(otherPeers);
     assertThat(agent.getPeers()).hasSize(20);
-    assertThat(agent.getPeers()).allMatch(p -> p.getStatus() == PeerDiscoveryStatus.BONDED);
+    for (DiscoveryPeer peer : agent.getPeers()) {
+      assertThat(DiscoveryPeerStatus.Lifecycle.bonded.contains(peer.getStatus())).isTrue();
+    }
 
     // Use additional agent to exchange messages with agent
     final MockPeerDiscoveryAgent testAgent = helper.startDiscoveryAgent();
