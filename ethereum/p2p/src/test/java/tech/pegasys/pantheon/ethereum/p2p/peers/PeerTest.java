@@ -17,6 +17,7 @@ import static org.junit.Assert.assertNotEquals;
 import static tech.pegasys.pantheon.util.bytes.BytesValue.fromHexString;
 
 import tech.pegasys.pantheon.ethereum.p2p.discovery.DiscoveryPeer;
+import tech.pegasys.pantheon.ethereum.p2p.discovery.DiscoveryPeerStatus;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import org.junit.Test;
@@ -114,7 +115,7 @@ public class PeerTest {
   @Test
   public void getStatus() {
     final DiscoveryPeer peer = new DiscoveryPeer(Peer.randomId(), "127.0.0.1", 5000);
-    assertEquals(PeerDiscoveryStatus.KNOWN, peer.getStatus());
+    assertEquals(DiscoveryPeerStatus.KNOWN, peer.getStatus());
   }
 
   @Test
