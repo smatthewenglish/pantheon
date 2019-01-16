@@ -69,12 +69,9 @@ class RecursivePeerRefreshState {
         bondingRoundCandidates(oneTrueMap.size(), oneTrueMap);
 
     for (DiscoveryPeer discoPeer : bondingRoundCandidatesList) {
-      pingDispatcher.ping(discoPeer);
-
-      System.out.println("--> PING: " + discoPeer.getId());
-
       final MetadataPeer metadataPeer = oneTrueMap.get(discoPeer.getId());
       metadataPeer.setBondQueried();
+      pingDispatcher.ping(discoPeer);
     }
   }
 
@@ -88,9 +85,6 @@ class RecursivePeerRefreshState {
     final List<DiscoveryPeer> neighboursRoundCandidatesList = neighboursRoundCandidates(3, oneTrueMap);
 
     for (DiscoveryPeer discoPeer : neighboursRoundCandidatesList) {
-
-      System.out.println("--> FIND NEIGHBOURS: " + discoPeer.getId());
-
       findNeighbourDispatcher.findNeighbours(discoPeer, target);
       final MetadataPeer metadataPeer = oneTrueMap.get(discoPeer.getId());
       metadataPeer.setNeighbourQueried();

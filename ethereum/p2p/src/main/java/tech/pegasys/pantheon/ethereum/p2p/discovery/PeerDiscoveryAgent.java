@@ -102,8 +102,7 @@ public abstract class PeerDiscoveryAgent implements DisconnectCallback {
     this.peerRequirement = peerRequirement;
     this.peerBlacklist = peerBlacklist;
     this.nodeWhitelistController = nodeWhitelistController;
-    this.bootstrapPeers =
-        config.getBootstrapPeers().stream().map(DiscoveryPeer::new).collect(Collectors.toList());
+    this.bootstrapPeers = config.getBootstrapPeers().stream().map(DiscoveryPeer::new).collect(Collectors.toList());
 
     this.config = config;
     this.keyPair = keyPair;
@@ -159,7 +158,7 @@ public abstract class PeerDiscoveryAgent implements DisconnectCallback {
   }
 
   private void startController() {
-    PeerDiscoveryController controller = createController();
+    final PeerDiscoveryController controller = createController();
     this.controller = Optional.of(controller);
     controller.start();
   }
@@ -184,6 +183,9 @@ public abstract class PeerDiscoveryAgent implements DisconnectCallback {
   }
 
   protected void handleIncomingPacket(final Endpoint sourceEndpoint, final Packet packet) {
+
+    System.out.println("0-0-0-0-0-0-0-0");
+
     OptionalInt tcpPort = OptionalInt.empty();
     if (packet.getPacketData(PingPacketData.class).isPresent()) {
       final PingPacketData ping = packet.getPacketData(PingPacketData.class).orElseGet(null);
