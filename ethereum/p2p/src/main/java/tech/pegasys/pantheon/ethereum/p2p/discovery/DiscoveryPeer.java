@@ -24,7 +24,7 @@ import java.util.OptionalInt;
  * Represents an Ethereum node that we interacting with through the discovery and wire protocols.
  */
 public class DiscoveryPeer extends DefaultPeer {
-  private PeerDiscoveryStatus status = PeerDiscoveryStatus.KNOWN;
+  private DiscoveryPeerStatus status = DiscoveryPeerStatus.KNOWN;
 
   // Timestamps.
   private long firstDiscovered = 0;
@@ -53,11 +53,11 @@ public class DiscoveryPeer extends DefaultPeer {
     super(peer.getId(), peer.getEndpoint());
   }
 
-  public PeerDiscoveryStatus getStatus() {
+  public DiscoveryPeerStatus getStatus() {
     return status;
   }
 
-  public void setStatus(final PeerDiscoveryStatus status) {
+  public void setStatus(final DiscoveryPeerStatus status) {
     this.status = status;
   }
 
