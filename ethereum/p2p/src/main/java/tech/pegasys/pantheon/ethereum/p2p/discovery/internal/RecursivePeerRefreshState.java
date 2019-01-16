@@ -39,11 +39,11 @@ class RecursivePeerRefreshState {
   private final SortedMap<BytesValue, MetadataPeer> oneTrueMap;
 
   RecursivePeerRefreshState(
-          final BytesValue target,
-          final PeerBlacklist peerBlacklist,
-          final NodeWhitelistController peerWhitelist,
-          final PingDispatcher bondingAgent,
-          final FindNeighbourDispatcher neighborFinder) {
+      final BytesValue target,
+      final PeerBlacklist peerBlacklist,
+      final NodeWhitelistController peerWhitelist,
+      final PingDispatcher bondingAgent,
+      final FindNeighbourDispatcher neighborFinder) {
     this.target = target;
     this.peerBlacklist = peerBlacklist;
     this.peerWhitelist = peerWhitelist;
@@ -59,7 +59,7 @@ class RecursivePeerRefreshState {
   void kickstartBootstrapPeers(final List<DiscoveryPeer> bootstrapPeers) {
     for (DiscoveryPeer bootstrapPeer : bootstrapPeers) {
       final MetadataPeer iterationParticipant =
-              new MetadataPeer(bootstrapPeer, distance(target, bootstrapPeer.getId()));
+          new MetadataPeer(bootstrapPeer, distance(target, bootstrapPeer.getId()));
       oneTrueMap.put(bootstrapPeer.getId(), iterationParticipant);
     }
   }
@@ -84,7 +84,7 @@ class RecursivePeerRefreshState {
     // TODO: Terminating condition...
 
     final List<DiscoveryPeer> neighboursRoundCandidatesList =
-            neighboursRoundCandidates(3, oneTrueMap);
+        neighboursRoundCandidates(3, oneTrueMap);
 
     for (DiscoveryPeer discoPeer : neighboursRoundCandidatesList) {
 
@@ -103,7 +103,7 @@ class RecursivePeerRefreshState {
    * our one true map.
    */
   void onNeighboursPacketReceived(
-          final DiscoveryPeer peer, final NeighborsPacketData neighboursPacket) {
+      final DiscoveryPeer peer, final NeighborsPacketData neighboursPacket) {
 
     final MetadataPeer metadataPeer = oneTrueMap.get(peer.getId());
 
@@ -112,11 +112,11 @@ class RecursivePeerRefreshState {
     for (DiscoveryPeer receivedDiscoPeer : receivedPeerList) {
 
       if (!oneTrueMap.containsKey(receivedDiscoPeer.getId())
-              && !peerBlacklist.contains(receivedDiscoPeer)
-              && peerWhitelist.contains(receivedDiscoPeer)) {
+          && !peerBlacklist.contains(receivedDiscoPeer)
+          && peerWhitelist.contains(receivedDiscoPeer)) {
 
         final MetadataPeer receivedMetadataPeer =
-                new MetadataPeer(receivedDiscoPeer, distance(target, receivedDiscoPeer.getId()));
+            new MetadataPeer(receivedDiscoPeer, distance(target, receivedDiscoPeer.getId()));
         oneTrueMap.put(receivedDiscoPeer.getId(), receivedMetadataPeer);
       }
     }
@@ -145,7 +145,7 @@ class RecursivePeerRefreshState {
     for (Map.Entry<BytesValue, MetadataPeer> entry : oneTrueMap.entrySet()) {
       final MetadataPeer metadataPeer = entry.getValue();
       if (metadataPeer.getNeighbourQueried()
-              && !(metadataPeer.getNeighbourResponded() || metadataPeer.getNeighbourCancelled())) {
+          && !(metadataPeer.getNeighbourResponded() || metadataPeer.getNeighbourCancelled())) {
         return false;
       }
     }
@@ -156,7 +156,7 @@ class RecursivePeerRefreshState {
     for (Map.Entry<BytesValue, MetadataPeer> entry : oneTrueMap.entrySet()) {
       final MetadataPeer metadataPeer = entry.getValue();
       if (metadataPeer.getBondQueried()
-              && !(metadataPeer.getBondResponded() || metadataPeer.getBondCancelled())) {
+          && !(metadataPeer.getBondResponded() || metadataPeer.getBondCancelled())) {
         return false;
       }
     }
@@ -164,7 +164,7 @@ class RecursivePeerRefreshState {
   }
 
   private List<DiscoveryPeer> bondingRoundCandidates(
-          final int max, final SortedMap<BytesValue, MetadataPeer> source) {
+      final int max, final SortedMap<BytesValue, MetadataPeer> source) {
     final int threshold = Math.min(oneTrueMap.size(), max);
 
     final List<DiscoveryPeer> candidatesList = new ArrayList<>();
@@ -178,11 +178,11 @@ class RecursivePeerRefreshState {
       final MetadataPeer candidate = candidateEntry.getValue();
 
       if (!candidate.getNeighbourCancelled()
-              && !candidate.getNeighbourResponded()
-              && !candidate.getNeighbourQueried()
-              && !candidate.getBondCancelled()
-              && !candidate.getBondResponded()
-              && !candidate.getBondQueried()) {
+          && !candidate.getNeighbourResponded()
+          && !candidate.getNeighbourQueried()
+          && !candidate.getBondCancelled()
+          && !candidate.getBondResponded()
+          && !candidate.getBondQueried()) {
 
         candidatesList.add(candidate.getPeer());
         count++;
@@ -192,7 +192,7 @@ class RecursivePeerRefreshState {
   }
 
   private List<DiscoveryPeer> neighboursRoundCandidates(
-          final int max, final SortedMap<BytesValue, MetadataPeer> source) {
+      final int max, final SortedMap<BytesValue, MetadataPeer> source) {
     final int threshold = Math.min(oneTrueMap.size(), max);
 
     final List<DiscoveryPeer> candidatesList = new ArrayList<>();
