@@ -16,16 +16,27 @@ import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 
+import io.vertx.core.Vertx;
+import tech.pegasys.pantheon.crypto.SECP256K1;
+import tech.pegasys.pantheon.ethereum.p2p.config.DiscoveryConfiguration;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.MockPeerDiscoveryAgent;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.MockPeerDiscoveryAgent.IncomingPacket;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.Packet;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PacketType;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PingPacketData;
 import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
+import tech.pegasys.pantheon.ethereum.p2p.peers.PeerBlacklist;
+import tech.pegasys.pantheon.ethereum.p2p.permissioning.NodeWhitelistController;
+import tech.pegasys.pantheon.ethereum.permissioning.PermissioningConfiguration;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.Test;
 
@@ -104,29 +115,108 @@ public class PeerDiscoveryBootstrappingTest {
   }
 
   @Test
-  public void bootstrappingPeersListUpdated() {
+  public void bootstrappingPeersListUpdated() throws InterruptedException {
     // Start an agent.
     final PeerDiscoveryAgent bootstrapAgent = helper.startDiscoveryAgent(emptyList());
 
+    System.out.println("----------> " + bootstrapAgent.getAdvertisedPeer().getId());
+
     // Start other five agents, pointing to the one above as a bootstrap peer.
-    final List<MockPeerDiscoveryAgent> otherAgents =
-        helper.startDiscoveryAgents(5, singletonList(bootstrapAgent.getAdvertisedPeer()));
+    final List<MockPeerDiscoveryAgent> otherAgents = helper.startDiscoveryAgents(5, singletonList(bootstrapAgent.getAdvertisedPeer()));
+    final BytesValue[] otherPeersIds = otherAgents.stream().map(PeerDiscoveryAgent::getId).toArray(BytesValue[]::new);
 
-    final BytesValue[] otherPeersIds =
-        otherAgents.stream().map(PeerDiscoveryAgent::getId).toArray(BytesValue[]::new);
+    assertThat(bootstrapAgent.getPeers()).extracting(Peer::getId).containsExactlyInAnyOrder(otherPeersIds);
 
-    assertThat(bootstrapAgent.getPeers())
-        .extracting(Peer::getId)
-        .containsExactlyInAnyOrder(otherPeersIds);
-
-    assertThat(bootstrapAgent.getPeers())
-        .allMatch(p -> p.getStatus() == DiscoveryPeerStatus.DISPATCHED_NEIGHBOURS_TO);
+    assertThat(bootstrapAgent.getPeers()).allMatch(p -> p.getStatus() == DiscoveryPeerStatus.DISPATCHED_PONG_TO);
 
     // This agent will bootstrap off the bootstrap peer, will add all nodes returned by the latter,
     // and will
     // bond with them, ultimately adding all 7 nodes in the network to its table.
-    final PeerDiscoveryAgent newAgent =
-        helper.startDiscoveryAgent(bootstrapAgent.getAdvertisedPeer());
+    //final PeerDiscoveryAgent newAgent = helper.startDiscoveryAgent(bootstrapAgent.getAdvertisedPeer());
+
+    final DiscoveryConfiguration config = new DiscoveryConfiguration();
+    config.setBootstrapPeers(Collections.singletonList(bootstrapAgent.getAdvertisedPeer()));
+    config.setBindPort(0);
+    config.setActive(true);
+
+    final PeerDiscoveryAgent newAgent = new VertxPeerDiscoveryAgent(
+            Vertx.vertx(),
+            SECP256K1.KeyPair.generate(),
+            config,
+            () -> true,
+            new PeerBlacklist(),
+            new NodeWhitelistController(PermissioningConfiguration.createDefault()));
+    newAgent.start();
+
+    Thread.sleep(1000);
+
+    for(DiscoveryPeer peer : newAgent.getPeers()) {
+      System.out.println("newAgent " + peer.getId());
+    }
+    System.out.println("-----");
+
+    for(DiscoveryPeer peer : bootstrapAgent.getPeers()) {
+      System.out.println("bootstrapAgent " + peer.getId());
+    }
+
     assertThat(newAgent.getPeers()).hasSize(6);
+  }
+
+
+  @Test
+  public void deconstructedIncrementalUpdateBootstrapPeersList() {
+    final Vertx vertx = Vertx.vertx();
+
+    // Start an agent.
+    final DiscoveryConfiguration discoveryConfiguration0 = new DiscoveryConfiguration();
+    discoveryConfiguration0.setBootstrapPeers(emptyList());
+    discoveryConfiguration0.setBindPort(0);
+    final PeerDiscoveryAgent peerDiscoveryAgent0 = new VertxPeerDiscoveryAgent(
+            vertx,
+            SECP256K1.KeyPair.generate(),
+            discoveryConfiguration0,
+            () -> true,
+            new PeerBlacklist(),
+            new NodeWhitelistController(PermissioningConfiguration.createDefault()));
+    peerDiscoveryAgent0.start().join();
+
+    // Start another agent, pointing to the above agent as a bootstrap peer.
+    final DiscoveryConfiguration discoveryConfiguration1 = new DiscoveryConfiguration();
+    discoveryConfiguration1.setBootstrapPeers(Collections.singletonList(peerDiscoveryAgent0.getAdvertisedPeer()));
+    discoveryConfiguration1.setBindPort(0);
+    final PeerDiscoveryAgent peerDiscoveryAgent1 = new VertxPeerDiscoveryAgent(
+            vertx,
+            SECP256K1.KeyPair.generate(),
+            discoveryConfiguration1,
+            () -> true,
+            new PeerBlacklist(),
+            new NodeWhitelistController(PermissioningConfiguration.createDefault()));
+    peerDiscoveryAgent1.start().join();
+
+    await().atMost(5, TimeUnit.SECONDS)
+            .untilAsserted(() -> assertThat(peerDiscoveryAgent0.getPeers()).hasSize(1));
+    await().atMost(5, TimeUnit.SECONDS)
+            .untilAsserted(() -> assertThat(peerDiscoveryAgent1.getPeers()).hasSize(1));
+
+    // This agent will bootstrap off the bootstrap peer, will add all nodes
+    // returned by the latter, and will bond with them, ultimately adding all
+    // nodes in the network to its table.
+    final DiscoveryConfiguration discoveryConfiguration_TEST = new DiscoveryConfiguration();
+    discoveryConfiguration_TEST.setBootstrapPeers(Collections.singletonList(peerDiscoveryAgent1.getAdvertisedPeer()));
+    discoveryConfiguration_TEST.setBindPort(0);
+    final PeerDiscoveryAgent peerDiscoveryAgent_TEST = new VertxPeerDiscoveryAgent(
+            vertx,
+            SECP256K1.KeyPair.generate(),
+            discoveryConfiguration_TEST,
+            () -> true,
+            new PeerBlacklist(),
+            new NodeWhitelistController(PermissioningConfiguration.createDefault()));
+    peerDiscoveryAgent_TEST.start().join();
+
+    await()
+            .atMost(10, TimeUnit.SECONDS)
+            .untilAsserted(() -> assertThat(peerDiscoveryAgent_TEST.getPeers()).hasSize(2));
+
+    vertx.close();
   }
 }

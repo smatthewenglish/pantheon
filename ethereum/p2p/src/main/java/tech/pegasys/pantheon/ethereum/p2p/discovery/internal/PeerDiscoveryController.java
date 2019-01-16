@@ -151,11 +151,8 @@ public class PeerDiscoveryController {
     if (!started.compareAndSet(false, true)) {
       throw new IllegalStateException("The peer table had already been started");
     }
-
     bootstrapNodes.stream().filter(nodeWhitelist::contains).forEach(peerTable::tryAdd);
-    recursivePeerRefreshState =
-        new RecursivePeerRefreshState(
-            target, peerBlacklist, nodeWhitelist, this::dispatchPing, this::dispatchFindNeighbours);
+    recursivePeerRefreshState = new RecursivePeerRefreshState(target, peerBlacklist, nodeWhitelist, this::dispatchPing, this::dispatchFindNeighbours);
     recursivePeerRefreshState.kickstartBootstrapPeers(
         bootstrapNodes.stream().filter(nodeWhitelist::contains).collect(Collectors.toList()));
     recursivePeerRefreshState.start();
