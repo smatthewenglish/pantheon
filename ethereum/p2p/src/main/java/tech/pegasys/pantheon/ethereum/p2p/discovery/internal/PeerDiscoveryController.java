@@ -152,7 +152,9 @@ public class PeerDiscoveryController {
       throw new IllegalStateException("The peer table had already been started");
     }
     bootstrapNodes.stream().filter(nodeWhitelist::contains).forEach(peerTable::tryAdd);
-    recursivePeerRefreshState = new RecursivePeerRefreshState(target, peerBlacklist, nodeWhitelist, this::dispatchPing, this::dispatchFindNeighbours);
+    recursivePeerRefreshState =
+        new RecursivePeerRefreshState(
+            target, peerBlacklist, nodeWhitelist, this::dispatchPing, this::dispatchFindNeighbours);
     recursivePeerRefreshState.kickstartBootstrapPeers(
         bootstrapNodes.stream().filter(nodeWhitelist::contains).collect(Collectors.toList()));
     recursivePeerRefreshState.start();
@@ -190,7 +192,6 @@ public class PeerDiscoveryController {
   public void onMessage(final Packet packet, final DiscoveryPeer sender) {
 
     System.out.println("16");
-
 
     LOG.trace(
         "<<< Received {} discovery packet from {} ({}): {}",
@@ -236,11 +237,11 @@ public class PeerDiscoveryController {
         recursivePeerRefreshState.onPongPacketReceived(peer);
         break;
       case NEIGHBORS:
-
         System.out.println("NEIGHBORS");
 
         peer.setStatus(DiscoveryPeerStatus.RECEIVED_NEIGHBOURS_FROM);
-        recursivePeerRefreshState.onNeighboursPacketReceived(peer, packet.getPacketData(NeighborsPacketData.class).orElse(null));
+        recursivePeerRefreshState.onNeighboursPacketReceived(
+            peer, packet.getPacketData(NeighborsPacketData.class).orElse(null));
         break;
       case FIND_NEIGHBORS:
         if (!peerKnown) {
@@ -284,7 +285,9 @@ public class PeerDiscoveryController {
    * Currently the refresh process is NOT recursive.
    */
   private void refreshTable() {
-    peerTable.nearestPeers(target, 16).forEach((peer) -> dispatchFindNeighbours(peer, target));
+    final List<DiscoveryPeer> nearestPeers = peerTable.nearestPeers(target, 16);
+    recursivePeerRefreshState.kickstartBootstrapPeers(nearestPeers);
+    recursivePeerRefreshState.start();
     lastRefreshTime = System.currentTimeMillis();
   }
 
@@ -308,7 +311,8 @@ public class PeerDiscoveryController {
     System.out.println("---> sending out a ping...");
 
     peer.setFirstDiscovered(System.currentTimeMillis());
-    final PingPacketData pingPacketData = PingPacketData.create(localPeer.getEndpoint(), peer.getEndpoint());
+    final PingPacketData pingPacketData =
+        PingPacketData.create(localPeer.getEndpoint(), peer.getEndpoint());
     sendPacket(peer, PacketType.PING, pingPacketData);
     peer.setStatus(DiscoveryPeerStatus.DISPATCHED_PING_TO);
   }
@@ -328,7 +332,8 @@ public class PeerDiscoveryController {
     peer.setStatus(DiscoveryPeerStatus.DISPATCHED_FIND_NEIGHBOURS_TO);
   }
 
-  private void respondToPing(final DiscoveryPeer peer, final PingPacketData packetData, final BytesValue pingHash) {
+  private void respondToPing(
+      final DiscoveryPeer peer, final PingPacketData packetData, final BytesValue pingHash) {
 
     System.out.println("---> sending out a PONG...");
 
@@ -354,7 +359,8 @@ public class PeerDiscoveryController {
   }
 
   // Dispatches an event to a set of observers.
-  private <T extends PeerDiscoveryEvent> void dispatchEvent(final Subscribers<Consumer<T>> observers, final T event) {
+  private <T extends PeerDiscoveryEvent> void dispatchEvent(
+      final Subscribers<Consumer<T>> observers, final T event) {
     observers.forEach(observer -> observer.accept(event));
   }
 
