@@ -19,7 +19,6 @@ import static tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PeerDistance
 
 import tech.pegasys.pantheon.crypto.Hash;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.DiscoveryPeer;
-import tech.pegasys.pantheon.ethereum.p2p.discovery.PeerDiscoveryStatus;
 import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
 import tech.pegasys.pantheon.ethereum.p2p.peers.PeerId;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
