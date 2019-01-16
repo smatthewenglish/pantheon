@@ -19,7 +19,6 @@ import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
 
 import java.net.URI;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -142,12 +141,14 @@ public class DiscoveryConfiguration {
     return this;
   }
 
-  public static List<Peer> getBootstrapPeersFromGenericCollection(final Collection<?> bootstrapPeers) {
+  public static List<Peer> getBootstrapPeersFromGenericCollection(
+      final Collection<?> bootstrapPeers) {
     List<Peer> bootnodes;
 
     if (bootstrapPeers.stream().allMatch(URI.class::isInstance)) {
 
-      bootnodes = bootstrapPeers.stream().map(URI.class::cast).map(DefaultPeer::fromURI).collect(toList());
+      bootnodes =
+          bootstrapPeers.stream().map(URI.class::cast).map(DefaultPeer::fromURI).collect(toList());
 
     } else if (bootstrapPeers.stream().allMatch(Peer.class::isInstance)) {
 
@@ -156,7 +157,6 @@ public class DiscoveryConfiguration {
     } else {
 
       throw new IllegalArgumentException("Expected a list of Peers or a list of enode URIs");
-
     }
     return bootnodes;
   }

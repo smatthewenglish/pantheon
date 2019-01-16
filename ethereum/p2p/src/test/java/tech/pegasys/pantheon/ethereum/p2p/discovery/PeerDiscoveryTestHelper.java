@@ -29,7 +29,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -68,8 +67,13 @@ public class PeerDiscoveryTestHelper {
     return new DiscoveryPeer(peerId, LOOPBACK_IP_ADDR, port, port);
   }
 
-  public Packet createPingPacket(final MockPeerDiscoveryAgent fromAgent, final MockPeerDiscoveryAgent toAgent) {
-    return Packet.create(PacketType.PING, PingPacketData.create(fromAgent.getAdvertisedPeer().getEndpoint(), toAgent.getAdvertisedPeer().getEndpoint()), fromAgent.getKeyPair());
+  public Packet createPingPacket(
+      final MockPeerDiscoveryAgent fromAgent, final MockPeerDiscoveryAgent toAgent) {
+    return Packet.create(
+        PacketType.PING,
+        PingPacketData.create(
+            fromAgent.getAdvertisedPeer().getEndpoint(), toAgent.getAdvertisedPeer().getEndpoint()),
+        fromAgent.getKeyPair());
   }
 
   public AgentBuilder agentBuilder() {
@@ -90,8 +94,11 @@ public class PeerDiscoveryTestHelper {
    * @param bootstrapPeers the list of bootstrap peers
    * @return a list of discovery agents.
    */
-  public List<MockPeerDiscoveryAgent> startDiscoveryAgents(final int count, final List<DiscoveryPeer> bootstrapPeers) {
-    return Stream.generate(() -> startDiscoveryAgent(bootstrapPeers)).limit(count).collect(Collectors.toList());
+  public List<MockPeerDiscoveryAgent> startDiscoveryAgents(
+      final int count, final List<DiscoveryPeer> bootstrapPeers) {
+    return Stream.generate(() -> startDiscoveryAgent(bootstrapPeers))
+        .limit(count)
+        .collect(Collectors.toList());
   }
 
   public List<MockPeerDiscoveryAgent> startDiscoveryAgents(final int count) {
