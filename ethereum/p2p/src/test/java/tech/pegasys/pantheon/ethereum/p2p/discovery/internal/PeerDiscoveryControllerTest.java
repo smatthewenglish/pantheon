@@ -15,7 +15,6 @@ package tech.pegasys.pantheon.ethereum.p2p.discovery.internal;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeast;
@@ -65,8 +64,6 @@ import org.mockito.ArgumentCaptor;
 public class PeerDiscoveryControllerTest {
 
   private static final byte MOST_SIGNFICANT_BIT_MASK = -128;
-  private static final RetryDelayFunction LONG_DELAY_FUNCTION = (prev) -> 999999999L;
-  private static final RetryDelayFunction SHORT_DELAY_FUNCTION = (prev) -> Math.max(100, prev * 2);
   private static final PeerRequirement PEER_REQUIREMENT = () -> true;
   private static final long TABLE_REFRESH_INTERVAL_MS = TimeUnit.HOURS.toMillis(1);
   private PeerDiscoveryController controller;
@@ -92,14 +89,14 @@ public class PeerDiscoveryControllerTest {
   }
 
   @Test
-  public void bootstrapPeersRetriesSent() {
+  public void bootstrapPeersSent() {
     // Create peers.
-    int peerCount = 3;
+    final int peerCount = 3;
     final List<SECP256K1.KeyPair> keyPairs = PeerDiscoveryTestHelper.generateKeyPairs(peerCount);
     final List<DiscoveryPeer> peers = helper.createDiscoveryPeers(keyPairs);
 
-    MockTimerUtil timer = spy(new MockTimerUtil());
-    OutboundMessageHandler outboundMessageHandler = mock(OutboundMessageHandler.class);
+    final MockTimerUtil timer = spy(new MockTimerUtil());
+    final OutboundMessageHandler outboundMessageHandler = mock(OutboundMessageHandler.class);
     controller =
         getControllerBuilder()
             .peers(peers)
@@ -116,24 +113,11 @@ public class PeerDiscoveryControllerTest {
 
     controller.start();
 
-    int timeouts = 4;
-    for (int i = 0; i < timeouts; i++) {
-      timer.runTimerHandlers();
-    }
-    int expectedTimerEvents = (timeouts + 1) * peerCount;
-    verify(timer, times(expectedTimerEvents)).setTimer(anyLong(), any());
-
-    // Within this time period, 4 timers should be placed with these timeouts.
-    final long[] expectedTimeouts = {100, 200, 400, 800};
-    for (final long timeout : expectedTimeouts) {
-      verify(timer, times(peerCount)).setTimer(eq(timeout), any());
-    }
-
     // Check that 5 PING packets were sent for each peer (the initial + 4 attempts following
     // timeouts).
     peers.forEach(
         p ->
-            verify(outboundMessageHandler, times(timeouts + 1))
+            verify(outboundMessageHandler, times(1))
                 .send(eq(p), matchPacketOfType(PacketType.PING)));
 
     controller
@@ -173,7 +157,7 @@ public class PeerDiscoveryControllerTest {
 
     // Assert PING packet was sent for peer[0] 4 times.
     for (DiscoveryPeer peer : peers) {
-      verify(outboundMessageHandler, times(4)).send(eq(peer), matchPacketOfType(PacketType.PING));
+      verify(outboundMessageHandler, times(1)).send(eq(peer), matchPacketOfType(PacketType.PING));
     }
 
     // Simulate a PONG message from peer 0.
@@ -190,9 +174,7 @@ public class PeerDiscoveryControllerTest {
     // Ensure we receive no more PING packets for peer[0].
     // Assert PING packet was sent for peer[0] 4 times.
     for (DiscoveryPeer peer : peers) {
-      int expectedCount = peer.equals(peers.get(0)) ? 4 : 8;
-      verify(outboundMessageHandler, times(expectedCount))
-          .send(eq(peer), matchPacketOfType(PacketType.PING));
+      verify(outboundMessageHandler, times(1)).send(eq(peer), matchPacketOfType(PacketType.PING));
     }
   }
 
@@ -202,8 +184,8 @@ public class PeerDiscoveryControllerTest {
     final List<SECP256K1.KeyPair> keyPairs = PeerDiscoveryTestHelper.generateKeyPairs(3);
     final List<DiscoveryPeer> peers = helper.createDiscoveryPeers(keyPairs);
 
-    MockTimerUtil timer = new MockTimerUtil();
-    OutboundMessageHandler outboundMessageHandler = mock(OutboundMessageHandler.class);
+    final MockTimerUtil timer = new MockTimerUtil();
+    final OutboundMessageHandler outboundMessageHandler = mock(OutboundMessageHandler.class);
     controller =
         getControllerBuilder()
             .peers(peers)
@@ -224,35 +206,35 @@ public class PeerDiscoveryControllerTest {
             controller
                 .getPeers()
                 .stream()
-                .filter(p -> p.getStatus() == DiscoveryPeerStatus.DISPATCHED_FIND_NEIGHBOURS_TO))
+                .filter(p -> p.getStatus() == DiscoveryPeerStatus.DISPATCHED_PING_TO))
         .hasSize(3);
 
     // Simulate a PONG message from peer 0.
-    final PongPacketData packetData =
+    final PongPacketData packetData0 =
         PongPacketData.create(localPeer.getEndpoint(), mockPacket.getHash());
-    final Packet packet = Packet.create(PacketType.PONG, packetData, keyPairs.get(0));
-    controller.onMessage(packet, peers.get(0));
+    final Packet packet0 = Packet.create(PacketType.PONG, packetData0, keyPairs.get(0));
+    controller.onMessage(packet0, peers.get(0));
 
-    // Ensure that the peer controller is now sending FIND_NEIGHBORS messages for this peer.
+    final PongPacketData packetData1 =
+        PongPacketData.create(localPeer.getEndpoint(), mockPacket.getHash());
+    final Packet packet1 = Packet.create(PacketType.PONG, packetData1, keyPairs.get(1));
+    controller.onMessage(packet1, peers.get(1));
+
+    final PongPacketData packetData2 =
+        PongPacketData.create(localPeer.getEndpoint(), mockPacket.getHash());
+    final Packet packet2 = Packet.create(PacketType.PONG, packetData2, keyPairs.get(2));
+    controller.onMessage(packet2, peers.get(2));
+
+    // Ensure that the peer controller has now sent a FIND_NEIGHBORS message for this peer.
     verify(outboundMessageHandler, times(1))
         .send(eq(peers.get(0)), matchPacketOfType(PacketType.FIND_NEIGHBORS));
-    // Invoke timeouts and check that we resent our neighbors request
-    timer.runTimerHandlers();
-    verify(outboundMessageHandler, times(2))
-        .send(eq(peers.get(0)), matchPacketOfType(PacketType.FIND_NEIGHBORS));
 
     assertThat(
             controller
                 .getPeers()
                 .stream()
-                .filter(p -> p.getStatus() == DiscoveryPeerStatus.DISPATCHED_PING_TO))
-        .hasSize(2);
-    assertThat(
-            controller
-                .getPeers()
-                .stream()
-                .filter(p -> p.getStatus() == DiscoveryPeerStatus.RECEIVED_PONG_FROM))
-        .hasSize(1);
+                .filter(p -> p.getStatus() == DiscoveryPeerStatus.DISPATCHED_FIND_NEIGHBOURS_TO))
+        .hasSize(3);
   }
 
   @Test
@@ -1034,11 +1016,6 @@ public class PeerDiscoveryControllerTest {
 
   private PeerDiscoveryController startPeerDiscoveryController(
       final DiscoveryPeer... bootstrapPeers) {
-    return startPeerDiscoveryController(LONG_DELAY_FUNCTION, bootstrapPeers);
-  }
-
-  private PeerDiscoveryController startPeerDiscoveryController(
-      final RetryDelayFunction retryDelayFunction, final DiscoveryPeer... bootstrapPeers) {
     // Create the controller.
     controller = getControllerBuilder().peers(bootstrapPeers).build();
     controller.start();
