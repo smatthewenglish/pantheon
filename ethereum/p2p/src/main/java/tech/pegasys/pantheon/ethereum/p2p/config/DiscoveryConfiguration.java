@@ -146,16 +146,11 @@ public class DiscoveryConfiguration {
     List<Peer> bootnodes;
 
     if (bootstrapPeers.stream().allMatch(URI.class::isInstance)) {
-
       bootnodes =
           bootstrapPeers.stream().map(URI.class::cast).map(DefaultPeer::fromURI).collect(toList());
-
     } else if (bootstrapPeers.stream().allMatch(Peer.class::isInstance)) {
-
       bootnodes = bootstrapPeers.stream().map(Peer.class::cast).collect(toList());
-
     } else {
-
       throw new IllegalArgumentException("Expected a list of Peers or a list of enode URIs");
     }
     return bootnodes;
