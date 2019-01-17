@@ -38,11 +38,11 @@ import java.util.stream.Collectors;
 
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
+import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 public class PeerDiscoveryTableRefreshTest {
   private final PeerDiscoveryTestHelper helper = new PeerDiscoveryTestHelper();
 
-  // TODO: Reformulate this test...
   @Test
   public void tableRefreshSingleNode() {
     final List<SECP256K1.KeyPair> keypairs = PeerDiscoveryTestHelper.generateKeyPairs(2);
@@ -87,22 +87,22 @@ public class PeerDiscoveryTableRefreshTest {
     for (int i = 0; i < 5; i++) {
       timer.runPeriodicHandlers();
     }
-    verify(outboundMessageHandler, atLeast(2)).send(eq(peers.get(1)), captor.capture());
+    verify(outboundMessageHandler, atLeast(5)).send(eq(peers.get(1)), captor.capture());
     List<Packet> capturedFindNeighborsPackets =
         captor
             .getAllValues()
             .stream()
-            .filter(p -> p.getType().equals(PacketType.PONG))
+            .filter(p -> p.getType().equals(PacketType.FIND_NEIGHBORS))
             .collect(Collectors.toList());
-    assertThat(capturedFindNeighborsPackets.size()).isEqualTo(1);
+    assertThat(capturedFindNeighborsPackets.size()).isEqualTo(5);
 
     // Collect targets from find neighbors packets
-    final List<Endpoint> targets = new ArrayList<>();
+    final List<BytesValue> targets = new ArrayList<>();
     for (final Packet captured : capturedFindNeighborsPackets) {
-      Optional<PongPacketData> maybeData = captured.getPacketData(PongPacketData.class);
+      Optional<FindNeighborsPacketData> maybeData = captured.getPacketData(FindNeighborsPacketData.class);
       assertThat(maybeData).isPresent();
-      final PongPacketData neighborsData = maybeData.get();
-      targets.add(neighborsData.getTo());
+      final FindNeighborsPacketData neighborsData = maybeData.get();
+      targets.add(neighborsData.getTarget());
     }
 
     assertThat(targets.size()).isEqualTo(1);

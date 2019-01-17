@@ -48,8 +48,6 @@ import org.junit.Test;
 public class RecursivePeerRefreshStateTest {
   private static final ObjectMapper MAPPER = new ObjectMapper();
 
-  private RecursivePeerRefreshState recursivePeerRefreshState;
-
   private final BytesValue target =
       BytesValue.fromHexString(
           "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000");
@@ -191,8 +189,7 @@ public class RecursivePeerRefreshStateTest {
 
   @Test
   public void shouldIssueRequestToPeerWithLesserDistanceGreaterHops() {
-    recursivePeerRefreshState =
-        new RecursivePeerRefreshState(
+    RecursivePeerRefreshState recursivePeerRefreshState = new RecursivePeerRefreshState(
             target,
             new PeerBlacklist(),
             new NodeWhitelistController(PermissioningConfiguration.createDefault()),
@@ -379,129 +376,23 @@ public class RecursivePeerRefreshStateTest {
     }
   }
 
-  public static class MetadataPeer implements Comparable<MetadataPeer> {
-    DiscoveryPeer peer;
-    Integer distance;
-
-    boolean bondEvaluated;
-    boolean bondQueried;
-    boolean bondResponded;
-
-    boolean neighbourEvaluated;
-    boolean neighbourQueried;
-    boolean neighbourResponded;
-
-    @Override
-    public int compareTo(final MetadataPeer o) {
-      if (this.distance > o.distance) return 1;
-      return -1;
-    }
-
-    public MetadataPeer(final DiscoveryPeer peer, final Integer distance) {
-      this.peer = peer;
-      this.distance = distance;
-
-      this.bondEvaluated = false;
-      this.bondQueried = false;
-      this.bondResponded = false;
-
-      this.neighbourEvaluated = false;
-      this.neighbourQueried = false;
-      this.neighbourResponded = false;
-    }
-
-    DiscoveryPeer getPeer() {
-      return peer;
-    }
-
-    public Integer getDistance() {
-      return distance;
-    }
-
-    void setBondQueried() {
-      this.bondQueried = true;
-    }
-
-    boolean getBondQueried() {
-      return bondQueried;
-    }
-
-    void setBondResponded() {
-      this.bondResponded = true;
-    }
-
-    boolean getBondResponded() {
-      return bondResponded;
-    }
-
-    void setBondEvaluation() {
-      this.bondEvaluated = true;
-    }
-
-    boolean getBondEvaluation() {
-      return bondEvaluated;
-    }
-
-    void setNeighbourQueried() {
-      this.neighbourQueried = true;
-    }
-
-    boolean getNeighbourQueried() {
-      return neighbourQueried;
-    }
-
-    void setNeighbourResponded() {
-      this.neighbourResponded = true;
-    }
-
-    boolean getNeighbourResponded() {
-      return neighbourResponded;
-    }
-
-    void setNeighbourEvaluation() {
-      this.neighbourEvaluated = true;
-    }
-
-    boolean getNeighbourEvaluation() {
-      return neighbourEvaluated;
-    }
-
-    @Override
-    public boolean equals(final Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-      final MetadataPeer that = (MetadataPeer) o;
-      return Objects.equals(peer.getId(), that.peer.getId());
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hash(peer.getId());
-    }
-
-    @Override
-    public String toString() {
-      return peer + ": " + distance;
-    }
-  }
-
   @Test
   public void testSortMetadataBonding() {
 
-    final MetadataPeer peerA = new MetadataPeer(peer_020, distance(target, peer_020.getId()));
+    final RecursivePeerRefreshState.MetadataPeer peerA = new RecursivePeerRefreshState.MetadataPeer(peer_020, distance(target, peer_020.getId()));
 
-    final MetadataPeer peerB = new MetadataPeer(peer_021, distance(target, peer_021.getId()));
+    final RecursivePeerRefreshState.MetadataPeer peerB = new RecursivePeerRefreshState.MetadataPeer(peer_021, distance(target, peer_021.getId()));
     peerB.setBondQueried();
 
-    final MetadataPeer peerC = new MetadataPeer(peer_022, distance(target, peer_022.getId()));
+    final RecursivePeerRefreshState.MetadataPeer peerC = new RecursivePeerRefreshState.MetadataPeer(peer_022, distance(target, peer_022.getId()));
 
-    final MetadataPeer peerD =
-        new MetadataPeer(
+    final RecursivePeerRefreshState.MetadataPeer peerD =
+        new RecursivePeerRefreshState.MetadataPeer(
             peer_023, distance(target, peer_023.getId())); // Not returned on threshold 3
 
-    final MetadataPeer peerE = new MetadataPeer(peer_120, distance(target, peer_120.getId()));
+    final RecursivePeerRefreshState.MetadataPeer peerE = new RecursivePeerRefreshState.MetadataPeer(peer_120, distance(target, peer_120.getId()));
 
-    final SortedMap<BytesValue, MetadataPeer> oneTrueMap = new TreeMap<>();
+    final SortedMap<BytesValue, RecursivePeerRefreshState.MetadataPeer> oneTrueMap = new TreeMap<>();
 
     oneTrueMap.put(peer_023.getId(), peerD);
     oneTrueMap.put(peer_022.getId(), peerC);
@@ -531,22 +422,22 @@ public class RecursivePeerRefreshStateTest {
   }
 
   private List<DiscoveryPeer> bondingRoundCandidates(
-      final int max, final SortedMap<BytesValue, MetadataPeer> source) {
+      final int max, final SortedMap<BytesValue, RecursivePeerRefreshState.MetadataPeer> source) {
     final List<DiscoveryPeer> candidatesList = new ArrayList<>();
 
     int count = 0;
-    for (Map.Entry<BytesValue, MetadataPeer> candidateEntry : source.entrySet()) {
+    for (Map.Entry<BytesValue, RecursivePeerRefreshState.MetadataPeer> candidateEntry : source.entrySet()) {
       if (count >= max) {
         break;
       }
-      final MetadataPeer candidate = candidateEntry.getValue();
+      final RecursivePeerRefreshState.MetadataPeer candidate = candidateEntry.getValue();
 
-      if (!candidate.getNeighbourEvaluation()
+      if (!candidate.getNeighbourCancelled()
           && !candidate.getNeighbourResponded()
           && !candidate.getNeighbourQueried()
           &&
           //
-          !candidate.getBondEvaluation()
+          !candidate.getBondCancelled()
           && !candidate.getBondResponded()
           && !candidate.getBondQueried()) {
 
@@ -558,15 +449,15 @@ public class RecursivePeerRefreshStateTest {
   }
 
   private List<DiscoveryPeer> neighboursRoundCandidates(
-      final int max, final SortedMap<BytesValue, MetadataPeer> source) {
+      final int max, final SortedMap<BytesValue, RecursivePeerRefreshState.MetadataPeer> source) {
     final List<DiscoveryPeer> candidatesList = new ArrayList<>();
 
     int count = 0;
-    for (Map.Entry<BytesValue, MetadataPeer> candidateEntry : source.entrySet()) {
+    for (Map.Entry<BytesValue, RecursivePeerRefreshState.MetadataPeer> candidateEntry : source.entrySet()) {
       if (count >= max) {
         break;
       }
-      final MetadataPeer candidate = candidateEntry.getValue();
+      final RecursivePeerRefreshState.MetadataPeer candidate = candidateEntry.getValue();
 
       if (candidate.getBondQueried() && candidate.getBondResponded()) {
         candidatesList.add(candidate.getPeer());
@@ -579,25 +470,25 @@ public class RecursivePeerRefreshStateTest {
   @Test
   public void testSortMetadataNeighbours() {
 
-    final MetadataPeer peerA = new MetadataPeer(peer_020, distance(target, peer_020.getId()));
+    final RecursivePeerRefreshState.MetadataPeer peerA = new RecursivePeerRefreshState.MetadataPeer(peer_020, distance(target, peer_020.getId()));
     peerA.setBondQueried();
-    peerA.setBondEvaluation(); // !!!
+    peerA.setBondCancelled(); // !!!
 
-    final MetadataPeer peerB = new MetadataPeer(peer_021, distance(target, peer_021.getId()));
+    final RecursivePeerRefreshState.MetadataPeer peerB = new RecursivePeerRefreshState.MetadataPeer(peer_021, distance(target, peer_021.getId()));
     peerB.setBondQueried();
     peerB.setBondResponded();
 
-    final MetadataPeer peerC = new MetadataPeer(peer_022, distance(target, peer_022.getId()));
+    final RecursivePeerRefreshState.MetadataPeer peerC = new RecursivePeerRefreshState.MetadataPeer(peer_022, distance(target, peer_022.getId()));
     peerC.setBondQueried();
     peerC.setBondResponded();
 
-    final MetadataPeer peerD =
-        new MetadataPeer(
+    final RecursivePeerRefreshState.MetadataPeer peerD =
+        new RecursivePeerRefreshState.MetadataPeer(
             peer_023, distance(target, peer_023.getId())); // Not returned on threshold 3
     peerD.setBondQueried();
     peerD.setBondResponded();
 
-    final SortedMap<BytesValue, MetadataPeer> oneTrueMap = new TreeMap<>();
+    final SortedMap<BytesValue, RecursivePeerRefreshState.MetadataPeer> oneTrueMap = new TreeMap<>();
 
     oneTrueMap.put(peer_023.getId(), peerD);
     oneTrueMap.put(peer_022.getId(), peerC);
@@ -620,29 +511,5 @@ public class RecursivePeerRefreshStateTest {
     assertThat(bondingRoundCandidatesList).contains(peerB.getPeer(), atIndex(0));
     assertThat(bondingRoundCandidatesList).contains(peerC.getPeer(), atIndex(1));
     assertThat(bondingRoundCandidatesList).contains(peerD.getPeer(), atIndex(2));
-  }
-
-  @Test
-  public void completableFuture() throws Exception {
-
-    final Future<String> completableFuture = calculateAsync();
-    final String result = completableFuture.get();
-
-    System.out.println(result);
-    assertThat(result).isEqualTo("Hello");
-  }
-
-  private Future<String> calculateAsync() {
-    final CompletableFuture<String> completableFuture = new CompletableFuture<>();
-
-    Executors.newCachedThreadPool()
-        .submit(
-            () -> {
-              Thread.sleep(500);
-              completableFuture.complete("Hello");
-              return null;
-            });
-
-    return completableFuture;
   }
 }
