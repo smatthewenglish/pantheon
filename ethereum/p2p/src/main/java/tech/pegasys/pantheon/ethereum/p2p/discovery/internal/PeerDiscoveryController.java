@@ -41,52 +41,7 @@ import com.google.common.annotations.VisibleForTesting;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-/**
- * This component is the entrypoint for managing the lifecycle of peers.
- *
- * <p>It keeps track of the interactions with each peer, including the expectations of what we
- * expect to receive next from each peer. In other words, it implements the state machine for
- * (discovery) peers.
- *
- * <p>When necessary, it updates the underlying {@link PeerTable}, particularly with additions which
- * may succeed or not depending on the contents of the target bucket for the peer.
- *
- * <h3>Peer state machine</h3>
- *
- * <pre>{@code
- *                                                                +--------------------+
- *                                                                |                    |
- *                                                    +-----------+  MESSAGE_EXPECTED  +-----------+
- *                                                    |           |                    |           |
- *                                                    |           +---+----------------+           |
- * +------------+         +-----------+         +-----+----+          |                      +-----v-----+
- * |            |         |           |         |          <----------+                      |           |
- * |  KNOWN  +--------->  BONDING  +--------->  BONDED     |                                 |  DROPPED  |
- * |            |         |           |         |          ^                                 |           |
- * +------------+         +-----------+         +----------+                                 +-----------+
- *
- * }</pre>
- *
- * <ul>
- *   <li><em>KNOWN:</em> the peer is known but there is no ongoing interaction with it.
- *   <li><em>BONDING:</em> an attempt to ping is being made (e.g. a PING has been sent).
- *   <li><em>BONDED:</em> the bonding handshake has taken place (e.g. an expected PONG has been
- *       received after having sent a PING or a PING has been received and a PONG has been sent in
- *       response). This is the same as having an "active" channel.
- *   <li><em>MESSAGE_EXPECTED (*)</em>: a message has been sent and a response is expected.
- *   <li><em>DROPPED (*):</em> the peer is no longer in our peer table.
- * </ul>
- *
- * <p>(*) It is worthy to note that the <code>MESSAGE_EXPECTED</code> and <code>DROPPED</code>
- * states are not modelled explicitly in {@link DiscoveryPeerStatus}, but they have been included in
- * the diagram for clarity. These two states define the elimination path for a peer from the
- * underlying table.
- *
- * <p>If an expectation to receive a message was unmet, following the evaluation of a failure
- * condition, the peer will be physically dropped (eliminated) from the table.
- */
 public class PeerDiscoveryController {
-
   private static final Logger LOG = LogManager.getLogger();
   private static final long REFRESH_CHECK_INTERVAL_MILLIS = MILLISECONDS.convert(30, SECONDS);
   private final TimerUtil timerUtil;
