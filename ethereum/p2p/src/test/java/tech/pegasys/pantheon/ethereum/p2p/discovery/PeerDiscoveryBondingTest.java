@@ -40,7 +40,7 @@ public class PeerDiscoveryBondingTest {
     // Start a test peer and send a PING packet to the agent under test.
     final MockPeerDiscoveryAgent otherAgent = helper.startDiscoveryAgent();
     final Packet ping = helper.createPingPacket(otherAgent, agent);
-    helper.sendMessageBetweenAgents(otherAgent, agent, ping);
+    helper.dispatchPing(otherAgent, agent, ping);
 
     final List<IncomingPacket> otherAgentIncomingPongs =
         otherAgent

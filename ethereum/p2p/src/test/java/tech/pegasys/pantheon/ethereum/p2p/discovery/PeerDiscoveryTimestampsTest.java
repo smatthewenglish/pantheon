@@ -101,7 +101,7 @@ public class PeerDiscoveryTimestampsTest {
     // Start a test peer and send a PING packet to the agent under test.
     final MockPeerDiscoveryAgent testAgent = helper.startDiscoveryAgent();
     final Packet ping = helper.createPingPacket(testAgent, agent);
-    helper.sendMessageBetweenAgents(testAgent, agent, ping);
+    helper.dispatchPing(testAgent, agent, ping);
 
     assertThat(agent.getPeers()).hasSize(1);
 

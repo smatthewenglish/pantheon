@@ -66,14 +66,16 @@ public class RecursivePeerRefreshState {
 
   void kickstartBootstrapPeers(final List<DiscoveryPeer> bootstrapPeers) {
     for (DiscoveryPeer bootstrapPeer : bootstrapPeers) {
-      final MetadataPeer iterationParticipant = new MetadataPeer(bootstrapPeer, distance(target, bootstrapPeer.getId()));
+      final MetadataPeer iterationParticipant =
+          new MetadataPeer(bootstrapPeer, distance(target, bootstrapPeer.getId()));
       oneTrueMap.put(bootstrapPeer.getId(), iterationParticipant);
     }
   }
 
   @VisibleForTesting
   void initiateBondingRound() {
-    final List<DiscoveryPeer> bondingRoundCandidatesList = bondingRoundCandidates(oneTrueMap.size(), oneTrueMap);
+    final List<DiscoveryPeer> bondingRoundCandidatesList =
+        bondingRoundCandidates(oneTrueMap.size(), oneTrueMap);
 
     for (DiscoveryPeer discoPeer : bondingRoundCandidatesList) {
       final MetadataPeer metadataPeer = oneTrueMap.get(discoPeer.getId());
@@ -109,6 +111,10 @@ public class RecursivePeerRefreshState {
       final DiscoveryPeer peer, final NeighborsPacketData neighboursPacket) {
 
     final MetadataPeer metadataPeer = oneTrueMap.get(peer.getId());
+
+    if (metadataPeer == null) {
+      return;
+    }
 
     final List<DiscoveryPeer> receivedPeerList = neighboursPacket.getNodes();
 
