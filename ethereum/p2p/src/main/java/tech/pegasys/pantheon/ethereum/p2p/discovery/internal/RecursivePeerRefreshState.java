@@ -70,7 +70,8 @@ public class RecursivePeerRefreshState {
   }
 
   void start() {
-    final List<DiscoveryPeer> bondingRoundCandidatesList = bondingRoundCandidates(3, oneTrueMap);
+    final List<DiscoveryPeer> bondingRoundCandidatesList =
+        bondingRoundCandidates(oneTrueMap.size(), oneTrueMap);
     bondingInitiateRound(bondingRoundCandidatesList);
   }
 
@@ -121,28 +122,7 @@ public class RecursivePeerRefreshState {
     }
   }
 
-  private boolean terminationConditionSatisfied() {
-    for (Map.Entry<BytesValue, MetadataPeer> candidateEntry : oneTrueMap.entrySet()) {
-      final MetadataPeer candidate = candidateEntry.getValue();
-      if (candidate.getBondQueried()) {
-        if (!(candidate.getBondResponded() || candidate.getBondCancelled())) {
-          return false;
-        }
-      }
-      if (candidate.getNeighbourQueried()) {
-        if (!(candidate.getNeighbourResponded() || candidate.getNeighbourCancelled())) {
-          return false;
-        }
-      }
-    }
-    return true;
-  }
-
   private void neighboursInitiateRound(final List<DiscoveryPeer> neighboursRoundCandidatesList) {
-    if (terminationConditionSatisfied()) {
-      return;
-    }
-
     for (DiscoveryPeer discoPeer : neighboursRoundCandidatesList) {
       findNeighbourDispatcher.findNeighbours(discoPeer, target);
       final MetadataPeer metadataPeer = oneTrueMap.get(discoPeer.getId());

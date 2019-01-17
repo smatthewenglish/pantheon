@@ -158,7 +158,7 @@ public abstract class PeerDiscoveryAgent implements DisconnectCallback {
   }
 
   private void startController() {
-    final PeerDiscoveryController controller = createController();
+    PeerDiscoveryController controller = createController();
     this.controller = Optional.of(controller);
     controller.start();
   }
@@ -178,6 +178,7 @@ public abstract class PeerDiscoveryAgent implements DisconnectCallback {
         peerBondedObservers);
   }
 
+  @VisibleForTesting
   protected Optional<PeerDiscoveryController> getPeerDiscoveryController() {
     return controller;
   }
@@ -187,9 +188,6 @@ public abstract class PeerDiscoveryAgent implements DisconnectCallback {
   }
 
   protected void handleIncomingPacket(final Endpoint sourceEndpoint, final Packet packet) {
-
-    System.out.println("0-0-0-0-0-0-0-0");
-
     OptionalInt tcpPort = OptionalInt.empty();
     if (packet.getPacketData(PingPacketData.class).isPresent()) {
       final PingPacketData ping = packet.getPacketData(PingPacketData.class).orElseGet(null);

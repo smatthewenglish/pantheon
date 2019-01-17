@@ -144,7 +144,6 @@ public class DiscoveryConfiguration {
   public static List<Peer> getBootstrapPeersFromGenericCollection(
       final Collection<?> bootstrapPeers) {
     List<Peer> bootnodes;
-
     if (bootstrapPeers.stream().allMatch(URI.class::isInstance)) {
       bootnodes =
           bootstrapPeers.stream().map(URI.class::cast).map(DefaultPeer::fromURI).collect(toList());

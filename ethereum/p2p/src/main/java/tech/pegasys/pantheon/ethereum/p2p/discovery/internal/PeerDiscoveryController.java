@@ -143,10 +143,12 @@ public class PeerDiscoveryController {
     this.peerBondedObservers = peerBondedObservers;
   }
 
+  @VisibleForTesting
   public RecursivePeerRefreshState getRecursivePeerRefreshState() {
     return recursivePeerRefreshState;
   }
 
+  @VisibleForTesting
   public BytesValue getTarget() {
     return target;
   }
