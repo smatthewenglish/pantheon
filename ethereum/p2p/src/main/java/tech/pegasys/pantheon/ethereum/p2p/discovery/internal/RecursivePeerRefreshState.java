@@ -305,8 +305,6 @@ public class RecursivePeerRefreshState {
       return bondCancelled;
     }
 
-    /* * */
-
     void setNeighbourQueried() {
       this.neighbourQueried = true;
     }

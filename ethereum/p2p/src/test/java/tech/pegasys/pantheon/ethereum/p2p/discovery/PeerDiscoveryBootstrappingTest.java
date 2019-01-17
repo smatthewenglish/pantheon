@@ -127,8 +127,8 @@ public class PeerDiscoveryBootstrappingTest {
         .extracting(Peer::getId)
         .containsExactlyInAnyOrder(otherPeersIds);
 
-    // assertThat(bootstrapAgent.getPeers()).allMatch(p -> p.getStatus() ==
-    // DiscoveryPeerStatus.DISPATCHED_NEIGHBOURS_TO);
+    assertThat(bootstrapAgent.getPeers())
+        .allMatch(p -> p.getStatus() == DiscoveryPeerStatus.DISPATCHED_PONG_TO);
 
     // This agent will bootstrap off the bootstrap peer, will add all nodes returned by the latter,
     // and will

@@ -78,7 +78,6 @@ public class PeerDiscoveryAgentTest {
 
     // Send a PING so we can exchange messages with the latter agent.
     Packet packet = helper.createPingPacket(testAgent, agent);
-    // helper.sendMessageBetweenAgents(testAgent, agent, packet);
     helper.dispatchPing(testAgent, agent, packet);
 
     // Send a FIND_NEIGHBORS message.

@@ -389,48 +389,46 @@ public class PeerDiscoveryControllerTest {
     verify(outboundMessageHandler, times(1))
         .send(eq(peers.get(1)), matchPacketOfType(PacketType.FIND_NEIGHBORS));
 
-    //    // Simulate a NEIGHBORS message from peer[0] listing peer[2].
-    //    final NeighborsPacketData neighbors0 =
-    //        NeighborsPacketData.create(Collections.singletonList(peers.get(2)));
-    //    final Packet neighborsPacket0 =
-    //        Packet.create(PacketType.NEIGHBORS, neighbors0, keyPairs.get(0));
-    //    controller.onMessage(neighborsPacket0, peers.get(0));
-    //    /* * */
-    //    final NeighborsPacketData neighbors1 =
-    //        NeighborsPacketData.create(Collections.singletonList(peers.get(2)));
-    //    final Packet neighborsPacket1 =
-    //        Packet.create(PacketType.NEIGHBORS, neighbors1, keyPairs.get(1));
-    //    controller.onMessage(neighborsPacket1, peers.get(1));
-    //
-    //    // Assert that we're "bonding" with peers.
-    //    assertThat(controller.getPeers()).hasSize(2);
-    //    assertThat(controller.getPeers())
-    //        .filteredOn(p -> p.getStatus() == DiscoveryPeerStatus.RECEIVED_NEIGHBOURS_FROM)
-    //        .hasSize(2);
-    //
-    //    // Wait for 1 second and ensure that only 1 PING was ever sent to peer[2].
-    //    Thread.sleep(1000);
-    //    verify(outboundMessageHandler, times(1))
-    //        .send(eq(peers.get(2)), matchPacketOfType(PacketType.PING));
-    //
-    //    // Send a PONG packet from peer[2], to transition it to the "BONDED" state.
-    //    final PingPacketData pingPacketData2 =
-    //        PingPacketData.create(localPeer.getEndpoint(), peers.get(2).getEndpoint());
-    //    final Packet pingPacket2 = Packet.create(PacketType.PING, pingPacketData2,
-    // keyPairs.get(2));
-    //    final PongPacketData pongPacketData2 =
-    //        PongPacketData.create(localPeer.getEndpoint(), pingPacket2.getHash());
-    //    final Packet pongPacket2 = Packet.create(PacketType.PONG, pongPacketData2,
-    // keyPairs.get(2));
-    //    controller.onMessage(pongPacket2, peers.get(2));
-    //
-    //    // Assert we're now "bonded" with peer[2].
-    //    assertThat(controller.getPeers())
-    //        .filteredOn(
-    //            p ->
-    //                p.equals(peers.get(2))
-    //                    && p.getStatus() == DiscoveryPeerStatus.DISPATCHED_FIND_NEIGHBOURS_TO)
-    //        .hasSize(1);
+    // Simulate a NEIGHBORS message from peer[0] listing peer[2].
+    final NeighborsPacketData neighbors0 =
+        NeighborsPacketData.create(Collections.singletonList(peers.get(2)));
+    final Packet neighborsPacket0 =
+        Packet.create(PacketType.NEIGHBORS, neighbors0, keyPairs.get(0));
+    controller.onMessage(neighborsPacket0, peers.get(0));
+    /* * */
+    final NeighborsPacketData neighbors1 =
+        NeighborsPacketData.create(Collections.singletonList(peers.get(2)));
+    final Packet neighborsPacket1 =
+        Packet.create(PacketType.NEIGHBORS, neighbors1, keyPairs.get(1));
+    controller.onMessage(neighborsPacket1, peers.get(1));
+
+    // Assert that we're "bonding" with peers.
+    assertThat(controller.getPeers()).hasSize(2);
+    assertThat(controller.getPeers())
+        .filteredOn(p -> p.getStatus() == DiscoveryPeerStatus.RECEIVED_NEIGHBOURS_FROM)
+        .hasSize(2);
+
+    // Wait for 1 second and ensure that only 1 PING was ever sent to peer[2].
+    Thread.sleep(1000);
+    verify(outboundMessageHandler, times(1))
+        .send(eq(peers.get(2)), matchPacketOfType(PacketType.PING));
+
+    // Send a PONG packet from peer[2], to transition it to the "BONDED" state.
+    final PingPacketData pingPacketData2 =
+        PingPacketData.create(localPeer.getEndpoint(), peers.get(2).getEndpoint());
+    final Packet pingPacket2 = Packet.create(PacketType.PING, pingPacketData2, keyPairs.get(2));
+    final PongPacketData pongPacketData2 =
+        PongPacketData.create(localPeer.getEndpoint(), pingPacket2.getHash());
+    final Packet pongPacket2 = Packet.create(PacketType.PONG, pongPacketData2, keyPairs.get(2));
+    controller.onMessage(pongPacket2, peers.get(2));
+
+    // Assert we're now "bonded" with peer[2].
+    assertThat(controller.getPeers())
+        .filteredOn(
+            p ->
+                p.equals(peers.get(2))
+                    && p.getStatus() == DiscoveryPeerStatus.DISPATCHED_FIND_NEIGHBOURS_TO)
+        .hasSize(1);
   }
 
   @Test(expected = IllegalStateException.class)
