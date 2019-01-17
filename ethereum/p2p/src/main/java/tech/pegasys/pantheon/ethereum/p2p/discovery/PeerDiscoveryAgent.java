@@ -178,6 +178,10 @@ public abstract class PeerDiscoveryAgent implements DisconnectCallback {
         peerBondedObservers);
   }
 
+  protected Optional<PeerDiscoveryController> getPeerDiscoveryController() {
+    return controller;
+  }
+
   protected boolean validatePacketSize(final int packetSize) {
     return packetSize <= MAX_PACKET_SIZE_BYTES;
   }

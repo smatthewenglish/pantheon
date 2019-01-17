@@ -28,7 +28,7 @@ import java.util.TreeMap;
 
 import com.google.common.annotations.VisibleForTesting;
 
-class RecursivePeerRefreshState {
+public class RecursivePeerRefreshState {
   private final BytesValue target;
   private final PeerBlacklist peerBlacklist;
   private final NodeWhitelistController peerWhitelist;
@@ -52,22 +52,28 @@ class RecursivePeerRefreshState {
     this.oneTrueMap = new TreeMap<>();
   }
 
+  public BytesValue getTarget() {
+    return target;
+  }
+
+  public SortedMap<BytesValue, MetadataPeer> getOneTrueMap() {
+    return oneTrueMap;
+  }
+
   void start() {
     initiateBondingRound();
   }
 
   void kickstartBootstrapPeers(final List<DiscoveryPeer> bootstrapPeers) {
     for (DiscoveryPeer bootstrapPeer : bootstrapPeers) {
-      final MetadataPeer iterationParticipant =
-          new MetadataPeer(bootstrapPeer, distance(target, bootstrapPeer.getId()));
+      final MetadataPeer iterationParticipant = new MetadataPeer(bootstrapPeer, distance(target, bootstrapPeer.getId()));
       oneTrueMap.put(bootstrapPeer.getId(), iterationParticipant);
     }
   }
 
   @VisibleForTesting
   void initiateBondingRound() {
-    final List<DiscoveryPeer> bondingRoundCandidatesList =
-        bondingRoundCandidates(oneTrueMap.size(), oneTrueMap);
+    final List<DiscoveryPeer> bondingRoundCandidatesList = bondingRoundCandidates(oneTrueMap.size(), oneTrueMap);
 
     for (DiscoveryPeer discoPeer : bondingRoundCandidatesList) {
       final MetadataPeer metadataPeer = oneTrueMap.get(discoPeer.getId());
@@ -231,7 +237,7 @@ class RecursivePeerRefreshState {
       return -1;
     }
 
-    MetadataPeer(final DiscoveryPeer peer, final Integer distance) {
+    public MetadataPeer(final DiscoveryPeer peer, final Integer distance) {
       this.peer = peer;
       this.distance = distance;
 

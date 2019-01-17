@@ -79,7 +79,7 @@ public class PeerDiscoveryBondingTest {
 
     // Create and dispatch a PING packet.
     final Packet ping = helper.createPingPacket(otherNode, agent);
-    helper.sendMessageBetweenAgents(otherNode, agent, ping);
+    helper.dispatchPing(otherNode, agent, ping);
 
     // Now we received a PONG.
     final List<IncomingPacket> incomingPongs =

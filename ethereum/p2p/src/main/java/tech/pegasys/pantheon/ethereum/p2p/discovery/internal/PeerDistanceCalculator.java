@@ -25,7 +25,7 @@ public class PeerDistanceCalculator {
    * @param v2 the second value
    * @return the distance
    */
-  static int distance(final BytesValue v1, final BytesValue v2) {
+  public static int distance(final BytesValue v1, final BytesValue v2) {
     assert (v1.size() == v2.size());
     final byte[] v1b = v1.extractArray();
     final byte[] v2b = v2.extractArray();
