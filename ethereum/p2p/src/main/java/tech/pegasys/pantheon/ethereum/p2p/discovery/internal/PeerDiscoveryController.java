@@ -144,7 +144,7 @@ public class PeerDiscoveryController {
   }
 
   public RecursivePeerRefreshState getRecursivePeerRefreshState() {
-  return recursivePeerRefreshState;
+    return recursivePeerRefreshState;
   }
 
   public BytesValue getTarget() {

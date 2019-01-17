@@ -78,7 +78,8 @@ public class PeerDiscoveryAgentTest {
 
     // Send a PING so we can exchange messages with the latter agent.
     Packet packet = helper.createPingPacket(testAgent, agent);
-    helper.sendMessageBetweenAgents(testAgent, agent, packet);
+    // helper.sendMessageBetweenAgents(testAgent, agent, packet);
+    helper.dispatchPing(testAgent, agent, packet);
 
     // Send a FIND_NEIGHBORS message.
     packet =
@@ -95,7 +96,9 @@ public class PeerDiscoveryAgentTest {
             .stream()
             .filter(p -> p.packet.getType().equals(PacketType.NEIGHBORS))
             .collect(Collectors.toList());
-    assertThat(incomingPackets.size()).isEqualTo(1);
+    // Since we've initiated the "bonding" process between peers, we can't
+    // guarantee the number of NEIGHBOURS packets exchanged, but we can
+    // still make assertions about the contents of any such packet.
     IncomingPacket neighborsPacket = incomingPackets.get(0);
     assertThat(neighborsPacket.fromAgent).isEqualTo(agent);
 
@@ -161,7 +164,7 @@ public class PeerDiscoveryAgentTest {
   protected void bondViaIncomingPing(
       final MockPeerDiscoveryAgent agent, final MockPeerDiscoveryAgent otherNode) {
     Packet pingPacket = helper.createPingPacket(otherNode, agent);
-    helper.sendMessageBetweenAgents(otherNode, agent, pingPacket);
+    helper.dispatchPing(otherNode, agent, pingPacket);
   }
 
   @Test

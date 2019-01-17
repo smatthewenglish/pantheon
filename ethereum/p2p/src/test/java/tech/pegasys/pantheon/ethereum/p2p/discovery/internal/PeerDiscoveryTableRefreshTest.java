@@ -42,7 +42,7 @@ import org.mockito.ArgumentCaptor;
 public class PeerDiscoveryTableRefreshTest {
   private final PeerDiscoveryTestHelper helper = new PeerDiscoveryTestHelper();
 
-  //TODO: Reformulate this test...
+  // TODO: Reformulate this test...
   @Test
   public void tableRefreshSingleNode() {
     final List<SECP256K1.KeyPair> keypairs = PeerDiscoveryTestHelper.generateKeyPairs(2);
