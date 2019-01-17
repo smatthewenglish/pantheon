@@ -33,12 +33,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.SortedMap;
 import java.util.TreeMap;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -189,7 +185,8 @@ public class RecursivePeerRefreshStateTest {
 
   @Test
   public void shouldIssueRequestToPeerWithLesserDistanceGreaterHops() {
-    RecursivePeerRefreshState recursivePeerRefreshState = new RecursivePeerRefreshState(
+    RecursivePeerRefreshState recursivePeerRefreshState =
+        new RecursivePeerRefreshState(
             target,
             new PeerBlacklist(),
             new NodeWhitelistController(PermissioningConfiguration.createDefault()),
@@ -379,20 +376,25 @@ public class RecursivePeerRefreshStateTest {
   @Test
   public void testSortMetadataBonding() {
 
-    final RecursivePeerRefreshState.MetadataPeer peerA = new RecursivePeerRefreshState.MetadataPeer(peer_020, distance(target, peer_020.getId()));
+    final RecursivePeerRefreshState.MetadataPeer peerA =
+        new RecursivePeerRefreshState.MetadataPeer(peer_020, distance(target, peer_020.getId()));
 
-    final RecursivePeerRefreshState.MetadataPeer peerB = new RecursivePeerRefreshState.MetadataPeer(peer_021, distance(target, peer_021.getId()));
+    final RecursivePeerRefreshState.MetadataPeer peerB =
+        new RecursivePeerRefreshState.MetadataPeer(peer_021, distance(target, peer_021.getId()));
     peerB.setBondQueried();
 
-    final RecursivePeerRefreshState.MetadataPeer peerC = new RecursivePeerRefreshState.MetadataPeer(peer_022, distance(target, peer_022.getId()));
+    final RecursivePeerRefreshState.MetadataPeer peerC =
+        new RecursivePeerRefreshState.MetadataPeer(peer_022, distance(target, peer_022.getId()));
 
     final RecursivePeerRefreshState.MetadataPeer peerD =
         new RecursivePeerRefreshState.MetadataPeer(
             peer_023, distance(target, peer_023.getId())); // Not returned on threshold 3
 
-    final RecursivePeerRefreshState.MetadataPeer peerE = new RecursivePeerRefreshState.MetadataPeer(peer_120, distance(target, peer_120.getId()));
+    final RecursivePeerRefreshState.MetadataPeer peerE =
+        new RecursivePeerRefreshState.MetadataPeer(peer_120, distance(target, peer_120.getId()));
 
-    final SortedMap<BytesValue, RecursivePeerRefreshState.MetadataPeer> oneTrueMap = new TreeMap<>();
+    final SortedMap<BytesValue, RecursivePeerRefreshState.MetadataPeer> oneTrueMap =
+        new TreeMap<>();
 
     oneTrueMap.put(peer_023.getId(), peerD);
     oneTrueMap.put(peer_022.getId(), peerC);
@@ -426,7 +428,8 @@ public class RecursivePeerRefreshStateTest {
     final List<DiscoveryPeer> candidatesList = new ArrayList<>();
 
     int count = 0;
-    for (Map.Entry<BytesValue, RecursivePeerRefreshState.MetadataPeer> candidateEntry : source.entrySet()) {
+    for (Map.Entry<BytesValue, RecursivePeerRefreshState.MetadataPeer> candidateEntry :
+        source.entrySet()) {
       if (count >= max) {
         break;
       }
@@ -453,7 +456,8 @@ public class RecursivePeerRefreshStateTest {
     final List<DiscoveryPeer> candidatesList = new ArrayList<>();
 
     int count = 0;
-    for (Map.Entry<BytesValue, RecursivePeerRefreshState.MetadataPeer> candidateEntry : source.entrySet()) {
+    for (Map.Entry<BytesValue, RecursivePeerRefreshState.MetadataPeer> candidateEntry :
+        source.entrySet()) {
       if (count >= max) {
         break;
       }
@@ -470,15 +474,18 @@ public class RecursivePeerRefreshStateTest {
   @Test
   public void testSortMetadataNeighbours() {
 
-    final RecursivePeerRefreshState.MetadataPeer peerA = new RecursivePeerRefreshState.MetadataPeer(peer_020, distance(target, peer_020.getId()));
+    final RecursivePeerRefreshState.MetadataPeer peerA =
+        new RecursivePeerRefreshState.MetadataPeer(peer_020, distance(target, peer_020.getId()));
     peerA.setBondQueried();
     peerA.setBondCancelled(); // !!!
 
-    final RecursivePeerRefreshState.MetadataPeer peerB = new RecursivePeerRefreshState.MetadataPeer(peer_021, distance(target, peer_021.getId()));
+    final RecursivePeerRefreshState.MetadataPeer peerB =
+        new RecursivePeerRefreshState.MetadataPeer(peer_021, distance(target, peer_021.getId()));
     peerB.setBondQueried();
     peerB.setBondResponded();
 
-    final RecursivePeerRefreshState.MetadataPeer peerC = new RecursivePeerRefreshState.MetadataPeer(peer_022, distance(target, peer_022.getId()));
+    final RecursivePeerRefreshState.MetadataPeer peerC =
+        new RecursivePeerRefreshState.MetadataPeer(peer_022, distance(target, peer_022.getId()));
     peerC.setBondQueried();
     peerC.setBondResponded();
 
@@ -488,7 +495,8 @@ public class RecursivePeerRefreshStateTest {
     peerD.setBondQueried();
     peerD.setBondResponded();
 
-    final SortedMap<BytesValue, RecursivePeerRefreshState.MetadataPeer> oneTrueMap = new TreeMap<>();
+    final SortedMap<BytesValue, RecursivePeerRefreshState.MetadataPeer> oneTrueMap =
+        new TreeMap<>();
 
     oneTrueMap.put(peer_023.getId(), peerD);
     oneTrueMap.put(peer_022.getId(), peerC);

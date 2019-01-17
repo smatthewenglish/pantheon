@@ -31,20 +31,18 @@ import tech.pegasys.pantheon.ethereum.permissioning.PermissioningConfiguration;
 import tech.pegasys.pantheon.util.Subscribers;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
-import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 public class PeerDiscoveryTableRefreshTest {
   private final PeerDiscoveryTestHelper helper = new PeerDiscoveryTestHelper();
 
   @Test
-  public void tableRefreshSingleNode() {
+  public void tableRefreshSingleNode() throws InterruptedException {
     final List<SECP256K1.KeyPair> keypairs = PeerDiscoveryTestHelper.generateKeyPairs(2);
     final List<DiscoveryPeer> peers = helper.createDiscoveryPeers(keypairs);
     DiscoveryPeer localPeer = peers.get(0);
@@ -78,36 +76,35 @@ public class PeerDiscoveryTableRefreshTest {
     // Wait until the controller has added the newly found peer.
     assertThat(controller.getPeers()).hasSize(1);
 
-    // As the controller performs refreshes, it'll send FIND_NEIGHBORS packets with random target
-    // IDs every time.
-    // We capture the packets so that we can later assert on them.
-    // Within 1000ms, there should be ~10 packets. But let's be less ambitious and expect at least
-    // 5.
+    // As the controller performs refreshes, it'll send a PING packet to the single peer we know
+    // about,
+    // as we're trying to "bond" with them.
+    // We capture this packet so that we can later assert on it.
+    // Within 1000ms there should be 1 packet, because as mentioned above, there is exactly one peer
+    // apart from ourselves in this test, and we are now
+    // more deliberate about the messages we accept and transmit.
     final ArgumentCaptor<Packet> captor = ArgumentCaptor.forClass(Packet.class);
     for (int i = 0; i < 5; i++) {
       timer.runPeriodicHandlers();
     }
-    verify(outboundMessageHandler, atLeast(5)).send(eq(peers.get(1)), captor.capture());
-    List<Packet> capturedFindNeighborsPackets =
+    verify(outboundMessageHandler, atLeast(1)).send(eq(peers.get(1)), captor.capture());
+    final List<Packet> capturedPingPackets =
         captor
             .getAllValues()
             .stream()
-            .filter(p -> p.getType().equals(PacketType.FIND_NEIGHBORS))
+            .filter(p -> p.getType().equals(PacketType.PING))
             .collect(Collectors.toList());
-    assertThat(capturedFindNeighborsPackets.size()).isEqualTo(5);
+    assertThat(capturedPingPackets.size()).isEqualTo(1);
 
-    // Collect targets from find neighbors packets
-    final List<BytesValue> targets = new ArrayList<>();
-    for (final Packet captured : capturedFindNeighborsPackets) {
-      Optional<FindNeighborsPacketData> maybeData = captured.getPacketData(FindNeighborsPacketData.class);
+    // Collect endpoint from pong packet.
+    final List<Endpoint> targets = new ArrayList<>();
+    for (final Packet captured : capturedPingPackets) {
+      final Optional<PingPacketData> maybeData = captured.getPacketData(PingPacketData.class);
       assertThat(maybeData).isPresent();
-      final FindNeighborsPacketData neighborsData = maybeData.get();
-      targets.add(neighborsData.getTarget());
+      final PingPacketData pingPacketData = maybeData.get();
+      targets.add(pingPacketData.getTo());
     }
 
     assertThat(targets.size()).isEqualTo(1);
-
-    // All targets are unique.
-    assertThat(targets.size()).isEqualTo(new HashSet<>(targets).size());
   }
 }

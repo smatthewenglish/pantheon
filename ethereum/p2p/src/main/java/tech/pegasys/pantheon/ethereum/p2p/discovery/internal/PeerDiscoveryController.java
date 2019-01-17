@@ -89,34 +89,26 @@ public class PeerDiscoveryController {
 
   private static final Logger LOG = LogManager.getLogger();
   private static final long REFRESH_CHECK_INTERVAL_MILLIS = MILLISECONDS.convert(30, SECONDS);
-  protected final TimerUtil timerUtil;
+  private final TimerUtil timerUtil;
   private final PeerTable peerTable;
-
   private final Collection<DiscoveryPeer> bootstrapNodes;
-
   private final AtomicBoolean started = new AtomicBoolean(false);
 
   private final SECP256K1.KeyPair keypair;
-  // The peer representation of this node
-  private final DiscoveryPeer localPeer;
+  private final DiscoveryPeer localPeer; // The peer representation of this node
   private final OutboundMessageHandler outboundMessageHandler;
   private final PeerBlacklist peerBlacklist;
   private final NodeWhitelistController nodeWhitelist;
 
-  private final long tableRefreshIntervalMs;
-
   private final PeerRequirement peerRequirement;
-
+  private final long tableRefreshIntervalMs;
   private long lastRefreshTime = -1;
-
   private OptionalLong tableRefreshTimerId = OptionalLong.empty();
-
-  // Observers for "peer bonded" discovery events.
-  private final Subscribers<Consumer<PeerBondedEvent>> peerBondedObservers;
-
-  private RecursivePeerRefreshState recursivePeerRefreshState;
+  private final Subscribers<Consumer<PeerBondedEvent>>
+      peerBondedObservers; // Observers for "peer bonded" discovery events.
 
   private final BytesValue target = Peer.randomId();
+  private RecursivePeerRefreshState recursivePeerRefreshState;
 
   public PeerDiscoveryController(
       final KeyPair keypair,
@@ -245,8 +237,6 @@ public class PeerDiscoveryController {
         recursivePeerRefreshState.onPongPacketReceived(peer);
         break;
       case NEIGHBORS:
-        System.out.println("NEIGHBORS");
-
         peer.setStatus(DiscoveryPeerStatus.RECEIVED_NEIGHBOURS_FROM);
         recursivePeerRefreshState.onNeighboursPacketReceived(
             peer, packet.getPacketData(NeighborsPacketData.class).orElse(null));
@@ -288,12 +278,9 @@ public class PeerDiscoveryController {
     }
   }
 
-  /**
-   * Refreshes the peer table by generating a random ID and interrogating the closest nodes for it.
-   * Currently the refresh process is NOT recursive.
-   */
+  /** Refreshes the peer table by interrogating the closest nodes for a random search target. */
   private void refreshTable() {
-    final List<DiscoveryPeer> nearestPeers = peerTable.nearestPeers(target, 16);
+    final List<DiscoveryPeer> nearestPeers = peerTable.nearestPeers(Peer.randomId(), 16);
     recursivePeerRefreshState.kickstartBootstrapPeers(nearestPeers);
     recursivePeerRefreshState.start();
     lastRefreshTime = System.currentTimeMillis();
@@ -315,9 +302,6 @@ public class PeerDiscoveryController {
    * @param peer The targeted peer.
    */
   void dispatchPing(final DiscoveryPeer peer) {
-
-    System.out.println("---> sending out a ping...");
-
     peer.setFirstDiscovered(System.currentTimeMillis());
     final PingPacketData pingPacketData =
         PingPacketData.create(localPeer.getEndpoint(), peer.getEndpoint());
@@ -332,9 +316,6 @@ public class PeerDiscoveryController {
    * @param target the target node ID to find
    */
   private void dispatchFindNeighbours(final DiscoveryPeer peer, final BytesValue target) {
-
-    System.out.println("!!!!!!!  sending out a FIND NEIGHBOURS");
-
     final FindNeighborsPacketData findNeighborsPacketData = FindNeighborsPacketData.create(target);
     sendPacket(peer, PacketType.FIND_NEIGHBORS, findNeighborsPacketData);
     peer.setStatus(DiscoveryPeerStatus.DISPATCHED_FIND_NEIGHBOURS_TO);
@@ -342,9 +323,6 @@ public class PeerDiscoveryController {
 
   private void respondToPing(
       final DiscoveryPeer peer, final PingPacketData packetData, final BytesValue pingHash) {
-
-    System.out.println("---> sending out a PONG...");
-
     final PongPacketData pongPacketData = PongPacketData.create(packetData.getFrom(), pingHash);
     sendPacket(peer, PacketType.PONG, pongPacketData);
     peer.setStatus(DiscoveryPeerStatus.DISPATCHED_PONG_TO);
