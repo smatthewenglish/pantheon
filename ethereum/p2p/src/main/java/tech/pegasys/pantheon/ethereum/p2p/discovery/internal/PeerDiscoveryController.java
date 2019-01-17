@@ -158,7 +158,12 @@ public class PeerDiscoveryController {
     bootstrapNodes.stream().filter(nodeWhitelist::contains).forEach(peerTable::tryAdd);
     recursivePeerRefreshState =
         new RecursivePeerRefreshState(
-            target, peerBlacklist, nodeWhitelist, this::dispatchPing, this::dispatchFindNeighbours);
+            target,
+            peerBlacklist,
+            nodeWhitelist,
+            this::dispatchPing,
+            this::dispatchFindNeighbours,
+            30);
     recursivePeerRefreshState.kickstartBootstrapPeers(
         bootstrapNodes.stream().filter(nodeWhitelist::contains).collect(Collectors.toList()));
     recursivePeerRefreshState.start();
@@ -194,9 +199,6 @@ public class PeerDiscoveryController {
    * @param sender The sender.
    */
   public void onMessage(final Packet packet, final DiscoveryPeer sender) {
-
-    System.out.println("16");
-
     LOG.trace(
         "<<< Received {} discovery packet from {} ({}): {}",
         packet.getType(),

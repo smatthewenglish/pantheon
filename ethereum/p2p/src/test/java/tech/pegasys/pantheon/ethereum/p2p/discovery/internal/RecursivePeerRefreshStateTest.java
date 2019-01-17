@@ -99,7 +99,8 @@ public class RecursivePeerRefreshStateTest {
             new PeerBlacklist(),
             new NodeWhitelistController(PermissioningConfiguration.createDefault()),
             bondingAgent,
-            neighborFinder);
+            neighborFinder,
+            30);
 
     peer_000 = (TestPeer) generatePeer(peers);
 
