@@ -825,7 +825,7 @@ public class PeerDiscoveryControllerTest {
 
     controller.start();
 
-    verify(outboundMessageHandler, times(16)).send(any(), matchPacketOfType(PacketType.PING));
+    verify(outboundMessageHandler, times(3)).send(any(), matchPacketOfType(PacketType.PING));
 
     final Packet pongPacket =
         MockPacketDataFactory.mockPongPacket(peers.get(0), pingPacket.getHash());

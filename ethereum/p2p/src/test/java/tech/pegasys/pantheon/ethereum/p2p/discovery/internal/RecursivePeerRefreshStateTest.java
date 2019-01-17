@@ -93,14 +93,6 @@ public class RecursivePeerRefreshStateTest {
   public void setup() throws Exception {
     final JsonNode peers =
         MAPPER.readTree(RecursivePeerRefreshStateTest.class.getResource("/peers.json"));
-    recursivePeerRefreshState =
-        new RecursivePeerRefreshState(
-            target,
-            new PeerBlacklist(),
-            new NodeWhitelistController(PermissioningConfiguration.createDefault()),
-            bondingAgent,
-            neighborFinder,
-            30);
 
     peer_000 = (TestPeer) generatePeer(peers);
 
@@ -199,6 +191,15 @@ public class RecursivePeerRefreshStateTest {
 
   @Test
   public void shouldIssueRequestToPeerWithLesserDistanceGreaterHops() {
+    recursivePeerRefreshState =
+        new RecursivePeerRefreshState(
+            target,
+            new PeerBlacklist(),
+            new NodeWhitelistController(PermissioningConfiguration.createDefault()),
+            bondingAgent,
+            neighborFinder,
+            30);
+
     recursivePeerRefreshState.kickstartBootstrapPeers(Collections.singletonList(peer_000));
     recursivePeerRefreshState.start();
 
@@ -267,32 +268,39 @@ public class RecursivePeerRefreshStateTest {
   }
 
   @Test
-  public void shouldIssueRequestToPeerWithGreaterDistanceOnExpirationOfLowerDistancePeerRequest() {
-    //    recursivePeerRefreshState.kickstartBootstrapPeers(Collections.singletonList(peer_000));
-    //    recursivePeerRefreshState.neighboursTimeoutEvaluation();
-    //
-    //    verify(neighborFinder, never()).findNeighbours(peer_000, target);
-    //    verify(bondingAgent).ping(peer_000);
-    //
-    //    recursivePeerRefreshState.onPongPacketReceived(peer_000);
-    //
-    //    recursivePeerRefreshState.onNeighboursPacketReceived(neighborsPacketData_000, peer_000);
-    //
-    //    recursivePeerRefreshState.onPongPacketReceived(peer_010);
-    //    recursivePeerRefreshState.onPongPacketReceived(peer_011);
-    //    recursivePeerRefreshState.onPongPacketReceived(peer_012);
-    //    recursivePeerRefreshState.onPongPacketReceived(peer_013);
-    //
-    //    recursivePeerRefreshState.neighboursTimeoutEvaluation();
-    //
-    //    verify(neighborFinder, never()).findNeighbours(peer_010, target);
-    //    verify(neighborFinder).findNeighbours(peer_011, target);
-    //    verify(neighborFinder).findNeighbours(peer_012, target);
-    //    verify(neighborFinder).findNeighbours(peer_013, target);
-    //
-    //    recursivePeerRefreshState.neighboursTimeoutEvaluation();
-    //
-    //    verify(neighborFinder).findNeighbours(peer_010, target);
+  public void shouldIssueRequestToPeerWithGreaterDistanceOnExpirationOfLowerDistancePeerRequest()
+      throws InterruptedException {
+    final RecursivePeerRefreshState recursivePeerRefreshState0 =
+        new RecursivePeerRefreshState(
+            target,
+            new PeerBlacklist(),
+            new NodeWhitelistController(PermissioningConfiguration.createDefault()),
+            bondingAgent,
+            neighborFinder,
+            1);
+
+    recursivePeerRefreshState0.kickstartBootstrapPeers(Collections.singletonList(peer_000));
+    recursivePeerRefreshState0.start();
+
+    verify(neighborFinder, never()).findNeighbours(peer_000, target);
+    verify(bondingAgent).ping(peer_000);
+
+    recursivePeerRefreshState0.onPongPacketReceived(peer_000);
+    recursivePeerRefreshState0.onNeighboursPacketReceived(peer_000, neighborsPacketData_000);
+
+    recursivePeerRefreshState0.onPongPacketReceived(peer_010);
+    recursivePeerRefreshState0.onPongPacketReceived(peer_011);
+    recursivePeerRefreshState0.onPongPacketReceived(peer_012);
+    recursivePeerRefreshState0.onPongPacketReceived(peer_013);
+
+    verify(neighborFinder, never()).findNeighbours(peer_010, target);
+    verify(neighborFinder).findNeighbours(peer_011, target);
+    verify(neighborFinder).findNeighbours(peer_012, target);
+    verify(neighborFinder).findNeighbours(peer_013, target);
+
+    Thread.sleep(2000);
+
+    verify(neighborFinder).findNeighbours(peer_010, target);
   }
 
   private DiscoveryPeer generatePeer(final JsonNode peer) {

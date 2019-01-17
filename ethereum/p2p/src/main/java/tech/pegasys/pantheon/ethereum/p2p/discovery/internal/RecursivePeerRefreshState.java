@@ -39,8 +39,10 @@ public class RecursivePeerRefreshState {
 
   private final SortedMap<BytesValue, MetadataPeer> oneTrueMap;
 
-  private final ScheduledExecutorService scheduledExecutorService =
-      Executors.newScheduledThreadPool(2);
+  private final ScheduledExecutorService bondingScheduledExecutorService =
+      Executors.newScheduledThreadPool(1);
+  private final ScheduledExecutorService neighboursScheduledExecutorService =
+      Executors.newScheduledThreadPool(1);
   private final int timeoutPeriod;
 
   RecursivePeerRefreshState(
@@ -68,7 +70,8 @@ public class RecursivePeerRefreshState {
   }
 
   void start() {
-    bondingInitiateRound();
+    final List<DiscoveryPeer> bondingRoundCandidatesList = bondingRoundCandidates(3, oneTrueMap);
+    bondingInitiateRound(bondingRoundCandidatesList);
   }
 
   void kickstartBootstrapPeers(final List<DiscoveryPeer> bootstrapPeers) {
@@ -86,20 +89,21 @@ public class RecursivePeerRefreshState {
         metadataPeer.setBondCancelled();
       }
     }
-  }
-
-  private void bondingInitiateRound() {
     final List<DiscoveryPeer> bondingRoundCandidatesList =
         bondingRoundCandidates(oneTrueMap.size(), oneTrueMap);
+    if (bondingRoundCandidatesList.size() > 0) {
+      bondingInitiateRound(bondingRoundCandidatesList);
+    }
+  }
 
+  private void bondingInitiateRound(final List<DiscoveryPeer> bondingRoundCandidatesList) {
     for (DiscoveryPeer discoPeer : bondingRoundCandidatesList) {
       final MetadataPeer metadataPeer = oneTrueMap.get(discoPeer.getId());
       metadataPeer.setBondQueried();
       pingDispatcher.ping(discoPeer);
     }
-
     final Runnable bondingCancellationTimerTask = this::bondingCancelOutstandingRequests;
-    scheduledExecutorService.schedule(
+    bondingScheduledExecutorService.schedule(
         bondingCancellationTimerTask, timeoutPeriod, TimeUnit.SECONDS);
   }
 
@@ -110,13 +114,34 @@ public class RecursivePeerRefreshState {
         metadataPeer.setNeighbourCancelled();
       }
     }
-  }
-
-  private void neighboursInitiateRound() {
-    // TODO: Terminating condition...
-
     final List<DiscoveryPeer> neighboursRoundCandidatesList =
         neighboursRoundCandidates(3, oneTrueMap);
+    if (neighboursRoundCandidatesList.size() > 0) {
+      neighboursInitiateRound(neighboursRoundCandidatesList);
+    }
+  }
+
+  private boolean terminationConditionSatisfied() {
+    for (Map.Entry<BytesValue, MetadataPeer> candidateEntry : oneTrueMap.entrySet()) {
+      final MetadataPeer candidate = candidateEntry.getValue();
+      if (candidate.getBondQueried()) {
+        if (!(candidate.getBondResponded() || candidate.getBondCancelled())) {
+          return false;
+        }
+      }
+      if (candidate.getNeighbourQueried()) {
+        if (!(candidate.getNeighbourResponded() || candidate.getNeighbourCancelled())) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
+  private void neighboursInitiateRound(final List<DiscoveryPeer> neighboursRoundCandidatesList) {
+    if (terminationConditionSatisfied()) {
+      return;
+    }
 
     for (DiscoveryPeer discoPeer : neighboursRoundCandidatesList) {
       findNeighbourDispatcher.findNeighbours(discoPeer, target);
@@ -125,7 +150,7 @@ public class RecursivePeerRefreshState {
     }
 
     final Runnable neighboursCancellationTimerTask = this::neighboursCancelOutstandingRequests;
-    scheduledExecutorService.schedule(
+    neighboursScheduledExecutorService.schedule(
         neighboursCancellationTimerTask, timeoutPeriod, TimeUnit.SECONDS);
   }
 
@@ -155,7 +180,9 @@ public class RecursivePeerRefreshState {
     metadataPeer.setNeighbourResponded();
 
     if (neighboursRoundTermination()) {
-      bondingInitiateRound();
+      final List<DiscoveryPeer> bondingRoundCandidatesList =
+          bondingRoundCandidates(oneTrueMap.size(), oneTrueMap);
+      bondingInitiateRound(bondingRoundCandidatesList);
     }
   }
 
@@ -163,7 +190,9 @@ public class RecursivePeerRefreshState {
     final MetadataPeer iterationParticipant = oneTrueMap.get(peer.getId());
     iterationParticipant.setBondResponded();
     if (bondingRoundTermination()) {
-      neighboursInitiateRound();
+      final List<DiscoveryPeer> neighboursRoundCandidatesList =
+          neighboursRoundCandidates(3, oneTrueMap);
+      neighboursInitiateRound(neighboursRoundCandidatesList);
     }
   }
 
@@ -225,7 +254,11 @@ public class RecursivePeerRefreshState {
         break;
       }
       final MetadataPeer candidate = candidateEntry.getValue();
-      if (candidate.getBondQueried() && candidate.getBondResponded()) {
+      if (candidate.getBondQueried()
+          && candidate.getBondResponded()
+          && !candidate.getNeighbourCancelled()
+          && !candidate.getNeighbourQueried()
+          && !candidate.getNeighbourResponded()) {
         candidatesList.add(candidate.getPeer());
         count++;
       }
