@@ -260,7 +260,9 @@ public class RecursivePeerRefreshState {
 
     @Override
     public int compareTo(final MetadataPeer o) {
-      if (this.distance > o.distance) return 1;
+      if (this.distance > o.distance) {
+        return 1;
+      }
       return -1;
     }
 
