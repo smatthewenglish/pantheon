@@ -19,13 +19,23 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static sun.security.krb5.Confounder.bytes;
 
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
 import tech.pegasys.pantheon.ethereum.chain.Blockchain;
 import tech.pegasys.pantheon.ethereum.chain.MutableBlockchain;
+import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.Block;
+import tech.pegasys.pantheon.ethereum.core.BlockBody;
 import tech.pegasys.pantheon.ethereum.core.BlockDataGenerator;
 import tech.pegasys.pantheon.ethereum.core.BlockDataGenerator.BlockOptions;
+import tech.pegasys.pantheon.ethereum.core.BlockHeader;
+import tech.pegasys.pantheon.ethereum.core.BlockHeaderBuilder;
+import tech.pegasys.pantheon.ethereum.core.Hash;
+import tech.pegasys.pantheon.ethereum.core.InMemoryStorageProvider;
+import tech.pegasys.pantheon.ethereum.core.LogsBloomFilter;
+import tech.pegasys.pantheon.ethereum.db.BlockchainStorage;
+import tech.pegasys.pantheon.ethereum.db.DefaultMutableBlockchain;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthContext;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthMessages;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthPeers;
@@ -40,12 +50,20 @@ import tech.pegasys.pantheon.ethereum.eth.messages.NewBlockHashesMessage.NewBloc
 import tech.pegasys.pantheon.ethereum.eth.messages.NewBlockMessage;
 import tech.pegasys.pantheon.ethereum.eth.sync.state.PendingBlocks;
 import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncState;
+import tech.pegasys.pantheon.ethereum.mainnet.MainnetBlockHashFunction;
+import tech.pegasys.pantheon.ethereum.mainnet.MainnetProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.metrics.LabelledMetric;
 import tech.pegasys.pantheon.metrics.OperationTimer;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
+import tech.pegasys.pantheon.services.kvstore.InMemoryKeyValueStorage;
+import tech.pegasys.pantheon.services.kvstore.KeyValueStorage;
+import tech.pegasys.pantheon.util.bytes.Bytes32;
+import tech.pegasys.pantheon.util.bytes.BytesValue;
 import tech.pegasys.pantheon.util.uint.UInt256;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
@@ -103,6 +121,35 @@ public class BlockPropagationManagerTest {
             syncState,
             pendingBlocks,
             ethTasksTimer);
+  }
+
+  @Test
+  public void blockPropagationManager_functionalityAssessment() {
+
+    BlockchainStorage kvStore00 = new InMemoryStorageProvider().createBlockchainStorage(MainnetProtocolSchedule.create(new NoOpMetricsSystem()));
+    BlockHeader genesisHeader00 =
+            BlockHeaderBuilder.create()
+                    .parentHash(Hash.ZERO)
+                    .ommersHash(Hash.ZERO)
+                    .coinbase(Address.fromHexString("0x0000000000000000000000000000000000000000"))
+                    .stateRoot(Hash.ZERO)
+                    .transactionsRoot(Hash.ZERO)
+                    .receiptsRoot(Hash.ZERO)
+                    .logsBloom(new LogsBloomFilter(BytesValue.of(bytes(LogsBloomFilter.BYTE_SIZE))))
+                    .difficulty(UInt256.ZERO)
+                    .number(0L)
+                    .gasLimit(1L)
+                    .gasUsed(1L)
+                    .timestamp(Instant.now().truncatedTo(ChronoUnit.SECONDS).getEpochSecond())
+                    .extraData(Bytes32.wrap(bytes(Bytes32.SIZE)))
+                    .mixHash(Hash.ZERO)
+                    .nonce(0L)
+                    .blockHashFunction(MainnetBlockHashFunction::createHash)
+                    .buildBlockHeader();
+    BlockBody genesisBody00 = new BlockBody(Collections.emptyList(), Collections.emptyList());
+    Block genesisBlock00 = new Block(genesisHeader00, genesisBody00);
+    DefaultMutableBlockchain blockchain00 = new DefaultMutableBlockchain(genesisBlock00, kvStore00, new NoOpMetricsSystem());
+
   }
 
   @Test
