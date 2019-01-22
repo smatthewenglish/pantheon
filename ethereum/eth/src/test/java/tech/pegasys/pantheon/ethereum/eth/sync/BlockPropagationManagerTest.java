@@ -34,6 +34,7 @@ import tech.pegasys.pantheon.ethereum.core.BlockHeaderBuilder;
 import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.ethereum.core.InMemoryStorageProvider;
 import tech.pegasys.pantheon.ethereum.core.LogsBloomFilter;
+import tech.pegasys.pantheon.ethereum.core.TransactionReceipt;
 import tech.pegasys.pantheon.ethereum.db.BlockchainStorage;
 import tech.pegasys.pantheon.ethereum.db.DefaultMutableBlockchain;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthContext;
@@ -65,6 +66,7 @@ import tech.pegasys.pantheon.util.uint.UInt256;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 
@@ -149,6 +151,80 @@ public class BlockPropagationManagerTest {
     BlockBody genesisBody00 = new BlockBody(Collections.emptyList(), Collections.emptyList());
     Block genesisBlock00 = new Block(genesisHeader00, genesisBody00);
     DefaultMutableBlockchain blockchain00 = new DefaultMutableBlockchain(genesisBlock00, kvStore00, new NoOpMetricsSystem());
+
+    BlockHeader header00A =
+            BlockHeaderBuilder.create()
+                    .parentHash(genesisBlock00.getHash())
+                    .ommersHash(Hash.ZERO)
+                    .coinbase(Address.fromHexString("0x0000000000000000000000000000000000000000"))
+                    .stateRoot(Hash.ZERO)
+                    .transactionsRoot(Hash.ZERO)
+                    .receiptsRoot(Hash.ZERO)
+                    .logsBloom(new LogsBloomFilter(BytesValue.of(bytes(LogsBloomFilter.BYTE_SIZE))))
+                    .difficulty(UInt256.ZERO)
+                    .number(1L)
+                    .gasLimit(1L)
+                    .gasUsed(1L)
+                    .timestamp(Instant.now().truncatedTo(ChronoUnit.SECONDS).getEpochSecond())
+                    .extraData(Bytes32.wrap(bytes(Bytes32.SIZE)))
+                    .mixHash(Hash.ZERO)
+                    .nonce(0L)
+                    .blockHashFunction(MainnetBlockHashFunction::createHash)
+                    .buildBlockHeader();
+    BlockBody body00A = new BlockBody(Collections.emptyList(), Collections.emptyList());
+    Block block00A = new Block(header00A, body00A);
+    List<TransactionReceipt> receipts00A = Collections.emptyList();
+    blockchain00.appendBlock(block00A, receipts00A);
+
+    BlockHeader header00B =
+            BlockHeaderBuilder.create()
+                    .parentHash(block00A.getHash())
+                    .ommersHash(Hash.ZERO)
+                    .coinbase(Address.fromHexString("0x0000000000000000000000000000000000000000"))
+                    .stateRoot(Hash.ZERO)
+                    .transactionsRoot(Hash.ZERO)
+                    .receiptsRoot(Hash.ZERO)
+                    .logsBloom(new LogsBloomFilter(BytesValue.of(bytes(LogsBloomFilter.BYTE_SIZE))))
+                    .difficulty(UInt256.ZERO)
+                    .number(2L)
+                    .gasLimit(1L)
+                    .gasUsed(1L)
+                    .timestamp(Instant.now().truncatedTo(ChronoUnit.SECONDS).getEpochSecond())
+                    .extraData(Bytes32.wrap(bytes(Bytes32.SIZE)))
+                    .mixHash(Hash.ZERO)
+                    .nonce(0L)
+                    .blockHashFunction(MainnetBlockHashFunction::createHash)
+                    .buildBlockHeader();
+    BlockBody body00B = new BlockBody(Collections.emptyList(), Collections.emptyList());
+    Block block00B = new Block(header00B, body00B);
+    List<TransactionReceipt> receipts00B = Collections.emptyList();
+    blockchain00.appendBlock(block00B, receipts00B);
+
+    BlockHeader header00C =
+            BlockHeaderBuilder.create()
+                    .parentHash(block00B.getHash())
+                    .ommersHash(Hash.ZERO)
+                    .coinbase(Address.fromHexString("0x0000000000000000000000000000000000000000"))
+                    .stateRoot(Hash.ZERO)
+                    .transactionsRoot(Hash.ZERO)
+                    .receiptsRoot(Hash.ZERO)
+                    .logsBloom(new LogsBloomFilter(BytesValue.of(bytes(LogsBloomFilter.BYTE_SIZE))))
+                    .difficulty(UInt256.ZERO)
+                    .number(3L)
+                    .gasLimit(1L)
+                    .gasUsed(1L)
+                    .timestamp(Instant.now().truncatedTo(ChronoUnit.SECONDS).getEpochSecond())
+                    .extraData(Bytes32.wrap(bytes(Bytes32.SIZE)))
+                    .mixHash(Hash.ZERO)
+                    .nonce(0L)
+                    .blockHashFunction(MainnetBlockHashFunction::createHash)
+                    .buildBlockHeader();
+    BlockBody body00C = new BlockBody(Collections.emptyList(), Collections.emptyList());
+    Block block00C = new Block(header00C, body00C);
+    List<TransactionReceipt> receipts00C = Collections.emptyList();
+    blockchain00.appendBlock(block00C, receipts00C);
+
+    assertThat(blockchain00.getChainHeadBlockNumber()).isEqualTo(3L);
 
   }
 
