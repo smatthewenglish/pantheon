@@ -29,6 +29,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import com.google.common.annotations.VisibleForTesting;
+
 public class RecursivePeerRefreshState {
   private final BytesValue target;
   private final PeerBlacklist peerBlacklist;
@@ -40,9 +42,9 @@ public class RecursivePeerRefreshState {
   private final SortedMap<BytesValue, MetadataPeer> oneTrueMap;
 
   private final ScheduledExecutorService bondingScheduledExecutorService =
-      Executors.newScheduledThreadPool(1);
+      Executors.newSingleThreadScheduledExecutor();
   private final ScheduledExecutorService neighboursScheduledExecutorService =
-      Executors.newScheduledThreadPool(1);
+      Executors.newSingleThreadScheduledExecutor();
   private final int timeoutPeriod;
 
   RecursivePeerRefreshState(
@@ -59,14 +61,6 @@ public class RecursivePeerRefreshState {
     this.findNeighbourDispatcher = neighborFinder;
     this.timeoutPeriod = timeoutPeriod;
     this.oneTrueMap = new TreeMap<>();
-  }
-
-  public BytesValue getTarget() {
-    return target;
-  }
-
-  public SortedMap<BytesValue, MetadataPeer> getOneTrueMap() {
-    return oneTrueMap;
   }
 
   void start() {
@@ -244,6 +238,16 @@ public class RecursivePeerRefreshState {
       }
     }
     return candidatesList;
+  }
+
+  @VisibleForTesting
+  public BytesValue getTarget() {
+    return target;
+  }
+
+  @VisibleForTesting
+  public SortedMap<BytesValue, MetadataPeer> getOneTrueMap() {
+    return oneTrueMap;
   }
 
   public static class MetadataPeer implements Comparable<MetadataPeer> {
