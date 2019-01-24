@@ -13,6 +13,7 @@
 package tech.pegasys.pantheon.ethereum.p2p.discovery.internal;
 
 import tech.pegasys.pantheon.ethereum.p2p.discovery.DiscoveryPeer;
+import tech.pegasys.pantheon.ethereum.p2p.discovery.PeerDiscoveryStatus;
 import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
 import tech.pegasys.pantheon.ethereum.p2p.peers.PeerBlacklist;
 import tech.pegasys.pantheon.ethereum.p2p.permissioning.NodeWhitelistController;
@@ -131,8 +132,7 @@ class RecursivePeerRefreshState {
         break;
       }
       final MetadataPeer candidate = candidateEntry.getValue();
-      if (candidate.getBondQueried()
-              && candidate.getBondResponded()
+      if (candidate.getPeer().getStatus().equals(PeerDiscoveryStatus.BONDED)
               && !candidate.getNeighbourCancelled()
               && !candidate.getNeighbourQueried()
               && !candidate.getNeighbourResponded()) {
