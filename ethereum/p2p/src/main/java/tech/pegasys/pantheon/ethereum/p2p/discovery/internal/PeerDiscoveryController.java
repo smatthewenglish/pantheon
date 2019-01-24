@@ -123,6 +123,8 @@ public class PeerDiscoveryController {
   // Observers for "peer bonded" discovery events.
   private final Subscribers<Consumer<PeerBondedEvent>> peerBondedObservers;
 
+  private RecursivePeerRefreshState recursivePeerRefreshState;
+
   public PeerDiscoveryController(
       final KeyPair keypair,
       final DiscoveryPeer localPeer,
@@ -158,6 +160,15 @@ public class PeerDiscoveryController {
         .filter(node -> peerTable.tryAdd(node).getOutcome() == Outcome.ADDED)
         .filter(node -> nodeWhitelist.isPermitted(node))
         .forEach(node -> bond(node, true));
+
+    recursivePeerRefreshState =
+            new RecursivePeerRefreshState(
+                    peerTable,
+                    peerBlacklist,
+                    nodeWhitelist,
+                    this::bond,
+                    this::findNodes,
+                    30);
 
     final long timerId =
         timerUtil.setPeriodic(
@@ -349,27 +360,25 @@ public class PeerDiscoveryController {
    */
   @VisibleForTesting
   void bond(final DiscoveryPeer peer, final boolean bootstrap) {
+    if(peer.getStatus().equals(PeerDiscoveryStatus.BONDED)) { // TODO: Add a test to verify this functionality...
+      return;
+    }
+
     peer.setFirstDiscovered(System.currentTimeMillis());
     peer.setStatus(PeerDiscoveryStatus.BONDING);
 
-    final Consumer<PeerInteractionState> action =
-        interaction -> {
-          final PingPacketData data =
-              PingPacketData.create(localPeer.getEndpoint(), peer.getEndpoint());
-          final Packet pingPacket = createPacket(PacketType.PING, data);
+    final Consumer<PeerInteractionState> action = interaction -> {
 
-          final BytesValue pingHash = pingPacket.getHash();
-          // Update the matching filter to only accept the PONG if it echoes the hash of our PING.
-          final Predicate<Packet> newFilter =
-              packet ->
-                  packet
-                      .getPacketData(PongPacketData.class)
-                      .map(pong -> pong.getPingHash().equals(pingHash))
-                      .orElse(false);
-          interaction.updateFilter(newFilter);
+      final PingPacketData data = PingPacketData.create(localPeer.getEndpoint(), peer.getEndpoint());
+      final Packet pingPacket = createPacket(PacketType.PING, data);
 
-          sendPacket(peer, pingPacket);
-        };
+      final BytesValue pingHash = pingPacket.getHash();
+      // Update the matching filter to only accept the PONG if it echoes the hash of our PING.
+      final Predicate<Packet> newFilter = packet -> packet.getPacketData(PongPacketData.class).map(pong -> pong.getPingHash().equals(pingHash)).orElse(false);
+
+      interaction.updateFilter(newFilter);
+      sendPacket(peer, pingPacket);
+    };
 
     // The filter condition will be updated as soon as the action is performed.
     final PeerInteractionState ping =
