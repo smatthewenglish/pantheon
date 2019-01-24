@@ -98,8 +98,7 @@ public class PeerDiscoveryController {
   private final Collection<DiscoveryPeer> bootstrapNodes;
 
   /* A tracker for inflight interactions and the state machine of a peer. */
-  private final Map<BytesValue, PeerInteractionState> inflightInteractions =
-      new ConcurrentHashMap<>();
+  private final Map<BytesValue, PeerInteractionState> inflightInteractions = new ConcurrentHashMap<>();
 
   private final AtomicBoolean started = new AtomicBoolean(false);
 
@@ -349,31 +348,29 @@ public class PeerDiscoveryController {
    */
   @VisibleForTesting
   void bond(final DiscoveryPeer peer, final boolean bootstrap) {
+
+    if(peer.getStatus().equals(PeerDiscoveryStatus.BONDED)) { // TODO: Add a test to verify this functionality...
+      return;
+    }
+
     peer.setFirstDiscovered(System.currentTimeMillis());
     peer.setStatus(PeerDiscoveryStatus.BONDING);
 
-    final Consumer<PeerInteractionState> action =
-        interaction -> {
-          final PingPacketData data =
-              PingPacketData.create(localPeer.getEndpoint(), peer.getEndpoint());
+    final Consumer<PeerInteractionState> action = interaction -> {
+          final PingPacketData data = PingPacketData.create(localPeer.getEndpoint(), peer.getEndpoint());
           final Packet pingPacket = createPacket(PacketType.PING, data);
 
           final BytesValue pingHash = pingPacket.getHash();
           // Update the matching filter to only accept the PONG if it echoes the hash of our PING.
-          final Predicate<Packet> newFilter =
-              packet ->
-                  packet
-                      .getPacketData(PongPacketData.class)
-                      .map(pong -> pong.getPingHash().equals(pingHash))
-                      .orElse(false);
+          final Predicate<Packet> newFilter = packet -> packet.getPacketData(PongPacketData.class)
+                                                              .map(pong -> pong.getPingHash()
+                                                                               .equals(pingHash)
+                                                              ).orElse(false);
           interaction.updateFilter(newFilter);
-
           sendPacket(peer, pingPacket);
-        };
-
+    };
     // The filter condition will be updated as soon as the action is performed.
-    final PeerInteractionState ping =
-        new PeerInteractionState(action, PacketType.PONG, (packet) -> false, true, bootstrap);
+    final PeerInteractionState ping = new PeerInteractionState(action, PacketType.PONG, (packet) -> false, true, bootstrap);
     dispatchInteraction(peer, ping);
   }
 
