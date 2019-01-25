@@ -346,8 +346,8 @@ public class PeerDiscoveryController {
                       .getPacketData(PongPacketData.class)
                       .map(pong -> pong.getPingHash().equals(pingHash))
                       .orElse(false);
-
           interaction.updateFilter(newFilter);
+
           sendPacket(peer, pingPacket);
         };
 
