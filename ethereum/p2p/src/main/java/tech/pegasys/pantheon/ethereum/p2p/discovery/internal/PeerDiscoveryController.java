@@ -226,18 +226,19 @@ public class PeerDiscoveryController {
         }
 
         break;
-      case PONG: {
-        matchInteraction(packet)
-                .ifPresent(
-                        interaction -> {
-                          if (peerBlacklisted) {
-                            return;
-                          }
-                          addToPeerTable(peer);
-                          recursivePeerRefreshState.onPongPacketReceived(peer);
-                        });
-        break;
-      }
+      case PONG:
+        {
+          matchInteraction(packet)
+              .ifPresent(
+                  interaction -> {
+                    if (peerBlacklisted) {
+                      return;
+                    }
+                    addToPeerTable(peer);
+                    recursivePeerRefreshState.onPongPacketReceived(peer);
+                  });
+          break;
+        }
       case NEIGHBORS:
         matchInteraction(packet)
             .ifPresent(
