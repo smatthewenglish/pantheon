@@ -246,7 +246,7 @@ public class PeerDiscoveryController {
                     recursivePeerRefreshState.onNeighboursPacketReceived(
                         peer, packet.getPacketData(NeighborsPacketData.class).orElse(null)));
         break;
-        
+
       case FIND_NEIGHBORS:
         if (!peerKnown || peerBlacklisted) {
           break;
