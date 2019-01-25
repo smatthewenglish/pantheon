@@ -228,28 +228,47 @@ public class PeerDiscoveryControllerTest {
         .hasSize(3);
 
     // Simulate a PONG message from peer 0.
-    final PongPacketData packetData =
+    final PongPacketData packetData0 =
         PongPacketData.create(localPeer.getEndpoint(), mockPacket.getHash());
-    final Packet packet = Packet.create(PacketType.PONG, packetData, keyPairs.get(0));
-    controller.onMessage(packet, peers.get(0));
+    final Packet packet0 = Packet.create(PacketType.PONG, packetData0, keyPairs.get(0));
+    controller.onMessage(packet0, peers.get(0));
+
+    final PongPacketData packetData1 =
+        PongPacketData.create(localPeer.getEndpoint(), mockPacket.getHash());
+    final Packet packet1 = Packet.create(PacketType.PONG, packetData1, keyPairs.get(1));
+    controller.onMessage(packet1, peers.get(1));
+
+    final PongPacketData packetData2 =
+        PongPacketData.create(localPeer.getEndpoint(), mockPacket.getHash());
+    final Packet packet2 = Packet.create(PacketType.PONG, packetData2, keyPairs.get(2));
+    controller.onMessage(packet2, peers.get(2));
 
     // Ensure that the peer controller is now sending FIND_NEIGHBORS messages for this peer.
     verify(outboundMessageHandler, times(1))
         .send(eq(peers.get(0)), matchPacketOfType(PacketType.FIND_NEIGHBORS));
+    verify(outboundMessageHandler, times(1))
+        .send(eq(peers.get(1)), matchPacketOfType(PacketType.FIND_NEIGHBORS));
+    verify(outboundMessageHandler, times(1))
+        .send(eq(peers.get(2)), matchPacketOfType(PacketType.FIND_NEIGHBORS));
+
     // Invoke timeouts and check that we resent our neighbors request
     timer.runTimerHandlers();
     verify(outboundMessageHandler, times(2))
         .send(eq(peers.get(0)), matchPacketOfType(PacketType.FIND_NEIGHBORS));
+    verify(outboundMessageHandler, times(2))
+        .send(eq(peers.get(1)), matchPacketOfType(PacketType.FIND_NEIGHBORS));
+    verify(outboundMessageHandler, times(2))
+        .send(eq(peers.get(2)), matchPacketOfType(PacketType.FIND_NEIGHBORS));
 
     assertThat(
             controller
                 .getPeers()
                 .stream()
                 .filter(p -> p.getStatus() == PeerDiscoveryStatus.BONDING))
-        .hasSize(2);
+        .hasSize(0);
     assertThat(
             controller.getPeers().stream().filter(p -> p.getStatus() == PeerDiscoveryStatus.BONDED))
-        .hasSize(1);
+        .hasSize(3);
   }
 
   @Test
@@ -371,7 +390,8 @@ public class PeerDiscoveryControllerTest {
 
     // Mock the creation of the PING packet, so that we can control the hash, which gets validated
     // when processing the PONG.
-    final PingPacketData mockPing = PingPacketData.create(localPeer.getEndpoint(), peers.get(0).getEndpoint());
+    final PingPacketData mockPing =
+        PingPacketData.create(localPeer.getEndpoint(), peers.get(0).getEndpoint());
     final Packet mockPacket = Packet.create(PacketType.PING, mockPing, keyPairs.get(0));
 
     // Initialize the peer controller
@@ -393,32 +413,32 @@ public class PeerDiscoveryControllerTest {
         .send(eq(peers.get(1)), matchPacketOfType(PacketType.PING));
 
     // Simulate a PONG message from peer[0].
-    final PongPacketData packetData0 = PongPacketData.create(localPeer.getEndpoint(), mockPacket.getHash());
+    final PongPacketData packetData0 =
+        PongPacketData.create(localPeer.getEndpoint(), mockPacket.getHash());
     Packet pongPacket0 = Packet.create(PacketType.PONG, packetData0, keyPairs.get(0));
     controller.onMessage(pongPacket0, peers.get(0));
-
-    /* * */
 
     // Assert that we're bonding with the third peer.
     assertThat(controller.getPeers()).hasSize(2);
     assertThat(controller.getPeers())
-            .filteredOn(p -> p.getStatus() == PeerDiscoveryStatus.BONDING)
-            .hasSize(1);
+        .filteredOn(p -> p.getStatus() == PeerDiscoveryStatus.BONDING)
+        .hasSize(1);
     assertThat(controller.getPeers())
-            .filteredOn(p -> p.getStatus() == PeerDiscoveryStatus.BONDED)
-            .hasSize(1);
+        .filteredOn(p -> p.getStatus() == PeerDiscoveryStatus.BONDED)
+        .hasSize(1);
 
-    /* * */
-
-    final PongPacketData packetData1 = PongPacketData.create(localPeer.getEndpoint(), mockPacket.getHash());
+    final PongPacketData packetData1 =
+        PongPacketData.create(localPeer.getEndpoint(), mockPacket.getHash());
     Packet pongPacket1 = Packet.create(PacketType.PONG, packetData1, keyPairs.get(1));
     controller.onMessage(pongPacket1, peers.get(1));
 
-     // Now after we got that pong we should have sent a find neighbours message...
-    verify(outboundMessageHandler, times(1)).send(eq(peers.get(0)), matchPacketOfType(PacketType.FIND_NEIGHBORS));
+    // Now after we got that pong we should have sent a find neighbours message...
+    verify(outboundMessageHandler, times(1))
+        .send(eq(peers.get(0)), matchPacketOfType(PacketType.FIND_NEIGHBORS));
 
     // Simulate a NEIGHBORS message from peer[0] listing peer[2].
-    final NeighborsPacketData neighbors0 = NeighborsPacketData.create(Collections.singletonList(peers.get(2)));
+    final NeighborsPacketData neighbors0 =
+        NeighborsPacketData.create(Collections.singletonList(peers.get(2)));
     Packet neighborsPacket0 = Packet.create(PacketType.NEIGHBORS, neighbors0, keyPairs.get(0));
     controller.onMessage(neighborsPacket0, peers.get(0));
 
@@ -428,16 +448,20 @@ public class PeerDiscoveryControllerTest {
         .filteredOn(p -> p.getStatus() == PeerDiscoveryStatus.BONDED)
         .hasSize(2);
 
-    // Simulate bonding and neighbors packet from the second bootstrap peer, with peer[2] reported in
+    // Simulate bonding and neighbors packet from the second bootstrap peer, with peer[2] reported
+    // in
     // the peer list.
-    final NeighborsPacketData neighbors1 = NeighborsPacketData.create(Collections.singletonList(peers.get(2)));
+    final NeighborsPacketData neighbors1 =
+        NeighborsPacketData.create(Collections.singletonList(peers.get(2)));
     Packet neighborsPacket1 = Packet.create(PacketType.NEIGHBORS, neighbors1, keyPairs.get(1));
     controller.onMessage(neighborsPacket1, peers.get(1));
 
-    verify(outboundMessageHandler, times(1)).send(eq(peers.get(2)), matchPacketOfType(PacketType.PING));
+    verify(outboundMessageHandler, times(1))
+        .send(eq(peers.get(2)), matchPacketOfType(PacketType.PING));
 
     // Send a PONG packet from peer[2], to transition it to the BONDED state.
-    final PongPacketData packetData2 = PongPacketData.create(localPeer.getEndpoint(), mockPacket.getHash());
+    final PongPacketData packetData2 =
+        PongPacketData.create(localPeer.getEndpoint(), mockPacket.getHash());
     Packet pongPacket2 = Packet.create(PacketType.PONG, packetData2, keyPairs.get(2));
     controller.onMessage(pongPacket2, peers.get(2));
 
@@ -831,7 +855,7 @@ public class PeerDiscoveryControllerTest {
     final List<DiscoveryPeer> peers = createPeersInLastBucket(localPeer, 17);
 
     final List<DiscoveryPeer> bootstrapPeers = peers.subList(0, 16);
-    OutboundMessageHandler outboundMessageHandler = mock(OutboundMessageHandler.class);
+    final OutboundMessageHandler outboundMessageHandler = mock(OutboundMessageHandler.class);
     controller =
         getControllerBuilder()
             .peers(bootstrapPeers)
@@ -850,21 +874,161 @@ public class PeerDiscoveryControllerTest {
 
     verify(outboundMessageHandler, times(16)).send(any(), matchPacketOfType(PacketType.PING));
 
-    final Packet pongPacket =
+    final Packet pongPacket0 =
         MockPacketDataFactory.mockPongPacket(peers.get(0), pingPacket.getHash());
-    controller.onMessage(pongPacket, peers.get(0));
+    controller.onMessage(pongPacket0, peers.get(0));
 
-    final Packet neighborsPacket =
-        MockPacketDataFactory.mockNeighborsPacket(peers.get(0), peers.get(16));
-    controller.onMessage(neighborsPacket, peers.get(0));
+    final Packet pongPacket1 =
+        MockPacketDataFactory.mockPongPacket(peers.get(1), pingPacket.getHash());
+    controller.onMessage(pongPacket1, peers.get(1));
 
     final Packet pongPacket2 =
+        MockPacketDataFactory.mockPongPacket(peers.get(2), pingPacket.getHash());
+    controller.onMessage(pongPacket2, peers.get(2));
+
+    final Packet pongPacket3 =
+        MockPacketDataFactory.mockPongPacket(peers.get(3), pingPacket.getHash());
+    controller.onMessage(pongPacket3, peers.get(3));
+
+    final Packet pongPacket4 =
+        MockPacketDataFactory.mockPongPacket(peers.get(4), pingPacket.getHash());
+    controller.onMessage(pongPacket4, peers.get(4));
+
+    final Packet pongPacket5 =
+        MockPacketDataFactory.mockPongPacket(peers.get(5), pingPacket.getHash());
+    controller.onMessage(pongPacket5, peers.get(5));
+
+    final Packet pongPacket6 =
+        MockPacketDataFactory.mockPongPacket(peers.get(6), pingPacket.getHash());
+    controller.onMessage(pongPacket6, peers.get(6));
+
+    final Packet pongPacket7 =
+        MockPacketDataFactory.mockPongPacket(peers.get(7), pingPacket.getHash());
+    controller.onMessage(pongPacket7, peers.get(7));
+
+    final Packet pongPacket8 =
+        MockPacketDataFactory.mockPongPacket(peers.get(8), pingPacket.getHash());
+    controller.onMessage(pongPacket8, peers.get(8));
+
+    final Packet pongPacket9 =
+        MockPacketDataFactory.mockPongPacket(peers.get(9), pingPacket.getHash());
+    controller.onMessage(pongPacket9, peers.get(9));
+
+    final Packet pongPacket10 =
+        MockPacketDataFactory.mockPongPacket(peers.get(10), pingPacket.getHash());
+    controller.onMessage(pongPacket10, peers.get(10));
+
+    final Packet pongPacket11 =
+        MockPacketDataFactory.mockPongPacket(peers.get(11), pingPacket.getHash());
+    controller.onMessage(pongPacket11, peers.get(11));
+
+    final Packet pongPacket12 =
+        MockPacketDataFactory.mockPongPacket(peers.get(12), pingPacket.getHash());
+    controller.onMessage(pongPacket12, peers.get(12));
+
+    final Packet pongPacket13 =
+        MockPacketDataFactory.mockPongPacket(peers.get(13), pingPacket.getHash());
+    controller.onMessage(pongPacket13, peers.get(13));
+
+    final Packet pongPacket14 =
+        MockPacketDataFactory.mockPongPacket(peers.get(14), pingPacket.getHash());
+    controller.onMessage(pongPacket14, peers.get(14));
+
+    verify(outboundMessageHandler, times(0))
+        .send(any(), matchPacketOfType(PacketType.FIND_NEIGHBORS));
+
+    final Packet pongPacket15 =
+        MockPacketDataFactory.mockPongPacket(peers.get(15), pingPacket.getHash());
+    controller.onMessage(pongPacket15, peers.get(15));
+
+    verify(outboundMessageHandler, times(3))
+        .send(any(), matchPacketOfType(PacketType.FIND_NEIGHBORS));
+
+    final Packet neighborsPacket0 =
+        MockPacketDataFactory.mockNeighborsPacket(peers.get(0), peers.get(16));
+    controller.onMessage(neighborsPacket0, peers.get(0));
+
+    final Packet neighborsPacket1 =
+        MockPacketDataFactory.mockNeighborsPacket(peers.get(1), peers.get(16));
+    controller.onMessage(neighborsPacket1, peers.get(1));
+
+    final Packet neighborsPacket2 =
+        MockPacketDataFactory.mockNeighborsPacket(peers.get(2), peers.get(16));
+    controller.onMessage(neighborsPacket2, peers.get(2));
+
+    final Packet neighborsPacket3 =
+        MockPacketDataFactory.mockNeighborsPacket(peers.get(3), peers.get(16));
+    controller.onMessage(neighborsPacket3, peers.get(3));
+
+    final Packet neighborsPacket4 =
+        MockPacketDataFactory.mockNeighborsPacket(peers.get(4), peers.get(16));
+    controller.onMessage(neighborsPacket4, peers.get(4));
+
+    final Packet neighborsPacket5 =
+        MockPacketDataFactory.mockNeighborsPacket(peers.get(5), peers.get(16));
+    controller.onMessage(neighborsPacket5, peers.get(5));
+
+    final Packet neighborsPacket6 =
+        MockPacketDataFactory.mockNeighborsPacket(peers.get(6), peers.get(16));
+    controller.onMessage(neighborsPacket6, peers.get(6));
+
+    final Packet neighborsPacket7 =
+        MockPacketDataFactory.mockNeighborsPacket(peers.get(7), peers.get(16));
+    controller.onMessage(neighborsPacket7, peers.get(7));
+
+    final Packet neighborsPacket8 =
+        MockPacketDataFactory.mockNeighborsPacket(peers.get(8), peers.get(16));
+    controller.onMessage(neighborsPacket8, peers.get(8));
+
+    final Packet neighborsPacket9 =
+        MockPacketDataFactory.mockNeighborsPacket(peers.get(9), peers.get(16));
+    controller.onMessage(neighborsPacket9, peers.get(9));
+
+    final Packet neighborsPacket10 =
+        MockPacketDataFactory.mockNeighborsPacket(peers.get(10), peers.get(16));
+    controller.onMessage(neighborsPacket10, peers.get(10));
+
+    final Packet neighborsPacket11 =
+        MockPacketDataFactory.mockNeighborsPacket(peers.get(11), peers.get(16));
+    controller.onMessage(neighborsPacket11, peers.get(11));
+
+    final Packet neighborsPacket12 =
+        MockPacketDataFactory.mockNeighborsPacket(peers.get(12), peers.get(16));
+    controller.onMessage(neighborsPacket12, peers.get(12));
+
+    final Packet neighborsPacket13 =
+        MockPacketDataFactory.mockNeighborsPacket(peers.get(13), peers.get(16));
+    controller.onMessage(neighborsPacket13, peers.get(13));
+
+    final Packet neighborsPacket14 =
+        MockPacketDataFactory.mockNeighborsPacket(peers.get(14), peers.get(16));
+    controller.onMessage(neighborsPacket14, peers.get(14));
+
+    final Packet neighborsPacket15 =
+        MockPacketDataFactory.mockNeighborsPacket(peers.get(15), peers.get(16));
+    controller.onMessage(neighborsPacket15, peers.get(15));
+
+    verify(outboundMessageHandler, times(1))
+        .send(eq(peers.get(16)), matchPacketOfType(PacketType.PING));
+
+    final Packet pongPacket16 =
         MockPacketDataFactory.mockPongPacket(peers.get(16), pingPacket.getHash());
-    controller.onMessage(pongPacket2, peers.get(16));
+    controller.onMessage(pongPacket16, peers.get(16));
 
     assertThat(controller.getPeers()).contains(peers.get(16));
-    // Explain
-    assertThat(controller.getPeers()).doesNotContain(peers.get(1));
+    assertThat(controller.getPeers().size()).isEqualTo(16);
+    assertThat(ausbooten(bootstrapPeers, controller)).isTrue();
+  }
+
+  @SuppressWarnings("SpellCheckingInspection")
+  private boolean ausbooten(
+      final List<DiscoveryPeer> peers, final PeerDiscoveryController controller) {
+    for (DiscoveryPeer peer : peers) {
+      if (!controller.getPeers().contains(peer)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   @Test
