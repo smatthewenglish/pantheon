@@ -12,7 +12,6 @@
  */
 package tech.pegasys.pantheon.ethereum.p2p.discovery.internal;
 
-import static java.util.Collections.emptyList;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PeerTable.AddResult.Outcome;
@@ -39,6 +38,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.logging.log4j.LogManager;
@@ -155,20 +155,13 @@ public class PeerDiscoveryController {
       throw new IllegalStateException("The peer table had already been started");
     }
 
-    bootstrapNodes
-        .stream()
-        .filter(node -> peerTable.tryAdd(node).getOutcome() == Outcome.ADDED)
-        .filter(node -> nodeWhitelist.isPermitted(node))
-        .forEach(node -> bond(node, true));
-
+    bootstrapNodes.stream().filter(nodeWhitelist::contains).forEach(peerTable::tryAdd);
     recursivePeerRefreshState =
-            new RecursivePeerRefreshState(
-                    peerTable,
-                    peerBlacklist,
-                    nodeWhitelist,
-                    this::bond,
-                    this::findNodes,
-                    30);
+        new RecursivePeerRefreshState(
+            localPeer.getId(), peerBlacklist, nodeWhitelist, this::bond, this::findNodes, 30);
+    recursivePeerRefreshState.kickstartBootstrapPeers(
+        bootstrapNodes.stream().filter(nodeWhitelist::contains).collect(Collectors.toList()));
+    recursivePeerRefreshState.start();
 
     final long timerId =
         timerUtil.setPeriodic(
@@ -234,47 +227,23 @@ public class PeerDiscoveryController {
 
         break;
       case PONG:
-        {
-          matchInteraction(packet)
-              .ifPresent(
-                  interaction -> {
-                    if (peerBlacklisted) {
-                      return;
-                    }
-                    addToPeerTable(peer);
-
-                    // If this was a bootstrap peer, let's ask it for nodes near to us.
-                    if (interaction.isBootstrap()) {
-                      findNodes(peer, localPeer.getId());
-                    }
-                  });
-          break;
-        }
-      case NEIGHBORS:
         matchInteraction(packet)
             .ifPresent(
                 interaction -> {
-                  // Extract the peers from the incoming packet.
-                  final List<DiscoveryPeer> neighbors =
-                      packet
-                          .getPacketData(NeighborsPacketData.class)
-                          .map(NeighborsPacketData::getNodes)
-                          .orElse(emptyList());
-
-                  for (final DiscoveryPeer neighbor : neighbors) {
-                    // If the peer is not whitelisted, is blacklisted, is already known, or
-                    // represents this node, skip bonding
-                    if (!nodeWhitelist.isPermitted(neighbor)
-                        || peerBlacklist.contains(neighbor)
-                        || peerTable.get(neighbor).isPresent()
-                        || neighbor.getId().equals(localPeer.getId())) {
-                      continue;
-                    }
-                    bond(neighbor, false);
+                  if (peerBlacklisted) {
+                    return;
                   }
+                  addToPeerTable(peer);
+                  recursivePeerRefreshState.onPongPacketReceived(peer);
                 });
         break;
-
+      case NEIGHBORS:
+        matchInteraction(packet)
+            .ifPresent(
+                interaction ->
+                    recursivePeerRefreshState.onNeighboursPacketReceived(
+                        peer, packet.getPacketData(NeighborsPacketData.class).orElse(null)));
+        break;
       case FIND_NEIGHBORS:
         if (!peerKnown || peerBlacklisted) {
           break;
@@ -360,25 +329,27 @@ public class PeerDiscoveryController {
    */
   @VisibleForTesting
   void bond(final DiscoveryPeer peer, final boolean bootstrap) {
-    if(peer.getStatus().equals(PeerDiscoveryStatus.BONDED)) { // TODO: Add a test to verify this functionality...
-      return;
-    }
-
     peer.setFirstDiscovered(System.currentTimeMillis());
     peer.setStatus(PeerDiscoveryStatus.BONDING);
 
-    final Consumer<PeerInteractionState> action = interaction -> {
+    final Consumer<PeerInteractionState> action =
+        interaction -> {
+          final PingPacketData data =
+              PingPacketData.create(localPeer.getEndpoint(), peer.getEndpoint());
+          final Packet pingPacket = createPacket(PacketType.PING, data);
 
-      final PingPacketData data = PingPacketData.create(localPeer.getEndpoint(), peer.getEndpoint());
-      final Packet pingPacket = createPacket(PacketType.PING, data);
+          final BytesValue pingHash = pingPacket.getHash();
+          // Update the matching filter to only accept the PONG if it echoes the hash of our PING.
+          final Predicate<Packet> newFilter =
+              packet ->
+                  packet
+                      .getPacketData(PongPacketData.class)
+                      .map(pong -> pong.getPingHash().equals(pingHash))
+                      .orElse(false);
 
-      final BytesValue pingHash = pingPacket.getHash();
-      // Update the matching filter to only accept the PONG if it echoes the hash of our PING.
-      final Predicate<Packet> newFilter = packet -> packet.getPacketData(PongPacketData.class).map(pong -> pong.getPingHash().equals(pingHash)).orElse(false);
-
-      interaction.updateFilter(newFilter);
-      sendPacket(peer, pingPacket);
-    };
+          interaction.updateFilter(newFilter);
+          sendPacket(peer, pingPacket);
+        };
 
     // The filter condition will be updated as soon as the action is performed.
     final PeerInteractionState ping =
