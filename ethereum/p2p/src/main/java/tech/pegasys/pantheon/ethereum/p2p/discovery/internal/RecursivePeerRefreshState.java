@@ -12,9 +12,9 @@
  */
 package tech.pegasys.pantheon.ethereum.p2p.discovery.internal;
 
+import static tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PeerDistanceCalculator.distance;
+
 import tech.pegasys.pantheon.ethereum.p2p.discovery.DiscoveryPeer;
-import tech.pegasys.pantheon.ethereum.p2p.discovery.PeerDiscoveryStatus;
-import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
 import tech.pegasys.pantheon.ethereum.p2p.peers.PeerBlacklist;
 import tech.pegasys.pantheon.ethereum.p2p.permissioning.NodeWhitelistController;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
@@ -27,34 +27,34 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
-import static tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PeerDistanceCalculator.distance;
+import com.google.common.annotations.VisibleForTesting;
 
-class RecursivePeerRefreshState {
-
-  private final PeerTable peerTable;
-
-  private final SortedMap<BytesValue, MetadataPeer> oneTrueMap;
+public class RecursivePeerRefreshState {
+  private final BytesValue target;
+  private final PeerBlacklist peerBlacklist;
+  private final NodeWhitelistController peerWhitelist;
 
   private final BondingAgent bondingAgent;
   private final FindNeighbourDispatcher findNeighbourDispatcher;
 
-  private final PeerBlacklist peerBlacklist;
-  private final NodeWhitelistController peerWhitelist;
+  private final SortedMap<BytesValue, MetadataPeer> oneTrueMap;
 
-  private final ScheduledExecutorService neighboursScheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
+  private final ScheduledExecutorService bondingScheduledExecutorService =
+      Executors.newSingleThreadScheduledExecutor();
+  private final ScheduledExecutorService neighboursScheduledExecutorService =
+      Executors.newSingleThreadScheduledExecutor();
   private final int timeoutPeriod;
 
-  private BytesValue target;
-
   RecursivePeerRefreshState(
-          final PeerTable peerTable,
-          final PeerBlacklist peerBlacklist,
-          final NodeWhitelistController peerWhitelist,
-          final BondingAgent bondingAgent,
-          final FindNeighbourDispatcher neighborFinder,
-          final int timeoutPeriod) {
-    this.peerTable = peerTable;
+      final BytesValue target,
+      final PeerBlacklist peerBlacklist,
+      final NodeWhitelistController peerWhitelist,
+      final BondingAgent bondingAgent,
+      final FindNeighbourDispatcher neighborFinder,
+      final int timeoutPeriod) {
+    this.target = target;
     this.peerBlacklist = peerBlacklist;
     this.peerWhitelist = peerWhitelist;
     this.bondingAgent = bondingAgent;
@@ -63,9 +63,57 @@ class RecursivePeerRefreshState {
     this.oneTrueMap = new TreeMap<>();
   }
 
-  void start(final BytesValue target) {
-    this.target = target;
-    neighboursInitiateRound(peerTable.nearestPeers(target, 3));
+  void start() {
+    final List<DiscoveryPeer> bondingRoundCandidatesList =
+        bondingRoundCandidates(oneTrueMap.size(), oneTrueMap);
+    bondingInitiateRound(bondingRoundCandidatesList);
+  }
+
+  void kickstartBootstrapPeers(final List<DiscoveryPeer> bootstrapPeers) {
+    for (DiscoveryPeer bootstrapPeer : bootstrapPeers) {
+      final MetadataPeer iterationParticipant =
+          new MetadataPeer(bootstrapPeer, distance(target, bootstrapPeer.getId()));
+      oneTrueMap.put(bootstrapPeer.getId(), iterationParticipant);
+    }
+  }
+
+  private void bondingCancelOutstandingRequests() {
+    for (Map.Entry<BytesValue, MetadataPeer> entry : oneTrueMap.entrySet()) {
+      final MetadataPeer metadataPeer = entry.getValue();
+      if (metadataPeer.getBondQueried() && !metadataPeer.getBondResponded()) {
+        metadataPeer.setBondCancelled();
+      }
+    }
+    final List<DiscoveryPeer> bondingRoundCandidatesList =
+        bondingRoundCandidates(oneTrueMap.size(), oneTrueMap);
+    if (bondingRoundCandidatesList.size() > 0) {
+      bondingInitiateRound(bondingRoundCandidatesList);
+    }
+  }
+
+  private void bondingInitiateRound(final List<DiscoveryPeer> bondingRoundCandidatesList) {
+    for (DiscoveryPeer discoPeer : bondingRoundCandidatesList) {
+      final MetadataPeer metadataPeer = oneTrueMap.get(discoPeer.getId());
+      metadataPeer.setBondQueried();
+      bondingAgent.performBonding(discoPeer, false);
+    }
+    final Runnable bondingCancellationTimerTask = this::bondingCancelOutstandingRequests;
+    bondingScheduledExecutorService.schedule(
+        bondingCancellationTimerTask, timeoutPeriod, TimeUnit.SECONDS);
+  }
+
+  private void neighboursCancelOutstandingRequests() {
+    for (Map.Entry<BytesValue, MetadataPeer> entry : oneTrueMap.entrySet()) {
+      final MetadataPeer metadataPeer = entry.getValue();
+      if (metadataPeer.getNeighbourQueried() && !metadataPeer.getNeighbourResponded()) {
+        metadataPeer.setNeighbourCancelled();
+      }
+    }
+    final List<DiscoveryPeer> neighboursRoundCandidatesList =
+        neighboursRoundCandidates(3, oneTrueMap);
+    if (neighboursRoundCandidatesList.size() > 0) {
+      neighboursInitiateRound(neighboursRoundCandidatesList);
+    }
   }
 
   private void neighboursInitiateRound(final List<DiscoveryPeer> neighboursRoundCandidatesList) {
@@ -74,55 +122,78 @@ class RecursivePeerRefreshState {
       final MetadataPeer metadataPeer = oneTrueMap.get(discoPeer.getId());
       metadataPeer.setNeighbourQueried();
     }
+
+    final Runnable neighboursCancellationTimerTask = this::neighboursCancelOutstandingRequests;
+    neighboursScheduledExecutorService.schedule(
+        neighboursCancellationTimerTask, timeoutPeriod, TimeUnit.SECONDS);
   }
 
-  private void cancelOutstandingNeighboursRequests() {
-    for (Map.Entry<BytesValue, MetadataPeer> entry : oneTrueMap.entrySet()) {
-      final MetadataPeer metadataPeer = entry.getValue();
-      if (metadataPeer.getNeighbourQueried() && !metadataPeer.getNeighbourResponded()) {
-        metadataPeer.setNeighbourCancelled();
-      }
-    }
-    final List<DiscoveryPeer> neighboursRoundCandidatesList = neighboursRoundCandidates(3, oneTrueMap);
-    if (neighboursRoundCandidatesList.size() > 0) {
-      neighboursInitiateRound(neighboursRoundCandidatesList);
-    }
-  }
-
-  void onNeighboursPacketReceived(final DiscoveryPeer peer, final NeighborsPacketData neighboursPacket) {
+  /**
+   * What we're doing here is indicating that the message sender (peer), has responded to our
+   * outgoing request for nodes with a neighbours packet. Moreover, we examine that packet, and for
+   * each one of it's constituent nodes, if we've not hitherto encountered that node, we add it to
+   * our one true map.
+   */
+  void onNeighboursPacketReceived(
+      final DiscoveryPeer peer, final NeighborsPacketData neighboursPacket) {
     final MetadataPeer metadataPeer = oneTrueMap.get(peer.getId());
-    if (metadataPeer == null) { // TODO: Generate an error about unanticipated message...
+    if (metadataPeer == null) {
       return;
     }
     final List<DiscoveryPeer> receivedPeerList = neighboursPacket.getNodes();
-    for (DiscoveryPeer receivedDiscoveryPeer : receivedPeerList) {
-      if (!oneTrueMap.containsKey(receivedDiscoveryPeer.getId())  // If we haven't seen it before in this refresh iteration...
-              && !peerBlacklist.contains(receivedDiscoveryPeer)
-              && peerWhitelist.contains(receivedDiscoveryPeer)) {
+    for (DiscoveryPeer receivedDiscoPeer : receivedPeerList) {
+      if (!oneTrueMap.containsKey(receivedDiscoPeer.getId())
+          && !peerBlacklist.contains(receivedDiscoPeer)
+          && peerWhitelist.contains(receivedDiscoPeer)) {
 
-        final MetadataPeer receivedMetadataPeer = new MetadataPeer(receivedDiscoveryPeer, distance(target, receivedDiscoveryPeer.getId()));
-        oneTrueMap.put(receivedDiscoveryPeer.getId(), receivedMetadataPeer);
+        final MetadataPeer receivedMetadataPeer =
+            new MetadataPeer(receivedDiscoPeer, distance(target, receivedDiscoPeer.getId()));
+        oneTrueMap.put(receivedDiscoPeer.getId(), receivedMetadataPeer);
       }
     }
     metadataPeer.setNeighbourResponded();
 
     if (neighboursRoundTermination()) {
-      //final List<DiscoveryPeer> bondingRoundCandidatesList = bondingRoundCandidates(oneTrueMap.size(), oneTrueMap);
-      //bondingInitiateRound(bondingRoundCandidatesList);
+      final List<DiscoveryPeer> bondingRoundCandidatesList =
+          bondingRoundCandidates(oneTrueMap.size(), oneTrueMap);
+      bondingInitiateRound(bondingRoundCandidatesList);
+    }
+  }
+
+  void onPongPacketReceived(final DiscoveryPeer peer) {
+    final MetadataPeer iterationParticipant = oneTrueMap.get(peer.getId());
+    iterationParticipant.setBondResponded();
+    if (bondingRoundTermination()) {
+      final List<DiscoveryPeer> neighboursRoundCandidatesList =
+          neighboursRoundCandidates(3, oneTrueMap);
+      neighboursInitiateRound(neighboursRoundCandidatesList);
     }
   }
 
   private boolean neighboursRoundTermination() {
     for (Map.Entry<BytesValue, MetadataPeer> entry : oneTrueMap.entrySet()) {
       final MetadataPeer metadataPeer = entry.getValue();
-      if (metadataPeer.getNeighbourQueried() && !(metadataPeer.getNeighbourResponded() || metadataPeer.getNeighbourCancelled())) {
+      if (metadataPeer.getNeighbourQueried()
+          && !(metadataPeer.getNeighbourResponded() || metadataPeer.getNeighbourCancelled())) {
         return false;
       }
     }
     return true;
   }
 
-  private List<DiscoveryPeer> neighboursRoundCandidates(final int max, final SortedMap<BytesValue, MetadataPeer> source) {
+  private boolean bondingRoundTermination() {
+    for (Map.Entry<BytesValue, MetadataPeer> entry : oneTrueMap.entrySet()) {
+      final MetadataPeer metadataPeer = entry.getValue();
+      if (metadataPeer.getBondQueried()
+          && !(metadataPeer.getBondResponded() || metadataPeer.getBondCancelled())) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  private List<DiscoveryPeer> bondingRoundCandidates(
+      final int max, final SortedMap<BytesValue, MetadataPeer> source) {
     final int threshold = Math.min(oneTrueMap.size(), max);
     final List<DiscoveryPeer> candidatesList = new ArrayList<>();
 
@@ -132,10 +203,13 @@ class RecursivePeerRefreshState {
         break;
       }
       final MetadataPeer candidate = candidateEntry.getValue();
-      if (candidate.getPeer().getStatus().equals(PeerDiscoveryStatus.BONDED)
-              && !candidate.getNeighbourCancelled()
-              && !candidate.getNeighbourQueried()
-              && !candidate.getNeighbourResponded()) {
+      if (!candidate.getNeighbourCancelled()
+          && !candidate.getNeighbourResponded()
+          && !candidate.getNeighbourQueried()
+          && !candidate.getBondCancelled()
+          && !candidate.getBondResponded()
+          && !candidate.getBondQueried()) {
+
         candidatesList.add(candidate.getPeer());
         count++;
       }
@@ -143,9 +217,46 @@ class RecursivePeerRefreshState {
     return candidatesList;
   }
 
+  private List<DiscoveryPeer> neighboursRoundCandidates(
+      final int max, final SortedMap<BytesValue, MetadataPeer> source) {
+    final int threshold = Math.min(oneTrueMap.size(), max);
+    final List<DiscoveryPeer> candidatesList = new ArrayList<>();
+
+    int count = 0;
+    for (Map.Entry<BytesValue, MetadataPeer> candidateEntry : source.entrySet()) {
+      if (count >= threshold) {
+        break;
+      }
+      final MetadataPeer candidate = candidateEntry.getValue();
+      if (candidate.getBondQueried()
+          && candidate.getBondResponded()
+          && !candidate.getNeighbourCancelled()
+          && !candidate.getNeighbourQueried()
+          && !candidate.getNeighbourResponded()) {
+        candidatesList.add(candidate.getPeer());
+        count++;
+      }
+    }
+    return candidatesList;
+  }
+
+  @VisibleForTesting
+  public BytesValue getTarget() {
+    return target;
+  }
+
+  @VisibleForTesting
+  public SortedMap<BytesValue, MetadataPeer> getOneTrueMap() {
+    return oneTrueMap;
+  }
+
   public static class MetadataPeer implements Comparable<MetadataPeer> {
     DiscoveryPeer peer;
     Integer distance;
+
+    boolean bondQueried;
+    boolean bondResponded;
+    boolean bondCancelled;
 
     boolean neighbourQueried;
     boolean neighbourResponded;
@@ -159,9 +270,13 @@ class RecursivePeerRefreshState {
       return -1;
     }
 
-    MetadataPeer(final DiscoveryPeer peer, final Integer distance) {
+    public MetadataPeer(final DiscoveryPeer peer, final Integer distance) {
       this.peer = peer;
       this.distance = distance;
+
+      this.bondQueried = false;
+      this.bondResponded = false;
+      this.bondCancelled = false;
 
       this.neighbourQueried = false;
       this.neighbourResponded = false;
@@ -170,6 +285,30 @@ class RecursivePeerRefreshState {
 
     DiscoveryPeer getPeer() {
       return peer;
+    }
+
+    void setBondQueried() {
+      this.bondQueried = true;
+    }
+
+    boolean getBondQueried() {
+      return bondQueried;
+    }
+
+    void setBondResponded() {
+      this.bondResponded = true;
+    }
+
+    boolean getBondResponded() {
+      return bondResponded;
+    }
+
+    void setBondCancelled() {
+      this.bondCancelled = true;
+    }
+
+    boolean getBondCancelled() {
+      return bondCancelled;
     }
 
     void setNeighbourQueried() {
