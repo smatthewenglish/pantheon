@@ -34,13 +34,16 @@ import tech.pegasys.pantheon.ethereum.core.InMemoryStorageProvider;
 import tech.pegasys.pantheon.ethereum.core.LogsBloomFilter;
 import tech.pegasys.pantheon.ethereum.core.PrivacyParameters;
 import tech.pegasys.pantheon.ethereum.core.TransactionReceipt;
+import tech.pegasys.pantheon.ethereum.eth.EthProtocol;
 import tech.pegasys.pantheon.ethereum.eth.manager.DeterministicEthScheduler;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthContext;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthMessages;
+import tech.pegasys.pantheon.ethereum.eth.manager.EthPeer;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthPeers;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthProtocolManager;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthScheduler;
+import tech.pegasys.pantheon.ethereum.eth.manager.MockPeerConnection;
 import tech.pegasys.pantheon.ethereum.eth.manager.RespondingEthPeer;
 import tech.pegasys.pantheon.ethereum.eth.manager.RespondingEthPeer.Responder;
 import tech.pegasys.pantheon.ethereum.eth.manager.ethtaskutils.BlockchainSetupUtil;
@@ -53,6 +56,9 @@ import tech.pegasys.pantheon.ethereum.mainnet.MainnetBlockHashFunction;
 import tech.pegasys.pantheon.ethereum.mainnet.MainnetProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolScheduleBuilder;
+import tech.pegasys.pantheon.ethereum.p2p.api.PeerConnection;
+import tech.pegasys.pantheon.ethereum.p2p.wire.Capability;
+import tech.pegasys.pantheon.ethereum.p2p.wire.DefaultMessage;
 import tech.pegasys.pantheon.ethereum.storage.keyvalue.KeyValueStorageWorldStateStorage;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateArchive;
 import tech.pegasys.pantheon.metrics.LabelledMetric;
@@ -67,12 +73,16 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -274,11 +284,9 @@ public class BlockPropagationManagerTest {
             downloaderParallelism,
             transactionsParallelism);
 
-
     int DEFAULT_CHAIN_ID00 = 1;
     ProtocolSchedule<Void> protocolSchedule00 = new ProtocolScheduleBuilder<>(GenesisConfigFile.mainnet().getConfigOptions(), DEFAULT_CHAIN_ID00, Function.identity(), PrivacyParameters.noPrivacy())
             .createProtocolSchedule();
-
 
     final int networkId00 = 1;
     final EthScheduler ethScheduler00 = new DeterministicEthScheduler(DeterministicEthScheduler.TimeoutPolicy.NEVER);
@@ -306,7 +314,22 @@ public class BlockPropagationManagerTest {
             pendingBlocks00,
             ethTasksTimer00);
 
-    //blockPropagationManager00
+    // ...
+    blockPropagationManager00.start();
+
+    Set<Capability> caps = new HashSet<>(singletonList(EthProtocol.ETH63));
+    PeerConnection peerConnection = new MockPeerConnection(caps);
+    Consumer<EthPeer> onPeerReady = (peer) -> {};
+    EthPeer ethPeer = new EthPeer(peerConnection, EthProtocol.NAME, onPeerReady);
+
+    /*
+    public static NewBlockMessage create(final Block block, final UInt256 totalDifficulty) {
+     */
+    //NewBlockMessage newBlockMessage = new NewBlockMessage();
+
+    //DefaultMessage defaultMessage = new DefaultMessage(ethPeer.getPeerConnection(), message);
+
+    ethProtocolManager00.processMessage(EthProtocol.ETH63, defaultMessage);
 
   }
 
@@ -326,11 +349,11 @@ public class BlockPropagationManagerTest {
     final RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 0);
     final NewBlockHashesMessage nextAnnouncement =
         NewBlockHashesMessage.create(
-            Collections.singletonList(
+            singletonList(
                 new NewBlockHash(nextBlock.getHash(), nextBlock.getHeader().getNumber())));
     final NewBlockHashesMessage nextNextAnnouncement =
         NewBlockHashesMessage.create(
-            Collections.singletonList(
+            singletonList(
                 new NewBlockHash(nextNextBlock.getHash(), nextNextBlock.getHeader().getNumber())));
     final Responder responder = RespondingEthPeer.blockchainResponder(fullBlockchain);
 
@@ -361,11 +384,11 @@ public class BlockPropagationManagerTest {
     final RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 0);
     final NewBlockHashesMessage nextAnnouncement =
         NewBlockHashesMessage.create(
-            Collections.singletonList(
+            singletonList(
                 new NewBlockHash(nextBlock.getHash(), nextBlock.getHeader().getNumber())));
     final NewBlockHashesMessage nextNextAnnouncement =
         NewBlockHashesMessage.create(
-            Collections.singletonList(
+            singletonList(
                 new NewBlockHash(nextNextBlock.getHash(), nextNextBlock.getHeader().getNumber())));
     final Responder responder = RespondingEthPeer.blockchainResponder(fullBlockchain);
 
@@ -466,14 +489,14 @@ public class BlockPropagationManagerTest {
     final RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 0);
     final NewBlockHashesMessage block1Msg =
         NewBlockHashesMessage.create(
-            Collections.singletonList(
+            singletonList(
                 new NewBlockHash(block1.getHash(), block1.getHeader().getNumber())));
     final NewBlockMessage block2Msg =
         NewBlockMessage.create(
             block2, fullBlockchain.getTotalDifficultyByHash(block2.getHash()).get());
     final NewBlockHashesMessage block3Msg =
         NewBlockHashesMessage.create(
-            Collections.singletonList(
+            singletonList(
                 new NewBlockHash(block3.getHash(), block3.getHeader().getNumber())));
     final NewBlockMessage block4Msg =
         NewBlockMessage.create(
@@ -510,7 +533,7 @@ public class BlockPropagationManagerTest {
     final RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 0);
     final NewBlockHashesMessage newBlockHash =
         NewBlockHashesMessage.create(
-            Collections.singletonList(
+            singletonList(
                 new NewBlockHash(nextBlock.getHash(), nextBlock.getHeader().getNumber())));
     final NewBlockMessage newBlock =
         NewBlockMessage.create(
@@ -545,7 +568,7 @@ public class BlockPropagationManagerTest {
     final RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 0);
     final NewBlockHashesMessage newBlockHash =
         NewBlockHashesMessage.create(
-            Collections.singletonList(
+            singletonList(
                 new NewBlockHash(nextBlock.getHash(), nextBlock.getHeader().getNumber())));
     final NewBlockMessage newBlock =
         NewBlockMessage.create(
@@ -577,7 +600,7 @@ public class BlockPropagationManagerTest {
     final RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 0);
     final NewBlockHashesMessage futureAnnouncement =
         NewBlockHashesMessage.create(
-            Collections.singletonList(
+            singletonList(
                 new NewBlockHash(futureBlock.getHash(), futureBlock.getHeader().getNumber())));
 
     // Broadcast
@@ -629,7 +652,7 @@ public class BlockPropagationManagerTest {
     final RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 0);
     final NewBlockHashesMessage oldAnnouncement =
         NewBlockHashesMessage.create(
-            Collections.singletonList(
+            singletonList(
                 new NewBlockHash(oldBlock.getHash(), oldBlock.getHeader().getNumber())));
 
     // Broadcast

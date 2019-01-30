@@ -65,10 +65,10 @@ public class EthPeer {
   private final PeerReputation reputation = new PeerReputation();
   private final Subscribers<DisconnectCallback> disconnectCallbacks = new Subscribers<>();
 
-  EthPeer(
-      final PeerConnection connection,
-      final String protocolName,
-      final Consumer<EthPeer> onStatusesExchanged) {
+  public EthPeer(
+          final PeerConnection connection,
+          final String protocolName,
+          final Consumer<EthPeer> onStatusesExchanged) {
     this.connection = connection;
     this.protocolName = protocolName;
     knownBlocks =
