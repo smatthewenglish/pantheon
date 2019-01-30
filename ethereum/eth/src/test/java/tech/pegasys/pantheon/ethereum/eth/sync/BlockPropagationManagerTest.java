@@ -12,9 +12,11 @@
  */
 package tech.pegasys.pantheon.ethereum.eth.sync;
 
+import com.google.common.collect.Range;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import tech.pegasys.pantheon.config.GenesisConfigFile;
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
 import tech.pegasys.pantheon.ethereum.chain.Blockchain;
 import tech.pegasys.pantheon.ethereum.chain.BlockchainStorage;
@@ -30,7 +32,9 @@ import tech.pegasys.pantheon.ethereum.core.BlockHeaderBuilder;
 import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.ethereum.core.InMemoryStorageProvider;
 import tech.pegasys.pantheon.ethereum.core.LogsBloomFilter;
+import tech.pegasys.pantheon.ethereum.core.PrivacyParameters;
 import tech.pegasys.pantheon.ethereum.core.TransactionReceipt;
+import tech.pegasys.pantheon.ethereum.eth.manager.DeterministicEthScheduler;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthContext;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthMessages;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthPeers;
@@ -48,18 +52,25 @@ import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncState;
 import tech.pegasys.pantheon.ethereum.mainnet.MainnetBlockHashFunction;
 import tech.pegasys.pantheon.ethereum.mainnet.MainnetProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
+import tech.pegasys.pantheon.ethereum.mainnet.ProtocolScheduleBuilder;
+import tech.pegasys.pantheon.ethereum.storage.keyvalue.KeyValueStorageWorldStateStorage;
+import tech.pegasys.pantheon.ethereum.worldstate.WorldStateArchive;
 import tech.pegasys.pantheon.metrics.LabelledMetric;
 import tech.pegasys.pantheon.metrics.OperationTimer;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
+import tech.pegasys.pantheon.services.kvstore.InMemoryKeyValueStorage;
 import tech.pegasys.pantheon.util.bytes.Bytes32;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 import tech.pegasys.pantheon.util.uint.UInt256;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -222,6 +233,80 @@ public class BlockPropagationManagerTest {
     blockchain00.appendBlock(block00C, receipts00C);
 
     assertThat(blockchain00.getChainHeadBlockNumber()).isEqualTo(3L);
+
+    WorldStateArchive worldStateArchive00 = new WorldStateArchive(new KeyValueStorageWorldStateStorage(new InMemoryKeyValueStorage()));
+
+    ProtocolContext<Void> protocolContext00 = new ProtocolContext(blockchain00, worldStateArchive00, null);
+
+    int fastSyncPivotDistance = 500;
+    float fastSyncFullValidationRate = .1f;
+    SyncMode syncMode = SyncMode.FULL;
+    Range<Long> blockPropagationRange = Range.closed(-10L, 30L);
+    long downloaderChangeTargetThresholdByHeight = 20L;
+    UInt256 downloaderChangeTargetThresholdByTd = UInt256.of(1_000_000_000L);
+    int downloaderHeaderRequestSize = 10;
+    int downloaderCheckpointTimeoutsPermitted = 5;
+    int downloaderChainSegmentTimeoutsPermitted = 5;
+    int downloaderChainSegmentSize = 20;
+    long trailingPeerBlocksBehindThreshold = 3L;
+    int maxTrailingPeers = Integer.MAX_VALUE;
+    int downloaderParallelism = 2;
+    int transactionsParallelism = 2;
+    int DEFAULT_FAST_SYNC_MINIMUM_PEERS = 5;
+    Duration DEFAULT_FAST_SYNC_MAXIMUM_PEER_WAIT_TIME = Duration.ofMinutes(3);
+
+    SynchronizerConfiguration synchronizerConfiguration00 = new SynchronizerConfiguration(
+            syncMode,
+            fastSyncPivotDistance,
+            fastSyncFullValidationRate,
+            DEFAULT_FAST_SYNC_MINIMUM_PEERS,
+            DEFAULT_FAST_SYNC_MAXIMUM_PEER_WAIT_TIME,
+            blockPropagationRange,
+            Optional.empty(),
+            downloaderChangeTargetThresholdByHeight,
+            downloaderChangeTargetThresholdByTd,
+            downloaderHeaderRequestSize,
+            downloaderCheckpointTimeoutsPermitted,
+            downloaderChainSegmentTimeoutsPermitted,
+            downloaderChainSegmentSize,
+            trailingPeerBlocksBehindThreshold,
+            maxTrailingPeers,
+            downloaderParallelism,
+            transactionsParallelism);
+
+
+    int DEFAULT_CHAIN_ID00 = 1;
+    ProtocolSchedule<Void> protocolSchedule00 = new ProtocolScheduleBuilder<>(GenesisConfigFile.mainnet().getConfigOptions(), DEFAULT_CHAIN_ID00, Function.identity(), PrivacyParameters.noPrivacy())
+            .createProtocolSchedule();
+
+
+    final int networkId00 = 1;
+    final EthScheduler ethScheduler00 = new DeterministicEthScheduler(DeterministicEthScheduler.TimeoutPolicy.NEVER);
+
+    EthProtocolManager ethProtocolManager00 = new EthProtocolManager(
+            blockchain00,
+            worldStateArchive00,
+            networkId00,
+            false,
+            EthProtocolManager.DEFAULT_REQUEST_LIMIT,
+            ethScheduler00);
+
+    SyncState syncState00 = new SyncState(blockchain00, ethProtocolManager00.ethContext().getEthPeers());
+
+    PendingBlocks pendingBlocks00 = new PendingBlocks();
+
+    LabelledMetric<OperationTimer> ethTasksTimer00 = NoOpMetricsSystem.NO_OP_LABELLED_TIMER;
+
+    BlockPropagationManager blockPropagationManager00 = new BlockPropagationManager<>(
+            synchronizerConfiguration00,
+            protocolSchedule00,
+            protocolContext00,
+            ethProtocolManager00.ethContext(),
+            syncState00,
+            pendingBlocks00,
+            ethTasksTimer00);
+
+    //blockPropagationManager00
 
   }
 

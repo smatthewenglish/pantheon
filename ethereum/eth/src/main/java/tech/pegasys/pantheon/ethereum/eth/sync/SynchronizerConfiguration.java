@@ -59,24 +59,24 @@ public class SynchronizerConfiguration {
   private final int downloaderParallelism;
   private final int transactionsParallelism;
 
-  private SynchronizerConfiguration(
-      final SyncMode requestedSyncMode,
-      final int fastSyncPivotDistance,
-      final float fastSyncFullValidationRate,
-      final int fastSyncMinimumPeerCount,
-      final Duration fastSyncMaximumPeerWaitTime,
-      final Range<Long> blockPropagationRange,
-      final Optional<SyncMode> syncMode,
-      final long downloaderChangeTargetThresholdByHeight,
-      final UInt256 downloaderChangeTargetThresholdByTd,
-      final int downloaderHeaderRequestSize,
-      final int downloaderCheckpointTimeoutsPermitted,
-      final int downloaderChainSegmentTimeoutsPermitted,
-      final int downloaderChainSegmentSize,
-      final long trailingPeerBlocksBehindThreshold,
-      final int maxTrailingPeers,
-      final int downloaderParallelism,
-      final int transactionsParallelism) {
+  SynchronizerConfiguration(
+          final SyncMode requestedSyncMode,
+          final int fastSyncPivotDistance,
+          final float fastSyncFullValidationRate,
+          final int fastSyncMinimumPeerCount,
+          final Duration fastSyncMaximumPeerWaitTime,
+          final Range<Long> blockPropagationRange,
+          final Optional<SyncMode> syncMode,
+          final long downloaderChangeTargetThresholdByHeight,
+          final UInt256 downloaderChangeTargetThresholdByTd,
+          final int downloaderHeaderRequestSize,
+          final int downloaderCheckpointTimeoutsPermitted,
+          final int downloaderChainSegmentTimeoutsPermitted,
+          final int downloaderChainSegmentSize,
+          final long trailingPeerBlocksBehindThreshold,
+          final int maxTrailingPeers,
+          final int downloaderParallelism,
+          final int transactionsParallelism) {
     this.requestedSyncMode = requestedSyncMode;
     this.fastSyncPivotDistance = fastSyncPivotDistance;
     this.fastSyncFullValidationRate = fastSyncFullValidationRate;
