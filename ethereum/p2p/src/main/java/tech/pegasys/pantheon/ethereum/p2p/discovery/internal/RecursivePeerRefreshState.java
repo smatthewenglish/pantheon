@@ -71,6 +71,10 @@ public class RecursivePeerRefreshState {
     bondingInitiateRound();
   }
 
+  synchronized void stop() {
+    scheduledExecutorService.shutdownNow();
+  }
+
   // TODO: Maybe just pass bootstrap peers to start?
   synchronized void kickstartBootstrapPeers(final List<DiscoveryPeer> bootstrapPeers) {
     for (final DiscoveryPeer bootstrapPeer : bootstrapPeers) {

@@ -178,6 +178,7 @@ public class PeerDiscoveryController {
       return CompletableFuture.completedFuture(null);
     }
 
+    recursivePeerRefreshState.stop();
     tableRefreshTimerId.ifPresent(timerUtil::cancelTimer);
     tableRefreshTimerId = OptionalLong.empty();
     inflightInteractions.values().forEach(PeerInteractionState::cancelTimers);
