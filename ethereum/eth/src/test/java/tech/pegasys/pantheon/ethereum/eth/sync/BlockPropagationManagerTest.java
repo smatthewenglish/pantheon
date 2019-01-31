@@ -242,7 +242,131 @@ public class BlockPropagationManagerTest {
     List<TransactionReceipt> receipts00C = Collections.emptyList();
     blockchain00.appendBlock(block00C, receipts00C);
 
-    assertThat(blockchain00.getChainHeadBlockNumber()).isEqualTo(3L);
+    BlockHeader header00D =
+            BlockHeaderBuilder.create()
+                    .parentHash(block00C.getHash())
+                    .ommersHash(Hash.ZERO)
+                    .coinbase(Address.fromHexString("0x0000000000000000000000000000000000000000"))
+                    .stateRoot(Hash.ZERO)
+                    .transactionsRoot(Hash.ZERO)
+                    .receiptsRoot(Hash.ZERO)
+                    .logsBloom(new LogsBloomFilter(BytesValue.of(bytes(LogsBloomFilter.BYTE_SIZE))))
+                    .difficulty(UInt256.ZERO)
+                    .number(4L)
+                    .gasLimit(1L)
+                    .gasUsed(1L)
+                    .timestamp(Instant.now().truncatedTo(ChronoUnit.SECONDS).getEpochSecond())
+                    .extraData(Bytes32.wrap(bytes(Bytes32.SIZE)))
+                    .mixHash(Hash.ZERO)
+                    .nonce(0L)
+                    .blockHashFunction(MainnetBlockHashFunction::createHash)
+                    .buildBlockHeader();
+    BlockBody body00D = new BlockBody(Collections.emptyList(), Collections.emptyList());
+    Block block00D = new Block(header00D, body00D);
+    List<TransactionReceipt> receipts00D = Collections.emptyList();
+    blockchain00.appendBlock(block00D, receipts00D);
+
+    assertThat(blockchain00.getChainHeadBlockNumber()).isEqualTo(4L);
+
+    /* * */
+
+    BlockchainStorage kvStore01 = new InMemoryStorageProvider().createBlockchainStorage(MainnetProtocolSchedule.create());
+    BlockHeader genesisHeader01 =
+            BlockHeaderBuilder.create()
+                    .parentHash(Hash.ZERO)
+                    .ommersHash(Hash.ZERO)
+                    .coinbase(Address.fromHexString("0x0000000000000000000000000000000000000000"))
+                    .stateRoot(Hash.ZERO)
+                    .transactionsRoot(Hash.ZERO)
+                    .receiptsRoot(Hash.ZERO)
+                    .logsBloom(new LogsBloomFilter(BytesValue.of(bytes(LogsBloomFilter.BYTE_SIZE))))
+                    .difficulty(UInt256.ZERO)
+                    .number(0L)
+                    .gasLimit(1L)
+                    .gasUsed(1L)
+                    .timestamp(Instant.now().truncatedTo(ChronoUnit.SECONDS).getEpochSecond())
+                    .extraData(Bytes32.wrap(bytes(Bytes32.SIZE)))
+                    .mixHash(Hash.ZERO)
+                    .nonce(0L)
+                    .blockHashFunction(MainnetBlockHashFunction::createHash)
+                    .buildBlockHeader();
+    BlockBody genesisBody01 = new BlockBody(Collections.emptyList(), Collections.emptyList());
+    Block genesisBlock01 = new Block(genesisHeader01, genesisBody01);
+    DefaultMutableBlockchain blockchain01 = new DefaultMutableBlockchain(genesisBlock01, kvStore01, new NoOpMetricsSystem());
+
+    BlockHeader header01A =
+            BlockHeaderBuilder.create()
+                    .parentHash(genesisBlock01.getHash())
+                    .ommersHash(Hash.ZERO)
+                    .coinbase(Address.fromHexString("0x0000000000000000000000000000000000000000"))
+                    .stateRoot(Hash.ZERO)
+                    .transactionsRoot(Hash.ZERO)
+                    .receiptsRoot(Hash.ZERO)
+                    .logsBloom(new LogsBloomFilter(BytesValue.of(bytes(LogsBloomFilter.BYTE_SIZE))))
+                    .difficulty(UInt256.ZERO)
+                    .number(1L)
+                    .gasLimit(1L)
+                    .gasUsed(1L)
+                    .timestamp(Instant.now().truncatedTo(ChronoUnit.SECONDS).getEpochSecond())
+                    .extraData(Bytes32.wrap(bytes(Bytes32.SIZE)))
+                    .mixHash(Hash.ZERO)
+                    .nonce(0L)
+                    .blockHashFunction(MainnetBlockHashFunction::createHash)
+                    .buildBlockHeader();
+    BlockBody body01A = new BlockBody(Collections.emptyList(), Collections.emptyList());
+    Block block01A = new Block(header01A, body01A);
+    List<TransactionReceipt> receipts01A = Collections.emptyList();
+    blockchain01.appendBlock(block01A, receipts01A);
+
+    BlockHeader header01B =
+            BlockHeaderBuilder.create()
+                    .parentHash(block01A.getHash())
+                    .ommersHash(Hash.ZERO)
+                    .coinbase(Address.fromHexString("0x0000000000000000000000000000000000000000"))
+                    .stateRoot(Hash.ZERO)
+                    .transactionsRoot(Hash.ZERO)
+                    .receiptsRoot(Hash.ZERO)
+                    .logsBloom(new LogsBloomFilter(BytesValue.of(bytes(LogsBloomFilter.BYTE_SIZE))))
+                    .difficulty(UInt256.ZERO)
+                    .number(2L)
+                    .gasLimit(1L)
+                    .gasUsed(1L)
+                    .timestamp(Instant.now().truncatedTo(ChronoUnit.SECONDS).getEpochSecond())
+                    .extraData(Bytes32.wrap(bytes(Bytes32.SIZE)))
+                    .mixHash(Hash.ZERO)
+                    .nonce(0L)
+                    .blockHashFunction(MainnetBlockHashFunction::createHash)
+                    .buildBlockHeader();
+    BlockBody body01B = new BlockBody(Collections.emptyList(), Collections.emptyList());
+    Block block01B = new Block(header01B, body01B);
+    List<TransactionReceipt> receipts01B = Collections.emptyList();
+    blockchain01.appendBlock(block01B, receipts01B);
+
+    BlockHeader header01C =
+            BlockHeaderBuilder.create()
+                    .parentHash(block01B.getHash())
+                    .ommersHash(Hash.ZERO)
+                    .coinbase(Address.fromHexString("0x0000000000000000000000000000000000000000"))
+                    .stateRoot(Hash.ZERO)
+                    .transactionsRoot(Hash.ZERO)
+                    .receiptsRoot(Hash.ZERO)
+                    .logsBloom(new LogsBloomFilter(BytesValue.of(bytes(LogsBloomFilter.BYTE_SIZE))))
+                    .difficulty(UInt256.ZERO)
+                    .number(3L)
+                    .gasLimit(1L)
+                    .gasUsed(1L)
+                    .timestamp(Instant.now().truncatedTo(ChronoUnit.SECONDS).getEpochSecond())
+                    .extraData(Bytes32.wrap(bytes(Bytes32.SIZE)))
+                    .mixHash(Hash.ZERO)
+                    .nonce(0L)
+                    .blockHashFunction(MainnetBlockHashFunction::createHash)
+                    .buildBlockHeader();
+    BlockBody body01C = new BlockBody(Collections.emptyList(), Collections.emptyList());
+    Block block01C = new Block(header01C, body01C);
+    List<TransactionReceipt> receipts01C = Collections.emptyList();
+    blockchain01.appendBlock(block01C, receipts01C);
+
+    assertThat(blockchain01.getChainHeadBlockNumber()).isEqualTo(3L);
 
     WorldStateArchive worldStateArchive00 = new WorldStateArchive(new KeyValueStorageWorldStateStorage(new InMemoryKeyValueStorage()));
 
@@ -317,20 +441,18 @@ public class BlockPropagationManagerTest {
     // ...
     blockPropagationManager00.start();
 
-    Set<Capability> caps = new HashSet<>(singletonList(EthProtocol.ETH63));
-    PeerConnection peerConnection = new MockPeerConnection(caps);
-    Consumer<EthPeer> onPeerReady = (peer) -> {};
-    EthPeer ethPeer = new EthPeer(peerConnection, EthProtocol.NAME, onPeerReady);
+    /* * */
 
-    /*
-    public static NewBlockMessage create(final Block block, final UInt256 totalDifficulty) {
-     */
-    //NewBlockMessage newBlockMessage = new NewBlockMessage();
+    // Setup peer and messages
+    final RespondingEthPeer respondingEthPeer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 0);
+    final NewBlockHashesMessage newBlockHashesMessage = NewBlockHashesMessage.create(singletonList(new NewBlockHash(block00D.getHash(), block00D.getHeader().getNumber())));
+    final Responder responder = RespondingEthPeer.blockchainResponder(blockchain01);
 
-    //DefaultMessage defaultMessage = new DefaultMessage(ethPeer.getPeerConnection(), message);
+    // Broadcast first message
+    EthProtocolManagerTestUtil.broadcastMessage(ethProtocolManager, respondingEthPeer, newBlockHashesMessage);
+    respondingEthPeer.respondWhile(responder, respondingEthPeer::hasOutstandingRequests);
 
-    ethProtocolManager00.processMessage(EthProtocol.ETH63, defaultMessage);
-
+    assertThat(blockchain00.contains(block00D.getHash())).isTrue();
   }
 
   @Test
@@ -347,10 +469,7 @@ public class BlockPropagationManagerTest {
 
     // Setup peer and messages
     final RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 0);
-    final NewBlockHashesMessage nextAnnouncement =
-        NewBlockHashesMessage.create(
-            singletonList(
-                new NewBlockHash(nextBlock.getHash(), nextBlock.getHeader().getNumber())));
+    final NewBlockHashesMessage nextAnnouncement = NewBlockHashesMessage.create(singletonList(new NewBlockHash(nextBlock.getHash(), nextBlock.getHeader().getNumber())));
     final NewBlockHashesMessage nextNextAnnouncement =
         NewBlockHashesMessage.create(
             singletonList(
