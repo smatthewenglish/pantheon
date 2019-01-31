@@ -1183,18 +1183,19 @@ public class PeerDiscoveryControllerTest {
 
     for (int i = 0; i < n; i++) {
       template.setInt(template.size() - 4, i);
-      final Bytes32 newKeccak256 = Bytes32.leftPad(template.copy());
-      final DiscoveryPeer newPeer = mock(DiscoveryPeer.class);
-      when(newPeer.keccak256()).thenReturn(newKeccak256);
+      //final Bytes32 newKeccak256 = Bytes32.leftPad(template.copy());
+      //final DiscoveryPeer newPeer = mock(DiscoveryPeer.class);
+
+
       final MutableBytesValue newId = MutableBytesValue.create(64);
       UInt256.of(i).getBytes().copyTo(newId, newId.size() - UInt256Value.SIZE);
-      when(newPeer.getId()).thenReturn(newId);
-      when(newPeer.getEndpoint())
-          .thenReturn(
-              new Endpoint(
-                  host.getEndpoint().getHost(),
-                  100 + counter.incrementAndGet(),
-                  OptionalInt.empty()));
+      final DiscoveryPeer newPeer = new DiscoveryPeer(MutableBytesValue.create(64), new Endpoint(
+              host.getEndpoint().getHost(),
+              100 + counter.incrementAndGet(),
+              OptionalInt.empty()));
+
+      //when(newPeer.keccak256()).thenReturn(newKeccak256);
+
       newPeers.add(newPeer);
     }
 

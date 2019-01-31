@@ -225,6 +225,13 @@ public class PeerDiscoveryController {
     final boolean peerKnown = maybeKnownPeer.isPresent();
     final boolean peerBlacklisted = peerBlacklist.contains(peer);
 
+    // Reset the last seen timestamp.
+    final long now = System.currentTimeMillis();
+    if (peer.getFirstDiscovered() == 0) {
+      peer.setFirstDiscovered(now);
+    }
+    peer.setLastSeen(now);
+
     switch (packet.getType()) {
       case PING:
         if (!peerBlacklisted && addToPeerTable(peer)) {
@@ -241,6 +248,8 @@ public class PeerDiscoveryController {
                     if (peerBlacklisted) {
                       return;
                     }
+                    peer.setStatus(PeerDiscoveryStatus.BONDED);
+                    notifyPeerBonded(peer, now);
                     addToPeerTable(peer);
                     recursivePeerRefreshState.onBondingComplete(peer);
                   });
@@ -269,18 +278,6 @@ public class PeerDiscoveryController {
     final PeerTable.AddResult result = peerTable.tryAdd(peer);
     if (result.getOutcome() == Outcome.SELF) {
       return false;
-    }
-
-    // Reset the last seen timestamp.
-    final long now = System.currentTimeMillis();
-    if (peer.getFirstDiscovered() == 0) {
-      peer.setFirstDiscovered(now);
-    }
-    peer.setLastSeen(now);
-
-    if (peer.getStatus() != PeerDiscoveryStatus.BONDED) {
-      peer.setStatus(PeerDiscoveryStatus.BONDED);
-      notifyPeerBonded(peer, now);
     }
 
     if (result.getOutcome() == Outcome.ALREADY_EXISTED) {
