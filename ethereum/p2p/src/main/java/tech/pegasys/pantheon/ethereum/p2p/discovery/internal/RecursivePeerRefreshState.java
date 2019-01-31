@@ -90,15 +90,7 @@ public class RecursivePeerRefreshState {
 
   private boolean refreshReachedTerminationCieling() {
     final int cielingRound = 100;
-    if (currentRound <= cielingRound) {
-      return false;
-    }
-    return true;
-  }
-
-  @VisibleForTesting
-  public void cancelCurrentRound() {
-    iterativeSearchInProgress = false;
+    return currentRound > cielingRound;
   }
 
   private void addInitialPeers(final List<DiscoveryPeer> initialPeers) {
@@ -120,15 +112,12 @@ public class RecursivePeerRefreshState {
     }
     LOG.debug("Initiating bonding round with {} candidates", candidates.size());
     for (final DiscoveryPeer discoPeer : candidates) {
-      final MetadataPeer metadataPeer = oneTrueMap.get(discoPeer.getId());
-      metadataPeer.bondingStarted();
       bondingAgent.performBonding(discoPeer, false);
     }
-
     currentRoundTimeout = Optional.of(scheduleTimeout(this::bondingCancelOutstandingRequests));
   }
 
-  public RoundTimeout scheduleTimeout(final Runnable onTimeout) {
+  private RoundTimeout scheduleTimeout(final Runnable onTimeout) {
     final AtomicBoolean timeoutCancelled = new AtomicBoolean(false);
     final ScheduledFuture<?> future =
         scheduledExecutorService.schedule(
@@ -191,12 +180,6 @@ public class RecursivePeerRefreshState {
     bondingInitiateRound();
   }
 
-  /**
-   * What we're doing here is indicating that the message sender (peer), has responded to our
-   * outgoing request for nodes with a neighbours packet. Moreover, we examine that packet, and for
-   * each one of it's constituent nodes, if we've not hitherto encountered that node, we add it to
-   * our one true map.
-   */
   synchronized void onNeighboursPacketReceived(
       final DiscoveryPeer peer, final NeighborsPacketData neighboursPacket) {
     final MetadataPeer metadataPeer = oneTrueMap.get(peer.getId());
@@ -226,7 +209,6 @@ public class RecursivePeerRefreshState {
     if (iterationParticipant == null) {
       return;
     }
-    iterationParticipant.bondingComplete();
     if (bondingRoundTermination()) {
       neighboursInitiateRound();
     }
@@ -276,14 +258,16 @@ public class RecursivePeerRefreshState {
     return target;
   }
 
+  @VisibleForTesting
+  void cancelCurrentRound() {
+    iterativeSearchInProgress = false;
+  }
+
   public static class MetadataPeer implements Comparable<MetadataPeer> {
     DiscoveryPeer peer;
     Integer distance;
 
-    boolean bondingStarted = false;
-    boolean bondingSuccessful = false;
     boolean bondingFailed = false;
-
     boolean findNeighboursStarted = false;
     boolean findNeighboursComplete = false;
 
@@ -294,14 +278,6 @@ public class RecursivePeerRefreshState {
 
     DiscoveryPeer getPeer() {
       return peer;
-    }
-
-    void bondingStarted() {
-      this.bondingStarted = true;
-    }
-
-    void bondingComplete() {
-      this.bondingSuccessful = true;
     }
 
     void bondingFailed() {
@@ -321,15 +297,17 @@ public class RecursivePeerRefreshState {
     }
 
     private boolean isBondingCandidate() {
-      return !bondingFailed && !bondingSuccessful && !bondingStarted;
+      return !bondingFailed
+          && !peer.getStatus().equals(PeerDiscoveryStatus.BONDED)
+          && !peer.getStatus().equals(PeerDiscoveryStatus.BONDING);
     }
 
     private boolean isNeighboursRoundCandidate() {
-      return bondingSuccessful && !findNeighboursStarted;
+      return peer.getStatus().equals(PeerDiscoveryStatus.BONDED) && !findNeighboursStarted;
     }
 
     private boolean hasOutstandingBondRequest() {
-      return bondingStarted
+      return peer.getStatus().equals(PeerDiscoveryStatus.BONDING)
           && !peer.getStatus().equals(PeerDiscoveryStatus.BONDED)
           && !bondingFailed;
     }
