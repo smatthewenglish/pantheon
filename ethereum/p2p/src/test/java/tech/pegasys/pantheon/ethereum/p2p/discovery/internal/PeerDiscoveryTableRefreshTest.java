@@ -20,20 +20,22 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 
-import tech.pegasys.pantheon.crypto.SECP256K1;
 import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.DiscoveryPeer;
+import tech.pegasys.pantheon.ethereum.p2p.discovery.PeerDiscoveryStatus;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.PeerDiscoveryTestHelper;
 import tech.pegasys.pantheon.ethereum.p2p.peers.Endpoint;
 import tech.pegasys.pantheon.ethereum.p2p.peers.PeerBlacklist;
 import tech.pegasys.pantheon.ethereum.p2p.permissioning.NodeWhitelistController;
 import tech.pegasys.pantheon.ethereum.permissioning.PermissioningConfiguration;
 import tech.pegasys.pantheon.util.Subscribers;
+import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import org.junit.Test;
@@ -44,10 +46,28 @@ public class PeerDiscoveryTableRefreshTest {
 
   @Test
   public void tableRefreshSingleNode() {
-    final List<SECP256K1.KeyPair> keypairs = PeerDiscoveryTestHelper.generateKeyPairs(2);
-    final List<DiscoveryPeer> peers = helper.createDiscoveryPeers(keypairs);
-    DiscoveryPeer localPeer = peers.get(0);
-    KeyPair localKeyPair = keypairs.get(0);
+    // final List<SECP256K1.KeyPair> keypairs = PeerDiscoveryTestHelper.generateKeyPairs(2);
+
+    String LOOPBACK_IP_ADDR = "127.0.0.1";
+    AtomicInteger nextAvailablePort = new AtomicInteger(1);
+    int port = nextAvailablePort.incrementAndGet();
+
+    List<KeyPair> keyPairs = PeerDiscoveryTestHelper.generateKeyPairs(2);
+
+    KeyPair keyPair0 = keyPairs.get(0);
+    BytesValue id0 = keyPair0.getPublicKey().getEncodedBytes();
+    DiscoveryPeer peer0 = new DiscoveryPeer(id0, LOOPBACK_IP_ADDR, port, port);
+
+    KeyPair keyPair1 = keyPairs.get(1);
+    BytesValue id1 = keyPair1.getPublicKey().getEncodedBytes();
+    DiscoveryPeer peer1 = new DiscoveryPeer(id1, LOOPBACK_IP_ADDR, port, port);
+
+    /* * */
+
+    List<DiscoveryPeer> peers = new ArrayList<>();
+
+    peers.add(peer0);
+    peers.add(peer1);
 
     // Create and start the PeerDiscoveryController
     final OutboundMessageHandler outboundMessageHandler = mock(OutboundMessageHandler.class);
@@ -55,9 +75,9 @@ public class PeerDiscoveryTableRefreshTest {
     final PeerDiscoveryController controller =
         spy(
             new PeerDiscoveryController(
-                localKeyPair,
-                localPeer,
-                new PeerTable(localPeer.getId()),
+                keyPair0,
+                peer0,
+                new PeerTable(peer0.getId()),
                 emptyList(),
                 outboundMessageHandler,
                 timer,
@@ -71,7 +91,7 @@ public class PeerDiscoveryTableRefreshTest {
     // Send a PING, so as to add a Peer in the controller.
     final PingPacketData ping =
         PingPacketData.create(peers.get(1).getEndpoint(), peers.get(0).getEndpoint());
-    final Packet packet = Packet.create(PacketType.PING, ping, keypairs.get(1));
+    final Packet packet = Packet.create(PacketType.PING, ping, keyPairs.get(1));
     controller.onMessage(packet, peers.get(1));
 
     // Wait until the controller has added the newly found peer.
@@ -83,9 +103,12 @@ public class PeerDiscoveryTableRefreshTest {
     // Within 1000ms, there should be ~10 packets. But let's be less ambitious and expect at least
     // 5.
     final ArgumentCaptor<Packet> captor = ArgumentCaptor.forClass(Packet.class);
-    for (int i = 0; i < 5; i++) {
+    for (int i = 0; i < 6; i++) {
       timer.runPeriodicHandlers();
       controller.getRecursivePeerRefreshState().cancelCurrentRound();
+      // TODO: We iterate over '6', 'cause the first time around the peer will
+      // TODO: be ignored, since by virtue of having PING'd us, it'll be BONDED
+      controller.getPeers().forEach(p -> p.setStatus(PeerDiscoveryStatus.KNOWN));
     }
     verify(outboundMessageHandler, atLeast(5)).send(any(), captor.capture());
     List<Packet> capturedFindNeighborsPackets =
