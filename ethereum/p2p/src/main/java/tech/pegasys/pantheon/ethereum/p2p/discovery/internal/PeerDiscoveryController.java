@@ -331,16 +331,8 @@ public class PeerDiscoveryController {
    * Currently the refresh process is NOT recursive.
    */
   private void refreshTable() {
-
-    System.out.println("--> ");
-
     final BytesValue target = Peer.randomId();
     final List<DiscoveryPeer> initialPeers = peerTable.nearestPeers(Peer.randomId(), 16);
-
-    for (DiscoveryPeer d : initialPeers) {
-      System.out.println("~ " + d);
-    }
-
     recursivePeerRefreshState.start(initialPeers, target);
     lastRefreshTime = System.currentTimeMillis();
   }

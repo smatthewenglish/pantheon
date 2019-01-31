@@ -99,9 +99,6 @@ public class RecursivePeerRefreshState {
   }
 
   private void bondingInitiateRound() {
-
-    System.out.println("0");
-
     currentRoundTimeout.ifPresent(RoundTimeout::cancelTimeout);
     final List<DiscoveryPeer> candidates = bondingRoundCandidates();
     if (candidates.isEmpty()) {
@@ -149,9 +146,6 @@ public class RecursivePeerRefreshState {
   }
 
   private void neighboursInitiateRound() {
-
-    System.out.println(" --> A <--");
-
     currentRoundTimeout.ifPresent(RoundTimeout::cancelTimeout);
     final List<DiscoveryPeer> candidates = neighboursRoundCandidates();
     // TODO: Limit the total number of rounds we execute to avoid continuing forever.
