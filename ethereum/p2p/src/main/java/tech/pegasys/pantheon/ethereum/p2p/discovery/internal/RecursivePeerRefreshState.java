@@ -48,6 +48,8 @@ public class RecursivePeerRefreshState {
   private Optional<RoundTimeout> currentRoundTimeout = Optional.empty();
   private boolean iterativeSearchInProgress = false;
 
+  private int currentRound = 0;
+
   private final SortedMap<BytesValue, MetadataPeer> oneTrueMap = new TreeMap<>();
 
   // TODO: Need to shut these down as part of Pantheon stop
@@ -83,6 +85,14 @@ public class RecursivePeerRefreshState {
 
   synchronized void stop() {
     scheduledExecutorService.shutdownNow();
+  }
+
+  private boolean refreshReachedTerminationCieling() {
+    final int cielingRound = 100;
+    if (currentRound <= cielingRound) {
+      return false;
+    }
+    return true;
   }
 
   @VisibleForTesting
@@ -146,9 +156,11 @@ public class RecursivePeerRefreshState {
   }
 
   private void neighboursInitiateRound() {
+    if (refreshReachedTerminationCieling()) {
+      return;
+    }
     currentRoundTimeout.ifPresent(RoundTimeout::cancelTimeout);
     final List<DiscoveryPeer> candidates = neighboursRoundCandidates();
-    // TODO: Limit the total number of rounds we execute to avoid continuing forever.
     if (candidates.isEmpty()) {
       LOG.debug("Iterative peer search complete");
       iterativeSearchInProgress = false;
@@ -163,8 +175,8 @@ public class RecursivePeerRefreshState {
       final MetadataPeer metadataPeer = oneTrueMap.get(discoPeer.getId());
       metadataPeer.findNeighboursStarted();
     }
-
     currentRoundTimeout = Optional.of(scheduleTimeout(this::neighboursCancelOutstandingRequests));
+    currentRound++;
   }
 
   private synchronized void neighboursCancelOutstandingRequests() {
