@@ -92,6 +92,7 @@ public class PeerDiscoveryController {
 
   private static final Logger LOG = LogManager.getLogger();
   private static final long REFRESH_CHECK_INTERVAL_MILLIS = MILLISECONDS.convert(30, SECONDS);
+  private static final int PEER_REFRESH_ROUND_TIMEOUT_IN_SECONDS = 5;
   protected final TimerUtil timerUtil;
   private final PeerTable peerTable;
 
@@ -150,7 +151,11 @@ public class PeerDiscoveryController {
     this.peerBondedObservers = peerBondedObservers;
     recursivePeerRefreshState =
         new RecursivePeerRefreshState(
-            localPeer.getId(), peerBlacklist, nodeWhitelist, this::bond, this::findNodes, 30);
+            peerBlacklist,
+            nodeWhitelist,
+            this::bond,
+            this::findNodes,
+            PEER_REFRESH_ROUND_TIMEOUT_IN_SECONDS);
   }
 
   public CompletableFuture<?> start() {
@@ -160,14 +165,14 @@ public class PeerDiscoveryController {
 
     bootstrapNodes.stream().filter(nodeWhitelist::contains).forEach(peerTable::tryAdd);
 
-    recursivePeerRefreshState.kickstartBootstrapPeers(
-        bootstrapNodes.stream().filter(nodeWhitelist::contains).collect(Collectors.toList()));
-    recursivePeerRefreshState.start();
+    final List<DiscoveryPeer> initialDiscoveryPeers =
+        bootstrapNodes.stream().filter(nodeWhitelist::contains).collect(Collectors.toList());
+    recursivePeerRefreshState.start(initialDiscoveryPeers, localPeer.getId());
 
     final long timerId =
         timerUtil.setPeriodic(
             Math.min(REFRESH_CHECK_INTERVAL_MILLIS, tableRefreshIntervalMs),
-            () -> refreshTableIfRequired());
+            this::refreshTableIfRequired);
     tableRefreshTimerId = OptionalLong.of(timerId);
 
     return CompletableFuture.completedFuture(null);
@@ -322,7 +327,8 @@ public class PeerDiscoveryController {
    */
   private void refreshTable() {
     final BytesValue target = Peer.randomId();
-    peerTable.nearestPeers(Peer.randomId(), 16).forEach((peer) -> findNodes(peer, target));
+    final List<DiscoveryPeer> initialPeers = peerTable.nearestPeers(Peer.randomId(), 16);
+    recursivePeerRefreshState.start(initialPeers, target);
     lastRefreshTime = System.currentTimeMillis();
   }
 
