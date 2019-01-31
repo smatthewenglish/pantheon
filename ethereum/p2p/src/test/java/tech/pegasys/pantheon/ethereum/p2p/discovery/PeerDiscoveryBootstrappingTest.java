@@ -157,8 +157,6 @@ public class PeerDiscoveryBootstrappingTest {
             new NodeWhitelistController(PermissioningConfiguration.createDefault()));
     peerDiscoveryAgent0.start().join();
 
-    System.out.println(":: " + peerDiscoveryAgent0.getAdvertisedPeer().getId());
-
     // Start another agent, pointing to the above agent as a bootstrap peer.
     final DiscoveryConfiguration discoveryConfiguration1 = new DiscoveryConfiguration();
     discoveryConfiguration1.setBootstrapPeers(
@@ -173,8 +171,6 @@ public class PeerDiscoveryBootstrappingTest {
             new PeerBlacklist(),
             new NodeWhitelistController(PermissioningConfiguration.createDefault()));
     peerDiscoveryAgent1.start().join();
-
-    System.out.println(":: " + peerDiscoveryAgent1.getAdvertisedPeer().getId());
 
     await()
         .atMost(5, TimeUnit.SECONDS)
@@ -200,11 +196,9 @@ public class PeerDiscoveryBootstrappingTest {
             new NodeWhitelistController(PermissioningConfiguration.createDefault()));
     peerDiscoveryAgent_TEST.start().join();
 
-    //    await()
-    //        .atMost(10, TimeUnit.SECONDS)
-    //        .untilAsserted(() -> assertThat(peerDiscoveryAgent_TEST.getPeers()).hasSize(2));
-
-    peerDiscoveryAgent_TEST.getPeers().forEach(p -> System.out.println("--> " + p.getId()));
+    await()
+        .atMost(10, TimeUnit.SECONDS)
+        .untilAsserted(() -> assertThat(peerDiscoveryAgent_TEST.getPeers()).hasSize(2));
 
     vertx.close();
   }
