@@ -15,6 +15,7 @@ package tech.pegasys.pantheon.ethereum.p2p.discovery.internal;
 import static tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PeerDistanceCalculator.distance;
 
 import tech.pegasys.pantheon.ethereum.p2p.discovery.DiscoveryPeer;
+import tech.pegasys.pantheon.ethereum.p2p.discovery.PeerDiscoveryStatus;
 import tech.pegasys.pantheon.ethereum.p2p.peers.PeerBlacklist;
 import tech.pegasys.pantheon.ethereum.p2p.permissioning.NodeWhitelistController;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
@@ -328,7 +329,9 @@ public class RecursivePeerRefreshState {
     }
 
     private boolean hasOutstandingBondRequest() {
-      return bondingStarted && !bondingSuccessful && !bondingFailed;
+      return bondingStarted
+          && !peer.getStatus().equals(PeerDiscoveryStatus.BONDED)
+          && !bondingFailed;
     }
 
     private boolean hasOutstandingNeighboursRequest() {

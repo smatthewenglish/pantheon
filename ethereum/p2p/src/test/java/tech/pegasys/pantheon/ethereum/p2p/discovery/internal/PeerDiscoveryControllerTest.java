@@ -1066,7 +1066,84 @@ public class PeerDiscoveryControllerTest {
   @Test
   public void shouldNotBondWithNonWhitelistedPeer()
       throws InterruptedException, ExecutionException, TimeoutException {
-    final List<DiscoveryPeer> peers = createPeersInLastBucket(localPeer, 3);
+    // final List<DiscoveryPeer> peers = createPeersInLastBucket(localPeer, 3);
+
+    List<DiscoveryPeer> peers = new ArrayList<>();
+
+    // Flipping the most significant bit of the keccak256 will place the peer
+    // in the last bucket for the corresponding host peer.
+    final Bytes32 keccak256 = localPeer.keccak256();
+    final MutableBytesValue template = MutableBytesValue.create(keccak256.size());
+    byte msb = keccak256.get(0);
+    msb ^= MOST_SIGNFICANT_BIT_MASK;
+    template.set(0, msb);
+
+    /* * */
+
+    template.setInt(template.size() - 4, 0);
+    final Bytes32 keccak0 = Bytes32.leftPad(template.copy());
+    final MutableBytesValue id0 = MutableBytesValue.create(64);
+    UInt256.of(0).getBytes().copyTo(id0, id0.size() - UInt256Value.SIZE);
+    DiscoveryPeer peer0 =
+        new DiscoveryPeer(
+            id0,
+            new Endpoint(
+                localPeer.getEndpoint().getHost(),
+                100 + counter.incrementAndGet(),
+                OptionalInt.empty()));
+    peer0.setKeccak256(keccak0);
+    peers.add(peer0);
+
+    /* * */
+
+    template.setInt(template.size() - 4, 0);
+    final Bytes32 keccak1 = Bytes32.leftPad(template.copy());
+    final MutableBytesValue id1 = MutableBytesValue.create(64);
+    UInt256.of(1).getBytes().copyTo(id1, id1.size() - UInt256Value.SIZE);
+    DiscoveryPeer peer1 =
+        new DiscoveryPeer(
+            id1,
+            new Endpoint(
+                localPeer.getEndpoint().getHost(),
+                100 + counter.incrementAndGet(),
+                OptionalInt.empty()));
+    peer1.setKeccak256(keccak1);
+    peers.add(peer1);
+
+    /* * */
+
+    template.setInt(template.size() - 4, 0);
+    final Bytes32 keccak2 = Bytes32.leftPad(template.copy());
+    final MutableBytesValue id2 = MutableBytesValue.create(64);
+    UInt256.of(2).getBytes().copyTo(id2, id2.size() - UInt256Value.SIZE);
+    DiscoveryPeer peer2 =
+        new DiscoveryPeer(
+            id2,
+            new Endpoint(
+                localPeer.getEndpoint().getHost(),
+                100 + counter.incrementAndGet(),
+                OptionalInt.empty()));
+    peer2.setKeccak256(keccak2);
+    peers.add(peer2);
+
+    /* * */
+
+    template.setInt(template.size() - 4, 0);
+    final Bytes32 keccak3 = Bytes32.leftPad(template.copy());
+    final MutableBytesValue id3 = MutableBytesValue.create(64);
+    UInt256.of(3).getBytes().copyTo(id3, id3.size() - UInt256Value.SIZE);
+    DiscoveryPeer peer3 =
+        new DiscoveryPeer(
+            id3,
+            new Endpoint(
+                localPeer.getEndpoint().getHost(),
+                100 + counter.incrementAndGet(),
+                OptionalInt.empty()));
+    peer3.setKeccak256(keccak3);
+    peers.add(peer3);
+
+    /* * */
+
     final DiscoveryPeer discoPeer = peers.get(0);
     final DiscoveryPeer otherPeer = peers.get(1);
     final DiscoveryPeer otherPeer2 = peers.get(2);
