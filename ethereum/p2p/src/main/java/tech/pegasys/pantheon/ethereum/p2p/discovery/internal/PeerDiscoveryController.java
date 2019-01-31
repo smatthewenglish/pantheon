@@ -123,7 +123,7 @@ public class PeerDiscoveryController {
   // Observers for "peer bonded" discovery events.
   private final Subscribers<Consumer<PeerBondedEvent>> peerBondedObservers;
 
-  private RecursivePeerRefreshState recursivePeerRefreshState;
+  private final RecursivePeerRefreshState recursivePeerRefreshState;
 
   public PeerDiscoveryController(
       final KeyPair keypair,
@@ -148,6 +148,9 @@ public class PeerDiscoveryController {
     this.nodeWhitelist = nodeWhitelist;
     this.outboundMessageHandler = outboundMessageHandler;
     this.peerBondedObservers = peerBondedObservers;
+    recursivePeerRefreshState =
+        new RecursivePeerRefreshState(
+            localPeer.getId(), peerBlacklist, nodeWhitelist, this::bond, this::findNodes, 30);
   }
 
   public CompletableFuture<?> start() {
@@ -156,9 +159,7 @@ public class PeerDiscoveryController {
     }
 
     bootstrapNodes.stream().filter(nodeWhitelist::contains).forEach(peerTable::tryAdd);
-    recursivePeerRefreshState =
-        new RecursivePeerRefreshState(
-            localPeer.getId(), peerBlacklist, nodeWhitelist, this::bond, this::findNodes, 30);
+
     recursivePeerRefreshState.kickstartBootstrapPeers(
         bootstrapNodes.stream().filter(nodeWhitelist::contains).collect(Collectors.toList()));
     recursivePeerRefreshState.start();
@@ -235,7 +236,7 @@ public class PeerDiscoveryController {
                       return;
                     }
                     addToPeerTable(peer);
-                    recursivePeerRefreshState.onPongPacketReceived(peer);
+                    recursivePeerRefreshState.onBondingComplete(peer);
                   });
           break;
         }

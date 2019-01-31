@@ -19,31 +19,36 @@ import tech.pegasys.pantheon.ethereum.p2p.peers.PeerBlacklist;
 import tech.pegasys.pantheon.ethereum.p2p.permissioning.NodeWhitelistController;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 
 import com.google.common.annotations.VisibleForTesting;
 
 public class RecursivePeerRefreshState {
+
+  private static final int MAX_CONCURRENT_REQUESTS = 3;
   private final BytesValue target;
   private final PeerBlacklist peerBlacklist;
   private final NodeWhitelistController peerWhitelist;
 
   private final BondingAgent bondingAgent;
   private final FindNeighbourDispatcher findNeighbourDispatcher;
+  private Optional<RoundTimeout> currentRoundTimeout = Optional.empty();
 
-  private final SortedMap<BytesValue, MetadataPeer> oneTrueMap;
+  private final SortedMap<BytesValue, MetadataPeer> oneTrueMap = new TreeMap<>();
 
-  private final ScheduledExecutorService bondingScheduledExecutorService =
-      Executors.newSingleThreadScheduledExecutor();
-  private final ScheduledExecutorService neighboursScheduledExecutorService =
+  // TODO: Need to shut these down as part of Pantheon stop
+  private final ScheduledExecutorService scheduledExecutorService =
       Executors.newSingleThreadScheduledExecutor();
   private final int timeoutPeriod;
 
@@ -60,72 +65,88 @@ public class RecursivePeerRefreshState {
     this.bondingAgent = bondingAgent;
     this.findNeighbourDispatcher = neighborFinder;
     this.timeoutPeriod = timeoutPeriod;
-    this.oneTrueMap = new TreeMap<>();
   }
 
-  void start() {
-    final List<DiscoveryPeer> bondingRoundCandidatesList =
-        bondingRoundCandidates(oneTrueMap.size(), oneTrueMap);
-    bondingInitiateRound(bondingRoundCandidatesList);
+  synchronized void start() {
+    bondingInitiateRound();
   }
 
-  void kickstartBootstrapPeers(final List<DiscoveryPeer> bootstrapPeers) {
-    for (DiscoveryPeer bootstrapPeer : bootstrapPeers) {
+  // TODO: Maybe just pass bootstrap peers to start?
+  synchronized void kickstartBootstrapPeers(final List<DiscoveryPeer> bootstrapPeers) {
+    for (final DiscoveryPeer bootstrapPeer : bootstrapPeers) {
       final MetadataPeer iterationParticipant =
           new MetadataPeer(bootstrapPeer, distance(target, bootstrapPeer.getId()));
       oneTrueMap.put(bootstrapPeer.getId(), iterationParticipant);
     }
   }
 
-  private void bondingCancelOutstandingRequests() {
-    for (Map.Entry<BytesValue, MetadataPeer> entry : oneTrueMap.entrySet()) {
-      final MetadataPeer metadataPeer = entry.getValue();
-      if (metadataPeer.getBondQueried() && !metadataPeer.getBondResponded()) {
-        metadataPeer.setBondCancelled();
-      }
+  private void bondingInitiateRound() {
+    currentRoundTimeout.ifPresent(RoundTimeout::cancelTimeout);
+    final List<DiscoveryPeer> candidates = bondingRoundCandidates();
+    if (candidates.isEmpty()) {
+      // All peers are already bonded (or failed to bond) so immediately switch to neighbours round
+      neighboursInitiateRound();
+      return;
     }
-    final List<DiscoveryPeer> bondingRoundCandidatesList =
-        bondingRoundCandidates(oneTrueMap.size(), oneTrueMap);
-    if (bondingRoundCandidatesList.size() > 0) {
-      bondingInitiateRound(bondingRoundCandidatesList);
-    }
-  }
-
-  private void bondingInitiateRound(final List<DiscoveryPeer> bondingRoundCandidatesList) {
-    for (DiscoveryPeer discoPeer : bondingRoundCandidatesList) {
+    for (final DiscoveryPeer discoPeer : candidates) {
       final MetadataPeer metadataPeer = oneTrueMap.get(discoPeer.getId());
-      metadataPeer.setBondQueried();
+      metadataPeer.bondingStarted();
       bondingAgent.performBonding(discoPeer, false);
     }
-    final Runnable bondingCancellationTimerTask = this::bondingCancelOutstandingRequests;
-    bondingScheduledExecutorService.schedule(
-        bondingCancellationTimerTask, timeoutPeriod, TimeUnit.SECONDS);
+
+    currentRoundTimeout = Optional.of(scheduleTimeout(this::bondingCancelOutstandingRequests));
   }
 
-  private void neighboursCancelOutstandingRequests() {
-    for (Map.Entry<BytesValue, MetadataPeer> entry : oneTrueMap.entrySet()) {
+  public RoundTimeout scheduleTimeout(final Runnable onTimeout) {
+    final AtomicBoolean timeoutCancelled = new AtomicBoolean(false);
+    final ScheduledFuture<?> future =
+        scheduledExecutorService.schedule(
+            () -> performIfNotCancelled(onTimeout, timeoutCancelled),
+            this.timeoutPeriod,
+            TimeUnit.SECONDS);
+    return new RoundTimeout(timeoutCancelled, future);
+  }
+
+  private synchronized void performIfNotCancelled(
+      final Runnable action, final AtomicBoolean cancelled) {
+    if (!cancelled.get()) {
+      action.run();
+    }
+  }
+
+  private void bondingCancelOutstandingRequests() {
+    for (final Map.Entry<BytesValue, MetadataPeer> entry : oneTrueMap.entrySet()) {
       final MetadataPeer metadataPeer = entry.getValue();
-      if (metadataPeer.getNeighbourQueried() && !metadataPeer.getNeighbourResponded()) {
-        metadataPeer.setNeighbourCancelled();
+      if (metadataPeer.hasOutstandingBondRequest()) {
+        metadataPeer.bondingFailed();
       }
     }
-    final List<DiscoveryPeer> neighboursRoundCandidatesList =
-        neighboursRoundCandidates(3, oneTrueMap);
-    if (neighboursRoundCandidatesList.size() > 0) {
-      neighboursInitiateRound(neighboursRoundCandidatesList);
-    }
+    neighboursInitiateRound();
   }
 
-  private void neighboursInitiateRound(final List<DiscoveryPeer> neighboursRoundCandidatesList) {
-    for (DiscoveryPeer discoPeer : neighboursRoundCandidatesList) {
+  private void neighboursInitiateRound() {
+    currentRoundTimeout.ifPresent(RoundTimeout::cancelTimeout);
+    final List<DiscoveryPeer> candidates = neighboursRoundCandidates();
+    if (candidates.isEmpty()) {
+      return;
+    }
+    for (final DiscoveryPeer discoPeer : candidates) {
       findNeighbourDispatcher.findNeighbours(discoPeer, target);
       final MetadataPeer metadataPeer = oneTrueMap.get(discoPeer.getId());
-      metadataPeer.setNeighbourQueried();
+      metadataPeer.findNeighboursStarted();
     }
 
-    final Runnable neighboursCancellationTimerTask = this::neighboursCancelOutstandingRequests;
-    neighboursScheduledExecutorService.schedule(
-        neighboursCancellationTimerTask, timeoutPeriod, TimeUnit.SECONDS);
+    currentRoundTimeout = Optional.of(scheduleTimeout(this::neighboursCancelOutstandingRequests));
+  }
+
+  private synchronized void neighboursCancelOutstandingRequests() {
+    for (final Map.Entry<BytesValue, MetadataPeer> entry : oneTrueMap.entrySet()) {
+      final MetadataPeer metadataPeer = entry.getValue();
+      if (metadataPeer.hasOutstandingNeighboursRequest()) {
+        metadataPeer.findNeighboursFailed();
+      }
+    }
+    bondingInitiateRound();
   }
 
   /**
@@ -134,14 +155,13 @@ public class RecursivePeerRefreshState {
    * each one of it's constituent nodes, if we've not hitherto encountered that node, we add it to
    * our one true map.
    */
-  void onNeighboursPacketReceived(
+  synchronized void onNeighboursPacketReceived(
       final DiscoveryPeer peer, final NeighborsPacketData neighboursPacket) {
     final MetadataPeer metadataPeer = oneTrueMap.get(peer.getId());
     if (metadataPeer == null) {
       return;
     }
-    final List<DiscoveryPeer> receivedPeerList = neighboursPacket.getNodes();
-    for (DiscoveryPeer receivedDiscoPeer : receivedPeerList) {
+    for (final DiscoveryPeer receivedDiscoPeer : neighboursPacket.getNodes()) {
       if (!oneTrueMap.containsKey(receivedDiscoPeer.getId())
           && !peerBlacklist.contains(receivedDiscoPeer)
           && peerWhitelist.contains(receivedDiscoPeer)) {
@@ -151,30 +171,29 @@ public class RecursivePeerRefreshState {
         oneTrueMap.put(receivedDiscoPeer.getId(), receivedMetadataPeer);
       }
     }
-    metadataPeer.setNeighbourResponded();
+    metadataPeer.findNeighboursComplete();
 
     if (neighboursRoundTermination()) {
-      final List<DiscoveryPeer> bondingRoundCandidatesList =
-          bondingRoundCandidates(oneTrueMap.size(), oneTrueMap);
-      bondingInitiateRound(bondingRoundCandidatesList);
+      bondingInitiateRound();
     }
   }
 
-  void onPongPacketReceived(final DiscoveryPeer peer) {
+  synchronized void onBondingComplete(final DiscoveryPeer peer) {
     final MetadataPeer iterationParticipant = oneTrueMap.get(peer.getId());
-    iterationParticipant.setBondResponded();
+    if (iterationParticipant == null) {
+      return;
+    }
+    iterationParticipant.bondingComplete();
     if (bondingRoundTermination()) {
-      final List<DiscoveryPeer> neighboursRoundCandidatesList =
-          neighboursRoundCandidates(3, oneTrueMap);
-      neighboursInitiateRound(neighboursRoundCandidatesList);
+      // TODO: Cancel bonding round timer.
+      neighboursInitiateRound();
     }
   }
 
   private boolean neighboursRoundTermination() {
-    for (Map.Entry<BytesValue, MetadataPeer> entry : oneTrueMap.entrySet()) {
+    for (final Map.Entry<BytesValue, MetadataPeer> entry : oneTrueMap.entrySet()) {
       final MetadataPeer metadataPeer = entry.getValue();
-      if (metadataPeer.getNeighbourQueried()
-          && !(metadataPeer.getNeighbourResponded() || metadataPeer.getNeighbourCancelled())) {
+      if (metadataPeer.hasOutstandingNeighboursRequest()) {
         return false;
       }
     }
@@ -182,62 +201,32 @@ public class RecursivePeerRefreshState {
   }
 
   private boolean bondingRoundTermination() {
-    for (Map.Entry<BytesValue, MetadataPeer> entry : oneTrueMap.entrySet()) {
+    for (final Map.Entry<BytesValue, MetadataPeer> entry : oneTrueMap.entrySet()) {
       final MetadataPeer metadataPeer = entry.getValue();
-      if (metadataPeer.getBondQueried()
-          && !(metadataPeer.getBondResponded() || metadataPeer.getBondCancelled())) {
+      if (metadataPeer.hasOutstandingBondRequest()) {
         return false;
       }
     }
     return true;
   }
 
-  private List<DiscoveryPeer> bondingRoundCandidates(
-      final int max, final SortedMap<BytesValue, MetadataPeer> source) {
-    final int threshold = Math.min(oneTrueMap.size(), max);
-    final List<DiscoveryPeer> candidatesList = new ArrayList<>();
-
-    int count = 0;
-    for (Map.Entry<BytesValue, MetadataPeer> candidateEntry : source.entrySet()) {
-      if (count >= threshold) {
-        break;
-      }
-      final MetadataPeer candidate = candidateEntry.getValue();
-      if (!candidate.getNeighbourCancelled()
-          && !candidate.getNeighbourResponded()
-          && !candidate.getNeighbourQueried()
-          && !candidate.getBondCancelled()
-          && !candidate.getBondResponded()
-          && !candidate.getBondQueried()) {
-
-        candidatesList.add(candidate.getPeer());
-        count++;
-      }
-    }
-    return candidatesList;
+  private List<DiscoveryPeer> bondingRoundCandidates() {
+    return oneTrueMap
+        .values()
+        .stream()
+        .filter(MetadataPeer::isBondingCandidate)
+        .map(MetadataPeer::getPeer)
+        .collect(Collectors.toList());
   }
 
-  private List<DiscoveryPeer> neighboursRoundCandidates(
-      final int max, final SortedMap<BytesValue, MetadataPeer> source) {
-    final int threshold = Math.min(oneTrueMap.size(), max);
-    final List<DiscoveryPeer> candidatesList = new ArrayList<>();
-
-    int count = 0;
-    for (Map.Entry<BytesValue, MetadataPeer> candidateEntry : source.entrySet()) {
-      if (count >= threshold) {
-        break;
-      }
-      final MetadataPeer candidate = candidateEntry.getValue();
-      if (candidate.getBondQueried()
-          && candidate.getBondResponded()
-          && !candidate.getNeighbourCancelled()
-          && !candidate.getNeighbourQueried()
-          && !candidate.getNeighbourResponded()) {
-        candidatesList.add(candidate.getPeer());
-        count++;
-      }
-    }
-    return candidatesList;
+  private List<DiscoveryPeer> neighboursRoundCandidates() {
+    return oneTrueMap
+        .values()
+        .stream()
+        .filter(MetadataPeer::isNeighboursRoundCandidate)
+        .limit(MAX_CONCURRENT_REQUESTS)
+        .map(MetadataPeer::getPeer)
+        .collect(Collectors.toList());
   }
 
   @VisibleForTesting
@@ -245,22 +234,65 @@ public class RecursivePeerRefreshState {
     return target;
   }
 
-  @VisibleForTesting
-  public SortedMap<BytesValue, MetadataPeer> getOneTrueMap() {
-    return oneTrueMap;
-  }
-
   public static class MetadataPeer implements Comparable<MetadataPeer> {
     DiscoveryPeer peer;
     Integer distance;
 
-    boolean bondQueried;
-    boolean bondResponded;
-    boolean bondCancelled;
+    boolean bondingStarted = false;
+    boolean bondingSuccessful = false;
+    boolean bondingFailed = false;
 
-    boolean neighbourQueried;
-    boolean neighbourResponded;
-    boolean neighbourCancelled;
+    boolean findNeighboursStarted = false;
+    boolean findNeighboursComplete = false;
+
+    public MetadataPeer(final DiscoveryPeer peer, final Integer distance) {
+      this.peer = peer;
+      this.distance = distance;
+    }
+
+    DiscoveryPeer getPeer() {
+      return peer;
+    }
+
+    void bondingStarted() {
+      this.bondingStarted = true;
+    }
+
+    void bondingComplete() {
+      this.bondingSuccessful = true;
+    }
+
+    void bondingFailed() {
+      this.bondingFailed = true;
+    }
+
+    void findNeighboursStarted() {
+      this.findNeighboursStarted = true;
+    }
+
+    void findNeighboursComplete() {
+      this.findNeighboursComplete = true;
+    }
+
+    void findNeighboursFailed() {
+      this.findNeighboursComplete = true;
+    }
+
+    private boolean isBondingCandidate() {
+      return !bondingFailed && !bondingSuccessful && !bondingStarted;
+    }
+
+    private boolean isNeighboursRoundCandidate() {
+      return bondingSuccessful && !findNeighboursStarted;
+    }
+
+    private boolean hasOutstandingBondRequest() {
+      return bondingStarted && !bondingSuccessful && !bondingFailed;
+    }
+
+    private boolean hasOutstandingNeighboursRequest() {
+      return findNeighboursStarted && !findNeighboursComplete;
+    }
 
     @Override
     public int compareTo(final MetadataPeer o) {
@@ -268,71 +300,6 @@ public class RecursivePeerRefreshState {
         return 1;
       }
       return -1;
-    }
-
-    public MetadataPeer(final DiscoveryPeer peer, final Integer distance) {
-      this.peer = peer;
-      this.distance = distance;
-
-      this.bondQueried = false;
-      this.bondResponded = false;
-      this.bondCancelled = false;
-
-      this.neighbourQueried = false;
-      this.neighbourResponded = false;
-      this.neighbourCancelled = false;
-    }
-
-    DiscoveryPeer getPeer() {
-      return peer;
-    }
-
-    void setBondQueried() {
-      this.bondQueried = true;
-    }
-
-    boolean getBondQueried() {
-      return bondQueried;
-    }
-
-    void setBondResponded() {
-      this.bondResponded = true;
-    }
-
-    boolean getBondResponded() {
-      return bondResponded;
-    }
-
-    void setBondCancelled() {
-      this.bondCancelled = true;
-    }
-
-    boolean getBondCancelled() {
-      return bondCancelled;
-    }
-
-    void setNeighbourQueried() {
-      this.neighbourQueried = true;
-    }
-
-    boolean getNeighbourQueried() {
-      return neighbourQueried;
-    }
-
-    void setNeighbourResponded() {
-      this.neighbourResponded = true;
-    }
-
-    boolean getNeighbourResponded() {
-      return neighbourResponded;
-    }
-
-    void setNeighbourCancelled() {
-      this.neighbourCancelled = true;
-    }
-
-    boolean getNeighbourCancelled() {
-      return neighbourCancelled;
     }
 
     @Override
@@ -374,5 +341,20 @@ public class RecursivePeerRefreshState {
      * @param bootstrap Whether this is a bootstrap interaction.
      */
     void performBonding(final DiscoveryPeer peer, final boolean bootstrap);
+  }
+
+  private static class RoundTimeout {
+    private final AtomicBoolean timeoutCancelled;
+    private final ScheduledFuture<?> future;
+
+    private RoundTimeout(final AtomicBoolean timeoutCancelled, final ScheduledFuture<?> future) {
+      this.timeoutCancelled = timeoutCancelled;
+      this.future = future;
+    }
+
+    public void cancelTimeout() {
+      future.cancel(false);
+      timeoutCancelled.set(true);
+    }
   }
 }
