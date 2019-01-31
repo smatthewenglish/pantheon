@@ -124,7 +124,7 @@ public class PeerDiscoveryController {
   // Observers for "peer bonded" discovery events.
   private final Subscribers<Consumer<PeerBondedEvent>> peerBondedObservers;
 
-  private final RecursivePeerRefreshState recursivePeerRefreshState;
+  private RecursivePeerRefreshState recursivePeerRefreshState;
 
   public PeerDiscoveryController(
       final KeyPair keypair,
@@ -149,13 +149,6 @@ public class PeerDiscoveryController {
     this.nodeWhitelist = nodeWhitelist;
     this.outboundMessageHandler = outboundMessageHandler;
     this.peerBondedObservers = peerBondedObservers;
-    recursivePeerRefreshState =
-        new RecursivePeerRefreshState(
-            peerBlacklist,
-            nodeWhitelist,
-            this::bond,
-            this::findNodes,
-            PEER_REFRESH_ROUND_TIMEOUT_IN_SECONDS);
   }
 
   public CompletableFuture<?> start() {
@@ -164,6 +157,13 @@ public class PeerDiscoveryController {
     }
 
     bootstrapNodes.stream().filter(nodeWhitelist::contains).forEach(peerTable::tryAdd);
+    recursivePeerRefreshState =
+        new RecursivePeerRefreshState(
+            peerBlacklist,
+            nodeWhitelist,
+            this::bond,
+            this::findNodes,
+            PEER_REFRESH_ROUND_TIMEOUT_IN_SECONDS);
 
     final List<DiscoveryPeer> initialDiscoveryPeers =
         bootstrapNodes.stream().filter(nodeWhitelist::contains).collect(Collectors.toList());
@@ -321,13 +321,26 @@ public class PeerDiscoveryController {
     }
   }
 
+  @VisibleForTesting
+  public RecursivePeerRefreshState getRecursivePeerRefreshState() {
+    return recursivePeerRefreshState;
+  }
+
   /**
    * Refreshes the peer table by generating a random ID and interrogating the closest nodes for it.
    * Currently the refresh process is NOT recursive.
    */
   private void refreshTable() {
+
+    System.out.println("--> ");
+
     final BytesValue target = Peer.randomId();
     final List<DiscoveryPeer> initialPeers = peerTable.nearestPeers(Peer.randomId(), 16);
+
+    for (DiscoveryPeer d : initialPeers) {
+      System.out.println("~ " + d);
+    }
+
     recursivePeerRefreshState.start(initialPeers, target);
     lastRefreshTime = System.currentTimeMillis();
   }

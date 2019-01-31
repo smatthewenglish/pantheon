@@ -14,7 +14,7 @@ package tech.pegasys.pantheon.ethereum.p2p.discovery.internal;
 
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
@@ -24,11 +24,11 @@ import tech.pegasys.pantheon.crypto.SECP256K1;
 import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.DiscoveryPeer;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.PeerDiscoveryTestHelper;
+import tech.pegasys.pantheon.ethereum.p2p.peers.Endpoint;
 import tech.pegasys.pantheon.ethereum.p2p.peers.PeerBlacklist;
 import tech.pegasys.pantheon.ethereum.p2p.permissioning.NodeWhitelistController;
 import tech.pegasys.pantheon.ethereum.permissioning.PermissioningConfiguration;
 import tech.pegasys.pantheon.util.Subscribers;
-import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -85,29 +85,29 @@ public class PeerDiscoveryTableRefreshTest {
     final ArgumentCaptor<Packet> captor = ArgumentCaptor.forClass(Packet.class);
     for (int i = 0; i < 5; i++) {
       timer.runPeriodicHandlers();
+      controller.getRecursivePeerRefreshState().cancelCurrentRound();
     }
-    verify(outboundMessageHandler, atLeast(5)).send(eq(peers.get(1)), captor.capture());
+    verify(outboundMessageHandler, atLeast(5)).send(any(), captor.capture());
     List<Packet> capturedFindNeighborsPackets =
         captor
             .getAllValues()
             .stream()
-            .filter(p -> p.getType().equals(PacketType.FIND_NEIGHBORS))
+            .filter(p -> p.getType().equals(PacketType.PING))
             .collect(Collectors.toList());
     assertThat(capturedFindNeighborsPackets.size()).isEqualTo(5);
 
     // Collect targets from find neighbors packets
-    final List<BytesValue> targets = new ArrayList<>();
+    final List<Endpoint> targets = new ArrayList<>();
     for (final Packet captured : capturedFindNeighborsPackets) {
-      Optional<FindNeighborsPacketData> maybeData =
-          captured.getPacketData(FindNeighborsPacketData.class);
+      Optional<PingPacketData> maybeData = captured.getPacketData(PingPacketData.class);
       assertThat(maybeData).isPresent();
-      final FindNeighborsPacketData neighborsData = maybeData.get();
-      targets.add(neighborsData.getTarget());
+      final PingPacketData pingPacketData = maybeData.get();
+      targets.add(pingPacketData.getTo());
     }
 
     assertThat(targets.size()).isEqualTo(5);
 
-    // All targets are unique.
-    assertThat(targets.size()).isEqualTo(new HashSet<>(targets).size());
+    // All targets are the same.
+    assertThat(new HashSet<>(targets).size()).isEqualTo(1);
   }
 }
