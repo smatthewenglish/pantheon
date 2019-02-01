@@ -106,7 +106,7 @@ public class RecursivePeerRefreshState {
     }
     LOG.debug("Initiating bonding round with {} candidates", candidates.size());
     for (final DiscoveryPeer discoPeer : candidates) {
-      bondingAgent.performBonding(discoPeer, false);
+      bondingAgent.performBonding(discoPeer);
     }
     currentRoundTimeout = Optional.of(scheduleTimeout(this::bondingCancelOutstandingRequests));
   }
@@ -347,9 +347,8 @@ public class RecursivePeerRefreshState {
      * Initiates a bonding PING-PONG cycle with a peer.
      *
      * @param peer The targeted peer.
-     * @param bootstrap Whether this is a bootstrap interaction.
      */
-    void performBonding(final DiscoveryPeer peer, final boolean bootstrap);
+    void performBonding(final DiscoveryPeer peer);
   }
 
   private class RoundTimeout {

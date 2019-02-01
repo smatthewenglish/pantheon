@@ -52,7 +52,7 @@ public class PeerDiscoveryTableRefreshTest {
     final int port = nextAvailablePort.incrementAndGet();
 
     final List<KeyPair> keyPairs = PeerDiscoveryTestHelper.generateKeyPairs(2);
-
+    // TODO: Use helper to generate peers instead of duplicating code.
     final KeyPair keyPair0 = keyPairs.get(0);
     final BytesValue id0 = keyPair0.getPublicKey().getEncodedBytes();
     final DiscoveryPeer peer0 = new DiscoveryPeer(id0, LOOPBACK_IP_ADDR, port, port);
