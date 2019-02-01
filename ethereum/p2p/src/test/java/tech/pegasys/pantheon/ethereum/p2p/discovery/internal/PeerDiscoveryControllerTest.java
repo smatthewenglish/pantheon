@@ -121,7 +121,7 @@ public class PeerDiscoveryControllerTest {
     for (int i = 0; i < timeouts; i++) {
       timer.runTimerHandlers();
     }
-    final int expectedTimerEvents = (timeouts + 1) * peerCount;
+    final int expectedTimerEvents = 1 + (timeouts + 1) * peerCount;
     verify(timer, times(expectedTimerEvents)).setTimer(anyLong(), any());
 
     // Within this time period, 4 timers should be placed with these timeouts.
