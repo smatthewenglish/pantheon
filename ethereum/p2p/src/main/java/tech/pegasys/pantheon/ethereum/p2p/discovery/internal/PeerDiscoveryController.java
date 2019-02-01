@@ -341,10 +341,9 @@ public class PeerDiscoveryController {
    * Initiates a bonding PING-PONG cycle with a peer.
    *
    * @param peer The targeted peer.
-   * @param bootstrap Whether this is a bootstrap interaction.
    */
   @VisibleForTesting
-  void bond(final DiscoveryPeer peer, final boolean bootstrap) {
+  void bond(final DiscoveryPeer peer) {
     peer.setFirstDiscovered(System.currentTimeMillis());
     peer.setStatus(PeerDiscoveryStatus.BONDING);
 
@@ -369,7 +368,7 @@ public class PeerDiscoveryController {
 
     // The filter condition will be updated as soon as the action is performed.
     final PeerInteractionState ping =
-        new PeerInteractionState(action, PacketType.PONG, (packet) -> false, true, bootstrap);
+        new PeerInteractionState(action, PacketType.PONG, (packet) -> false, true);
     dispatchInteraction(peer, ping);
   }
 
@@ -400,7 +399,7 @@ public class PeerDiscoveryController {
           sendPacket(peer, PacketType.FIND_NEIGHBORS, data);
         };
     final PeerInteractionState interaction =
-        new PeerInteractionState(action, PacketType.NEIGHBORS, packet -> true, true, false);
+        new PeerInteractionState(action, PacketType.NEIGHBORS, packet -> true, true);
     dispatchInteraction(peer, interaction);
   }
 
@@ -469,8 +468,6 @@ public class PeerDiscoveryController {
     private Predicate<Packet> filter;
     /** Whether the action associated to this state is retryable or not. */
     private final boolean retryable;
-    /** Whether this is an entry for a bootstrap peer. */
-    private final boolean bootstrap;
     /** Timers associated with this entry. */
     private OptionalLong timerId = OptionalLong.empty();
 
@@ -478,13 +475,11 @@ public class PeerDiscoveryController {
         final Consumer<PeerInteractionState> action,
         final PacketType expectedType,
         final Predicate<Packet> filter,
-        final boolean retryable,
-        final boolean bootstrap) {
+        final boolean retryable) {
       this.action = action;
       this.expectedType = expectedType;
       this.filter = filter;
       this.retryable = retryable;
-      this.bootstrap = bootstrap;
     }
 
     @Override
@@ -494,10 +489,6 @@ public class PeerDiscoveryController {
 
     void updateFilter(final Predicate<Packet> filter) {
       this.filter = filter;
-    }
-
-    boolean isBootstrap() {
-      return bootstrap;
     }
 
     /**
