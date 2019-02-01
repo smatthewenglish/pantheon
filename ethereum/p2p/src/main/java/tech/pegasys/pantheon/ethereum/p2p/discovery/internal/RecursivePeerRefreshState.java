@@ -26,9 +26,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.SortedMap;
 import java.util.TreeMap;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
@@ -49,26 +46,27 @@ public class RecursivePeerRefreshState {
   private Optional<RoundTimeout> currentRoundTimeout = Optional.empty();
   private boolean iterativeSearchInProgress = false;
 
-  private int currentRound = 0;
+  private int currentRound;
 
   private final SortedMap<BytesValue, MetadataPeer> oneTrueMap = new TreeMap<>();
 
-  // TODO: Need to shut these down as part of Pantheon stop
-  private final ScheduledExecutorService scheduledExecutorService =
-      Executors.newSingleThreadScheduledExecutor();
-  private final int timeoutPeriod;
+  private final TimerUtil timerUtil;
+  private final int timeoutPeriodInSeconds;
+  private static final int MAX_ROUNDS = 100;
 
   RecursivePeerRefreshState(
       final PeerBlacklist peerBlacklist,
       final NodeWhitelistController peerWhitelist,
       final BondingAgent bondingAgent,
       final FindNeighbourDispatcher neighborFinder,
-      final int timeoutPeriod) {
+      final TimerUtil timerUtil,
+      final int timeoutPeriodInSeconds) {
     this.peerBlacklist = peerBlacklist;
     this.peerWhitelist = peerWhitelist;
     this.bondingAgent = bondingAgent;
     this.findNeighbourDispatcher = neighborFinder;
-    this.timeoutPeriod = timeoutPeriod;
+    this.timerUtil = timerUtil;
+    this.timeoutPeriodInSeconds = timeoutPeriodInSeconds;
   }
 
   synchronized void start(final List<DiscoveryPeer> initialPeers, final BytesValue target) {
@@ -79,18 +77,14 @@ public class RecursivePeerRefreshState {
     iterativeSearchInProgress = true;
     this.target = target;
     currentRoundTimeout.ifPresent(RoundTimeout::cancelTimeout);
+    currentRound = 0;
     oneTrueMap.clear();
     addInitialPeers(initialPeers);
     bondingInitiateRound();
   }
 
-  synchronized void stop() {
-    scheduledExecutorService.shutdownNow();
-  }
-
-  private boolean refreshReachedTerminationCieling() {
-    final int cielingRound = 100;
-    return currentRound > cielingRound;
+  private boolean reachedMaximumNumberOfRounds() {
+    return currentRound > MAX_ROUNDS;
   }
 
   private void addInitialPeers(final List<DiscoveryPeer> initialPeers) {
@@ -119,12 +113,11 @@ public class RecursivePeerRefreshState {
 
   private RoundTimeout scheduleTimeout(final Runnable onTimeout) {
     final AtomicBoolean timeoutCancelled = new AtomicBoolean(false);
-    final ScheduledFuture<?> future =
-        scheduledExecutorService.schedule(
-            () -> performIfNotCancelled(onTimeout, timeoutCancelled),
-            this.timeoutPeriod,
-            TimeUnit.SECONDS);
-    return new RoundTimeout(timeoutCancelled, future);
+    final long timerId =
+        timerUtil.setTimer(
+            TimeUnit.SECONDS.toMillis(this.timeoutPeriodInSeconds),
+            () -> performIfNotCancelled(onTimeout, timeoutCancelled));
+    return new RoundTimeout(timeoutCancelled, timerId);
   }
 
   private synchronized void performIfNotCancelled(
@@ -146,12 +139,9 @@ public class RecursivePeerRefreshState {
   }
 
   private void neighboursInitiateRound() {
-    if (refreshReachedTerminationCieling()) {
-      return;
-    }
     currentRoundTimeout.ifPresent(RoundTimeout::cancelTimeout);
     final List<DiscoveryPeer> candidates = neighboursRoundCandidates();
-    if (candidates.isEmpty()) {
+    if (candidates.isEmpty() || reachedMaximumNumberOfRounds()) {
       LOG.debug("Iterative peer search complete");
       iterativeSearchInProgress = false;
       return;
@@ -264,14 +254,15 @@ public class RecursivePeerRefreshState {
   }
 
   public static class MetadataPeer implements Comparable<MetadataPeer> {
+
     DiscoveryPeer peer;
-    Integer distance;
+    int distance;
 
     boolean bondingFailed = false;
     boolean findNeighboursStarted = false;
     boolean findNeighboursComplete = false;
 
-    public MetadataPeer(final DiscoveryPeer peer, final Integer distance) {
+    public MetadataPeer(final DiscoveryPeer peer, final int distance) {
       this.peer = peer;
       this.distance = distance;
     }
@@ -297,19 +288,15 @@ public class RecursivePeerRefreshState {
     }
 
     private boolean isBondingCandidate() {
-      return !bondingFailed
-          && !peer.getStatus().equals(PeerDiscoveryStatus.BONDED)
-          && !peer.getStatus().equals(PeerDiscoveryStatus.BONDING);
+      return !bondingFailed && peer.getStatus() == PeerDiscoveryStatus.KNOWN;
     }
 
     private boolean isNeighboursRoundCandidate() {
-      return peer.getStatus().equals(PeerDiscoveryStatus.BONDED) && !findNeighboursStarted;
+      return peer.getStatus() == PeerDiscoveryStatus.BONDED && !findNeighboursStarted;
     }
 
     private boolean hasOutstandingBondRequest() {
-      return peer.getStatus().equals(PeerDiscoveryStatus.BONDING)
-          && !peer.getStatus().equals(PeerDiscoveryStatus.BONDED)
-          && !bondingFailed;
+      return peer.getStatus() == PeerDiscoveryStatus.BONDING && !bondingFailed;
     }
 
     private boolean hasOutstandingNeighboursRequest() {
@@ -365,17 +352,17 @@ public class RecursivePeerRefreshState {
     void performBonding(final DiscoveryPeer peer, final boolean bootstrap);
   }
 
-  private static class RoundTimeout {
+  private class RoundTimeout {
     private final AtomicBoolean timeoutCancelled;
-    private final ScheduledFuture<?> future;
+    private final long timerId;
 
-    private RoundTimeout(final AtomicBoolean timeoutCancelled, final ScheduledFuture<?> future) {
+    private RoundTimeout(final AtomicBoolean timeoutCancelled, final long timerId) {
       this.timeoutCancelled = timeoutCancelled;
-      this.future = future;
+      this.timerId = timerId;
     }
 
     public void cancelTimeout() {
-      future.cancel(false);
+      timerUtil.cancelTimer(timerId);
       timeoutCancelled.set(true);
     }
   }

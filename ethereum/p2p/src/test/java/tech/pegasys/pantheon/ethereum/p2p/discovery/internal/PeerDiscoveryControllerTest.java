@@ -94,12 +94,12 @@ public class PeerDiscoveryControllerTest {
   @Test
   public void bootstrapPeersRetriesSent() {
     // Create peers.
-    int peerCount = 3;
+    final int peerCount = 3;
     final List<SECP256K1.KeyPair> keyPairs = PeerDiscoveryTestHelper.generateKeyPairs(peerCount);
     final List<DiscoveryPeer> peers = helper.createDiscoveryPeers(keyPairs);
 
-    MockTimerUtil timer = spy(new MockTimerUtil());
-    OutboundMessageHandler outboundMessageHandler = mock(OutboundMessageHandler.class);
+    final MockTimerUtil timer = spy(new MockTimerUtil());
+    final OutboundMessageHandler outboundMessageHandler = mock(OutboundMessageHandler.class);
     controller =
         getControllerBuilder()
             .peers(peers)
@@ -117,11 +117,11 @@ public class PeerDiscoveryControllerTest {
 
     controller.start();
 
-    int timeouts = 4;
+    final int timeouts = 4;
     for (int i = 0; i < timeouts; i++) {
       timer.runTimerHandlers();
     }
-    int expectedTimerEvents = (timeouts + 1) * peerCount;
+    final int expectedTimerEvents = (timeouts + 1) * peerCount;
     verify(timer, times(expectedTimerEvents)).setTimer(anyLong(), any());
 
     // Within this time period, 4 timers should be placed with these timeouts.
@@ -148,8 +148,8 @@ public class PeerDiscoveryControllerTest {
     final List<SECP256K1.KeyPair> keyPairs = PeerDiscoveryTestHelper.generateKeyPairs(3);
     final List<DiscoveryPeer> peers = helper.createDiscoveryPeers(keyPairs);
 
-    MockTimerUtil timer = new MockTimerUtil();
-    OutboundMessageHandler outboundMessageHandler = mock(OutboundMessageHandler.class);
+    final MockTimerUtil timer = new MockTimerUtil();
+    final OutboundMessageHandler outboundMessageHandler = mock(OutboundMessageHandler.class);
     controller =
         getControllerBuilder()
             .peers(peers)
@@ -172,7 +172,7 @@ public class PeerDiscoveryControllerTest {
     }
 
     // Assert PING packet was sent for peer[0] 4 times.
-    for (DiscoveryPeer peer : peers) {
+    for (final DiscoveryPeer peer : peers) {
       verify(outboundMessageHandler, times(4)).send(eq(peer), matchPacketOfType(PacketType.PING));
     }
 
@@ -189,8 +189,8 @@ public class PeerDiscoveryControllerTest {
 
     // Ensure we receive no more PING packets for peer[0].
     // Assert PING packet was sent for peer[0] 4 times.
-    for (DiscoveryPeer peer : peers) {
-      int expectedCount = peer.equals(peers.get(0)) ? 4 : 8;
+    for (final DiscoveryPeer peer : peers) {
+      final int expectedCount = peer.equals(peers.get(0)) ? 4 : 8;
       verify(outboundMessageHandler, times(expectedCount))
           .send(eq(peer), matchPacketOfType(PacketType.PING));
     }
@@ -202,8 +202,8 @@ public class PeerDiscoveryControllerTest {
     final List<SECP256K1.KeyPair> keyPairs = PeerDiscoveryTestHelper.generateKeyPairs(3);
     final List<DiscoveryPeer> peers = helper.createDiscoveryPeers(keyPairs);
 
-    MockTimerUtil timer = new MockTimerUtil();
-    OutboundMessageHandler outboundMessageHandler = mock(OutboundMessageHandler.class);
+    final MockTimerUtil timer = new MockTimerUtil();
+    final OutboundMessageHandler outboundMessageHandler = mock(OutboundMessageHandler.class);
     controller =
         getControllerBuilder()
             .peers(peers)
@@ -277,7 +277,7 @@ public class PeerDiscoveryControllerTest {
     final List<SECP256K1.KeyPair> keyPairs = PeerDiscoveryTestHelper.generateKeyPairs(3);
     final List<DiscoveryPeer> peers = helper.createDiscoveryPeers(keyPairs);
 
-    OutboundMessageHandler outboundMessageHandler = mock(OutboundMessageHandler.class);
+    final OutboundMessageHandler outboundMessageHandler = mock(OutboundMessageHandler.class);
     controller =
         getControllerBuilder().peers(peers).outboundMessageHandler(outboundMessageHandler).build();
     controller.setRetryDelayFunction(LONG_DELAY_FUNCTION);
@@ -326,7 +326,7 @@ public class PeerDiscoveryControllerTest {
     // Initialize the peer controller, setting a high controller refresh interval and a high timeout
     // threshold,
     // to avoid retries getting in the way of this test.
-    OutboundMessageHandler outboundMessageHandler = mock(OutboundMessageHandler.class);
+    final OutboundMessageHandler outboundMessageHandler = mock(OutboundMessageHandler.class);
     controller =
         getControllerBuilder()
             .peers(peers.get(0))
@@ -356,14 +356,14 @@ public class PeerDiscoveryControllerTest {
     // Verify that the FIND_NEIGHBORS packet was sent with target == localPeer.
     final ArgumentCaptor<Packet> captor = ArgumentCaptor.forClass(Packet.class);
     verify(outboundMessageHandler, atLeast(1)).send(eq(peers.get(0)), captor.capture());
-    List<Packet> neighborsPackets =
+    final List<Packet> neighborsPackets =
         captor
             .getAllValues()
             .stream()
             .filter(p -> p.getType().equals(PacketType.FIND_NEIGHBORS))
             .collect(Collectors.toList());
     assertThat(neighborsPackets.size()).isEqualTo(1);
-    Packet nieghborsPacket = neighborsPackets.get(0);
+    final Packet nieghborsPacket = neighborsPackets.get(0);
     final Optional<FindNeighborsPacketData> maybeData =
         nieghborsPacket.getPacketData(FindNeighborsPacketData.class);
     assertThat(maybeData).isPresent();
@@ -395,7 +395,7 @@ public class PeerDiscoveryControllerTest {
     final Packet mockPacket = Packet.create(PacketType.PING, mockPing, keyPairs.get(0));
 
     // Initialize the peer controller
-    OutboundMessageHandler outboundMessageHandler = mock(OutboundMessageHandler.class);
+    final OutboundMessageHandler outboundMessageHandler = mock(OutboundMessageHandler.class);
     controller =
         getControllerBuilder()
             .peers(peers.get(0), peers.get(1))
@@ -415,7 +415,7 @@ public class PeerDiscoveryControllerTest {
     // Simulate a PONG message from peer[0].
     final PongPacketData packetData0 =
         PongPacketData.create(localPeer.getEndpoint(), mockPacket.getHash());
-    Packet pongPacket0 = Packet.create(PacketType.PONG, packetData0, keyPairs.get(0));
+    final Packet pongPacket0 = Packet.create(PacketType.PONG, packetData0, keyPairs.get(0));
     controller.onMessage(pongPacket0, peers.get(0));
 
     // Assert that we're bonding with the third peer.
@@ -429,7 +429,7 @@ public class PeerDiscoveryControllerTest {
 
     final PongPacketData packetData1 =
         PongPacketData.create(localPeer.getEndpoint(), mockPacket.getHash());
-    Packet pongPacket1 = Packet.create(PacketType.PONG, packetData1, keyPairs.get(1));
+    final Packet pongPacket1 = Packet.create(PacketType.PONG, packetData1, keyPairs.get(1));
     controller.onMessage(pongPacket1, peers.get(1));
 
     // Now after we got that pong we should have sent a find neighbours message...
@@ -439,7 +439,8 @@ public class PeerDiscoveryControllerTest {
     // Simulate a NEIGHBORS message from peer[0] listing peer[2].
     final NeighborsPacketData neighbors0 =
         NeighborsPacketData.create(Collections.singletonList(peers.get(2)));
-    Packet neighborsPacket0 = Packet.create(PacketType.NEIGHBORS, neighbors0, keyPairs.get(0));
+    final Packet neighborsPacket0 =
+        Packet.create(PacketType.NEIGHBORS, neighbors0, keyPairs.get(0));
     controller.onMessage(neighborsPacket0, peers.get(0));
 
     // Assert that we're bonded with the third peer.
@@ -453,7 +454,8 @@ public class PeerDiscoveryControllerTest {
     // the peer list.
     final NeighborsPacketData neighbors1 =
         NeighborsPacketData.create(Collections.singletonList(peers.get(2)));
-    Packet neighborsPacket1 = Packet.create(PacketType.NEIGHBORS, neighbors1, keyPairs.get(1));
+    final Packet neighborsPacket1 =
+        Packet.create(PacketType.NEIGHBORS, neighbors1, keyPairs.get(1));
     controller.onMessage(neighborsPacket1, peers.get(1));
 
     verify(outboundMessageHandler, times(1))
@@ -462,7 +464,7 @@ public class PeerDiscoveryControllerTest {
     // Send a PONG packet from peer[2], to transition it to the BONDED state.
     final PongPacketData packetData2 =
         PongPacketData.create(localPeer.getEndpoint(), mockPacket.getHash());
-    Packet pongPacket2 = Packet.create(PacketType.PONG, packetData2, keyPairs.get(2));
+    final Packet pongPacket2 = Packet.create(PacketType.PONG, packetData2, keyPairs.get(2));
     controller.onMessage(pongPacket2, peers.get(2));
 
     // Assert we're now bonded with peer[2].
@@ -546,7 +548,7 @@ public class PeerDiscoveryControllerTest {
   @Test
   public void shouldNotAddNewPeerWhenReceivedPongFromBlacklistedPeer() {
 
-    List<DiscoveryPeer> peers = new ArrayList<>();
+    final List<DiscoveryPeer> peers = new ArrayList<>();
 
     // Flipping the most significant bit of the keccak256 will place the peer
     // in the last bucket for the corresponding host peer.
@@ -562,7 +564,7 @@ public class PeerDiscoveryControllerTest {
     final Bytes32 keccak0 = Bytes32.leftPad(template.copy());
     final MutableBytesValue id0 = MutableBytesValue.create(64);
     UInt256.of(0).getBytes().copyTo(id0, id0.size() - UInt256Value.SIZE);
-    DiscoveryPeer peer0 =
+    final DiscoveryPeer peer0 =
         new DiscoveryPeer(
             id0,
             new Endpoint(
@@ -578,7 +580,7 @@ public class PeerDiscoveryControllerTest {
     final Bytes32 keccak1 = Bytes32.leftPad(template.copy());
     final MutableBytesValue id1 = MutableBytesValue.create(64);
     UInt256.of(1).getBytes().copyTo(id1, id1.size() - UInt256Value.SIZE);
-    DiscoveryPeer peer1 =
+    final DiscoveryPeer peer1 =
         new DiscoveryPeer(
             id1,
             new Endpoint(
@@ -594,7 +596,7 @@ public class PeerDiscoveryControllerTest {
     final Bytes32 keccak2 = Bytes32.leftPad(template.copy());
     final MutableBytesValue id2 = MutableBytesValue.create(64);
     UInt256.of(2).getBytes().copyTo(id2, id2.size() - UInt256Value.SIZE);
-    DiscoveryPeer peer2 =
+    final DiscoveryPeer peer2 =
         new DiscoveryPeer(
             id2,
             new Endpoint(
@@ -611,7 +613,7 @@ public class PeerDiscoveryControllerTest {
     final DiscoveryPeer otherPeer2 = peers.get(2);
 
     final PeerBlacklist blacklist = new PeerBlacklist();
-    OutboundMessageHandler outboundMessageHandler = mock(OutboundMessageHandler.class);
+    final OutboundMessageHandler outboundMessageHandler = mock(OutboundMessageHandler.class);
     controller =
         getControllerBuilder()
             .peers(discoPeer)
@@ -690,7 +692,7 @@ public class PeerDiscoveryControllerTest {
   public void shouldNotBondWithBlacklistedPeer()
       throws InterruptedException, ExecutionException, TimeoutException {
 
-    List<DiscoveryPeer> peers = new ArrayList<>();
+    final List<DiscoveryPeer> peers = new ArrayList<>();
 
     // Flipping the most significant bit of the keccak256 will place the peer
     // in the last bucket for the corresponding host peer.
@@ -706,7 +708,7 @@ public class PeerDiscoveryControllerTest {
     final Bytes32 keccak0 = Bytes32.leftPad(template.copy());
     final MutableBytesValue id0 = MutableBytesValue.create(64);
     UInt256.of(0).getBytes().copyTo(id0, id0.size() - UInt256Value.SIZE);
-    DiscoveryPeer peer0 =
+    final DiscoveryPeer peer0 =
         new DiscoveryPeer(
             id0,
             new Endpoint(
@@ -722,7 +724,7 @@ public class PeerDiscoveryControllerTest {
     final Bytes32 keccak1 = Bytes32.leftPad(template.copy());
     final MutableBytesValue id1 = MutableBytesValue.create(64);
     UInt256.of(1).getBytes().copyTo(id1, id1.size() - UInt256Value.SIZE);
-    DiscoveryPeer peer1 =
+    final DiscoveryPeer peer1 =
         new DiscoveryPeer(
             id1,
             new Endpoint(
@@ -738,7 +740,7 @@ public class PeerDiscoveryControllerTest {
     final Bytes32 keccak2 = Bytes32.leftPad(template.copy());
     final MutableBytesValue id2 = MutableBytesValue.create(64);
     UInt256.of(2).getBytes().copyTo(id2, id2.size() - UInt256Value.SIZE);
-    DiscoveryPeer peer2 =
+    final DiscoveryPeer peer2 =
         new DiscoveryPeer(
             id2,
             new Endpoint(
@@ -754,7 +756,7 @@ public class PeerDiscoveryControllerTest {
     final Bytes32 keccak3 = Bytes32.leftPad(template.copy());
     final MutableBytesValue id3 = MutableBytesValue.create(64);
     UInt256.of(3).getBytes().copyTo(id3, id3.size() - UInt256Value.SIZE);
-    DiscoveryPeer peer3 =
+    final DiscoveryPeer peer3 =
         new DiscoveryPeer(
             id3,
             new Endpoint(
@@ -771,7 +773,7 @@ public class PeerDiscoveryControllerTest {
     final DiscoveryPeer otherPeer2 = peers.get(2);
 
     final PeerBlacklist blacklist = new PeerBlacklist();
-    OutboundMessageHandler outboundMessageHandler = mock(OutboundMessageHandler.class);
+    final OutboundMessageHandler outboundMessageHandler = mock(OutboundMessageHandler.class);
     controller =
         getControllerBuilder()
             .peers(discoPeer)
@@ -829,7 +831,7 @@ public class PeerDiscoveryControllerTest {
   @Test
   public void shouldRespondToNeighborsRequestFromKnownPeer()
       throws InterruptedException, ExecutionException, TimeoutException {
-    List<DiscoveryPeer> peers = new ArrayList<>();
+    final List<DiscoveryPeer> peers = new ArrayList<>();
 
     // Flipping the most significant bit of the keccak256 will place the peer
     // in the last bucket for the corresponding host peer.
@@ -845,7 +847,7 @@ public class PeerDiscoveryControllerTest {
     final Bytes32 keccak0 = Bytes32.leftPad(template.copy());
     final MutableBytesValue id0 = MutableBytesValue.create(64);
     UInt256.of(0).getBytes().copyTo(id0, id0.size() - UInt256Value.SIZE);
-    DiscoveryPeer peer0 =
+    final DiscoveryPeer peer0 =
         new DiscoveryPeer(
             id0,
             new Endpoint(
@@ -860,7 +862,7 @@ public class PeerDiscoveryControllerTest {
     final DiscoveryPeer discoPeer = peers.get(0);
 
     final PeerBlacklist blacklist = new PeerBlacklist();
-    OutboundMessageHandler outboundMessageHandler = mock(OutboundMessageHandler.class);
+    final OutboundMessageHandler outboundMessageHandler = mock(OutboundMessageHandler.class);
     controller =
         getControllerBuilder()
             .peers(discoPeer)
@@ -899,7 +901,7 @@ public class PeerDiscoveryControllerTest {
   @Test
   public void shouldNotRespondToNeighborsRequestFromUnknownPeer()
       throws InterruptedException, ExecutionException, TimeoutException {
-    List<DiscoveryPeer> peers = new ArrayList<>();
+    final List<DiscoveryPeer> peers = new ArrayList<>();
 
     // Flipping the most significant bit of the keccak256 will place the peer
     // in the last bucket for the corresponding host peer.
@@ -915,7 +917,7 @@ public class PeerDiscoveryControllerTest {
     final Bytes32 keccak0 = Bytes32.leftPad(template.copy());
     final MutableBytesValue id0 = MutableBytesValue.create(64);
     UInt256.of(0).getBytes().copyTo(id0, id0.size() - UInt256Value.SIZE);
-    DiscoveryPeer peer0 =
+    final DiscoveryPeer peer0 =
         new DiscoveryPeer(
             id0,
             new Endpoint(
@@ -931,7 +933,7 @@ public class PeerDiscoveryControllerTest {
     final Bytes32 keccak1 = Bytes32.leftPad(template.copy());
     final MutableBytesValue id1 = MutableBytesValue.create(64);
     UInt256.of(1).getBytes().copyTo(id1, id1.size() - UInt256Value.SIZE);
-    DiscoveryPeer peer1 =
+    final DiscoveryPeer peer1 =
         new DiscoveryPeer(
             id1,
             new Endpoint(
@@ -947,7 +949,7 @@ public class PeerDiscoveryControllerTest {
     final DiscoveryPeer otherPeer = peers.get(1);
 
     final PeerBlacklist blacklist = new PeerBlacklist();
-    OutboundMessageHandler outboundMessageHandler = mock(OutboundMessageHandler.class);
+    final OutboundMessageHandler outboundMessageHandler = mock(OutboundMessageHandler.class);
     controller =
         getControllerBuilder()
             .peers(discoPeer)
@@ -985,7 +987,7 @@ public class PeerDiscoveryControllerTest {
 
   @Test
   public void shouldNotRespondToNeighborsRequestFromBlacklistedPeer() {
-    List<DiscoveryPeer> peers = new ArrayList<>();
+    final List<DiscoveryPeer> peers = new ArrayList<>();
 
     // Flipping the most significant bit of the keccak256 will place the peer
     // in the last bucket for the corresponding host peer.
@@ -1001,7 +1003,7 @@ public class PeerDiscoveryControllerTest {
     final Bytes32 keccak0 = Bytes32.leftPad(template.copy());
     final MutableBytesValue id0 = MutableBytesValue.create(64);
     UInt256.of(0).getBytes().copyTo(id0, id0.size() - UInt256Value.SIZE);
-    DiscoveryPeer peer0 =
+    final DiscoveryPeer peer0 =
         new DiscoveryPeer(
             id0,
             new Endpoint(
@@ -1014,7 +1016,7 @@ public class PeerDiscoveryControllerTest {
     final DiscoveryPeer discoPeer = peers.get(0);
 
     final PeerBlacklist blacklist = new PeerBlacklist();
-    OutboundMessageHandler outboundMessageHandler = mock(OutboundMessageHandler.class);
+    final OutboundMessageHandler outboundMessageHandler = mock(OutboundMessageHandler.class);
     controller =
         getControllerBuilder()
             .peers(discoPeer)
@@ -1053,7 +1055,7 @@ public class PeerDiscoveryControllerTest {
 
   @Test
   public void shouldAddNewPeerWhenReceivedPongAndPeerTableBucketIsNotFull() {
-    List<DiscoveryPeer> peers = new ArrayList<>();
+    final List<DiscoveryPeer> peers = new ArrayList<>();
 
     // Flipping the most significant bit of the keccak256 will place the peer
     // in the last bucket for the corresponding host peer.
@@ -1069,7 +1071,7 @@ public class PeerDiscoveryControllerTest {
     final Bytes32 keccak0 = Bytes32.leftPad(template.copy());
     final MutableBytesValue id0 = MutableBytesValue.create(64);
     UInt256.of(0).getBytes().copyTo(id0, id0.size() - UInt256Value.SIZE);
-    DiscoveryPeer peer0 =
+    final DiscoveryPeer peer0 =
         new DiscoveryPeer(
             id0,
             new Endpoint(
@@ -1085,7 +1087,7 @@ public class PeerDiscoveryControllerTest {
         PingPacketData.create(localPeer.getEndpoint(), peers.get(0).getEndpoint());
     final Packet pingPacket = Packet.create(PacketType.PING, pingPacketData, keyPairs.get(0));
 
-    OutboundMessageHandler outboundMessageHandler = mock(OutboundMessageHandler.class);
+    final OutboundMessageHandler outboundMessageHandler = mock(OutboundMessageHandler.class);
     controller =
         getControllerBuilder()
             .peers(peers.get(0))
@@ -1107,7 +1109,7 @@ public class PeerDiscoveryControllerTest {
 
   @Test
   public void shouldAddNewPeerWhenReceivedPongAndPeerTableBucketIsFull() {
-    List<DiscoveryPeer> peers = new ArrayList<>();
+    final List<DiscoveryPeer> peers = new ArrayList<>();
 
     // Flipping the most significant bit of the keccak256 will place the peer
     // in the last bucket for the corresponding host peer.
@@ -1123,7 +1125,7 @@ public class PeerDiscoveryControllerTest {
     final Bytes32 keccak0 = Bytes32.leftPad(template.copy());
     final MutableBytesValue id0 = MutableBytesValue.create(64);
     UInt256.of(0).getBytes().copyTo(id0, id0.size() - UInt256Value.SIZE);
-    DiscoveryPeer peer0 =
+    final DiscoveryPeer peer0 =
         new DiscoveryPeer(
             id0,
             new Endpoint(
@@ -1139,7 +1141,7 @@ public class PeerDiscoveryControllerTest {
     final Bytes32 keccak1 = Bytes32.leftPad(template.copy());
     final MutableBytesValue id1 = MutableBytesValue.create(64);
     UInt256.of(1).getBytes().copyTo(id1, id1.size() - UInt256Value.SIZE);
-    DiscoveryPeer peer1 =
+    final DiscoveryPeer peer1 =
         new DiscoveryPeer(
             id1,
             new Endpoint(
@@ -1155,7 +1157,7 @@ public class PeerDiscoveryControllerTest {
     final Bytes32 keccak2 = Bytes32.leftPad(template.copy());
     final MutableBytesValue id2 = MutableBytesValue.create(64);
     UInt256.of(2).getBytes().copyTo(id2, id2.size() - UInt256Value.SIZE);
-    DiscoveryPeer peer2 =
+    final DiscoveryPeer peer2 =
         new DiscoveryPeer(
             id2,
             new Endpoint(
@@ -1171,7 +1173,7 @@ public class PeerDiscoveryControllerTest {
     final Bytes32 keccak3 = Bytes32.leftPad(template.copy());
     final MutableBytesValue id3 = MutableBytesValue.create(64);
     UInt256.of(3).getBytes().copyTo(id3, id3.size() - UInt256Value.SIZE);
-    DiscoveryPeer peer3 =
+    final DiscoveryPeer peer3 =
         new DiscoveryPeer(
             id3,
             new Endpoint(
@@ -1187,7 +1189,7 @@ public class PeerDiscoveryControllerTest {
     final Bytes32 keccak4 = Bytes32.leftPad(template.copy());
     final MutableBytesValue id4 = MutableBytesValue.create(64);
     UInt256.of(4).getBytes().copyTo(id4, id4.size() - UInt256Value.SIZE);
-    DiscoveryPeer peer4 =
+    final DiscoveryPeer peer4 =
         new DiscoveryPeer(
             id4,
             new Endpoint(
@@ -1203,7 +1205,7 @@ public class PeerDiscoveryControllerTest {
     final Bytes32 keccak5 = Bytes32.leftPad(template.copy());
     final MutableBytesValue id5 = MutableBytesValue.create(64);
     UInt256.of(5).getBytes().copyTo(id5, id5.size() - UInt256Value.SIZE);
-    DiscoveryPeer peer5 =
+    final DiscoveryPeer peer5 =
         new DiscoveryPeer(
             id5,
             new Endpoint(
@@ -1219,7 +1221,7 @@ public class PeerDiscoveryControllerTest {
     final Bytes32 keccak6 = Bytes32.leftPad(template.copy());
     final MutableBytesValue id6 = MutableBytesValue.create(64);
     UInt256.of(6).getBytes().copyTo(id6, id6.size() - UInt256Value.SIZE);
-    DiscoveryPeer peer6 =
+    final DiscoveryPeer peer6 =
         new DiscoveryPeer(
             id6,
             new Endpoint(
@@ -1235,7 +1237,7 @@ public class PeerDiscoveryControllerTest {
     final Bytes32 keccak7 = Bytes32.leftPad(template.copy());
     final MutableBytesValue id7 = MutableBytesValue.create(64);
     UInt256.of(7).getBytes().copyTo(id7, id7.size() - UInt256Value.SIZE);
-    DiscoveryPeer peer7 =
+    final DiscoveryPeer peer7 =
         new DiscoveryPeer(
             id7,
             new Endpoint(
@@ -1251,7 +1253,7 @@ public class PeerDiscoveryControllerTest {
     final Bytes32 keccak8 = Bytes32.leftPad(template.copy());
     final MutableBytesValue id8 = MutableBytesValue.create(64);
     UInt256.of(8).getBytes().copyTo(id8, id8.size() - UInt256Value.SIZE);
-    DiscoveryPeer peer8 =
+    final DiscoveryPeer peer8 =
         new DiscoveryPeer(
             id8,
             new Endpoint(
@@ -1267,7 +1269,7 @@ public class PeerDiscoveryControllerTest {
     final Bytes32 keccak9 = Bytes32.leftPad(template.copy());
     final MutableBytesValue id9 = MutableBytesValue.create(64);
     UInt256.of(9).getBytes().copyTo(id9, id9.size() - UInt256Value.SIZE);
-    DiscoveryPeer peer9 =
+    final DiscoveryPeer peer9 =
         new DiscoveryPeer(
             id9,
             new Endpoint(
@@ -1283,7 +1285,7 @@ public class PeerDiscoveryControllerTest {
     final Bytes32 keccak10 = Bytes32.leftPad(template.copy());
     final MutableBytesValue id10 = MutableBytesValue.create(64);
     UInt256.of(10).getBytes().copyTo(id10, id10.size() - UInt256Value.SIZE);
-    DiscoveryPeer peer10 =
+    final DiscoveryPeer peer10 =
         new DiscoveryPeer(
             id10,
             new Endpoint(
@@ -1299,7 +1301,7 @@ public class PeerDiscoveryControllerTest {
     final Bytes32 keccak11 = Bytes32.leftPad(template.copy());
     final MutableBytesValue id11 = MutableBytesValue.create(64);
     UInt256.of(11).getBytes().copyTo(id11, id11.size() - UInt256Value.SIZE);
-    DiscoveryPeer peer11 =
+    final DiscoveryPeer peer11 =
         new DiscoveryPeer(
             id11,
             new Endpoint(
@@ -1315,7 +1317,7 @@ public class PeerDiscoveryControllerTest {
     final Bytes32 keccak12 = Bytes32.leftPad(template.copy());
     final MutableBytesValue id12 = MutableBytesValue.create(64);
     UInt256.of(12).getBytes().copyTo(id12, id12.size() - UInt256Value.SIZE);
-    DiscoveryPeer peer12 =
+    final DiscoveryPeer peer12 =
         new DiscoveryPeer(
             id12,
             new Endpoint(
@@ -1331,7 +1333,7 @@ public class PeerDiscoveryControllerTest {
     final Bytes32 keccak13 = Bytes32.leftPad(template.copy());
     final MutableBytesValue id13 = MutableBytesValue.create(64);
     UInt256.of(13).getBytes().copyTo(id13, id13.size() - UInt256Value.SIZE);
-    DiscoveryPeer peer13 =
+    final DiscoveryPeer peer13 =
         new DiscoveryPeer(
             id13,
             new Endpoint(
@@ -1347,7 +1349,7 @@ public class PeerDiscoveryControllerTest {
     final Bytes32 keccak14 = Bytes32.leftPad(template.copy());
     final MutableBytesValue id14 = MutableBytesValue.create(64);
     UInt256.of(14).getBytes().copyTo(id14, id14.size() - UInt256Value.SIZE);
-    DiscoveryPeer peer14 =
+    final DiscoveryPeer peer14 =
         new DiscoveryPeer(
             id14,
             new Endpoint(
@@ -1363,7 +1365,7 @@ public class PeerDiscoveryControllerTest {
     final Bytes32 keccak15 = Bytes32.leftPad(template.copy());
     final MutableBytesValue id15 = MutableBytesValue.create(64);
     UInt256.of(15).getBytes().copyTo(id15, id15.size() - UInt256Value.SIZE);
-    DiscoveryPeer peer15 =
+    final DiscoveryPeer peer15 =
         new DiscoveryPeer(
             id15,
             new Endpoint(
@@ -1379,7 +1381,7 @@ public class PeerDiscoveryControllerTest {
     final Bytes32 keccak16 = Bytes32.leftPad(template.copy());
     final MutableBytesValue id16 = MutableBytesValue.create(64);
     UInt256.of(16).getBytes().copyTo(id16, id16.size() - UInt256Value.SIZE);
-    DiscoveryPeer peer16 =
+    final DiscoveryPeer peer16 =
         new DiscoveryPeer(
             id16,
             new Endpoint(
@@ -1395,7 +1397,7 @@ public class PeerDiscoveryControllerTest {
     final Bytes32 keccak17 = Bytes32.leftPad(template.copy());
     final MutableBytesValue id17 = MutableBytesValue.create(64);
     UInt256.of(17).getBytes().copyTo(id17, id17.size() - UInt256Value.SIZE);
-    DiscoveryPeer peer17 =
+    final DiscoveryPeer peer17 =
         new DiscoveryPeer(
             id17,
             new Endpoint(
@@ -1576,7 +1578,7 @@ public class PeerDiscoveryControllerTest {
   @SuppressWarnings("SpellCheckingInspection")
   private boolean ausbooten(
       final List<DiscoveryPeer> peers, final PeerDiscoveryController controller) {
-    for (DiscoveryPeer peer : peers) {
+    for (final DiscoveryPeer peer : peers) {
       if (!controller.getPeers().contains(peer)) {
         return true;
       }
@@ -1588,7 +1590,7 @@ public class PeerDiscoveryControllerTest {
   public void shouldNotAddPeerInNeighborsPacketWithoutBonding() {
     // final List<DiscoveryPeer> peers = createPeersInLastBucket(localPeer, 2);
 
-    List<DiscoveryPeer> peers = new ArrayList<>();
+    final List<DiscoveryPeer> peers = new ArrayList<>();
 
     // Flipping the most significant bit of the keccak256 will place the peer
     // in the last bucket for the corresponding host peer.
@@ -1604,7 +1606,7 @@ public class PeerDiscoveryControllerTest {
     final Bytes32 keccak0 = Bytes32.leftPad(template.copy());
     final MutableBytesValue id0 = MutableBytesValue.create(64);
     UInt256.of(0).getBytes().copyTo(id0, id0.size() - UInt256Value.SIZE);
-    DiscoveryPeer peer0 =
+    final DiscoveryPeer peer0 =
         new DiscoveryPeer(
             id0,
             new Endpoint(
@@ -1620,7 +1622,7 @@ public class PeerDiscoveryControllerTest {
     final Bytes32 keccak1 = Bytes32.leftPad(template.copy());
     final MutableBytesValue id1 = MutableBytesValue.create(64);
     UInt256.of(1).getBytes().copyTo(id1, id1.size() - UInt256Value.SIZE);
-    DiscoveryPeer peer1 =
+    final DiscoveryPeer peer1 =
         new DiscoveryPeer(
             id1,
             new Endpoint(
@@ -1636,7 +1638,7 @@ public class PeerDiscoveryControllerTest {
         PingPacketData.create(localPeer.getEndpoint(), peers.get(0).getEndpoint());
     final Packet pingPacket = Packet.create(PacketType.PING, pingPacketData, keyPairs.get(0));
 
-    OutboundMessageHandler outboundMessageHandler = mock(OutboundMessageHandler.class);
+    final OutboundMessageHandler outboundMessageHandler = mock(OutboundMessageHandler.class);
     controller =
         getControllerBuilder()
             .peers(peers.get(0))
@@ -1663,7 +1665,7 @@ public class PeerDiscoveryControllerTest {
       throws InterruptedException, ExecutionException, TimeoutException {
     // final List<DiscoveryPeer> peers = createPeersInLastBucket(localPeer, 3);
 
-    List<DiscoveryPeer> peers = new ArrayList<>();
+    final List<DiscoveryPeer> peers = new ArrayList<>();
 
     // Flipping the most significant bit of the keccak256 will place the peer
     // in the last bucket for the corresponding host peer.
@@ -1679,7 +1681,7 @@ public class PeerDiscoveryControllerTest {
     final Bytes32 keccak0 = Bytes32.leftPad(template.copy());
     final MutableBytesValue id0 = MutableBytesValue.create(64);
     UInt256.of(0).getBytes().copyTo(id0, id0.size() - UInt256Value.SIZE);
-    DiscoveryPeer peer0 =
+    final DiscoveryPeer peer0 =
         new DiscoveryPeer(
             id0,
             new Endpoint(
@@ -1695,7 +1697,7 @@ public class PeerDiscoveryControllerTest {
     final Bytes32 keccak1 = Bytes32.leftPad(template.copy());
     final MutableBytesValue id1 = MutableBytesValue.create(64);
     UInt256.of(1).getBytes().copyTo(id1, id1.size() - UInt256Value.SIZE);
-    DiscoveryPeer peer1 =
+    final DiscoveryPeer peer1 =
         new DiscoveryPeer(
             id1,
             new Endpoint(
@@ -1711,7 +1713,7 @@ public class PeerDiscoveryControllerTest {
     final Bytes32 keccak2 = Bytes32.leftPad(template.copy());
     final MutableBytesValue id2 = MutableBytesValue.create(64);
     UInt256.of(2).getBytes().copyTo(id2, id2.size() - UInt256Value.SIZE);
-    DiscoveryPeer peer2 =
+    final DiscoveryPeer peer2 =
         new DiscoveryPeer(
             id2,
             new Endpoint(
@@ -1727,7 +1729,7 @@ public class PeerDiscoveryControllerTest {
     final Bytes32 keccak3 = Bytes32.leftPad(template.copy());
     final MutableBytesValue id3 = MutableBytesValue.create(64);
     UInt256.of(3).getBytes().copyTo(id3, id3.size() - UInt256Value.SIZE);
-    DiscoveryPeer peer3 =
+    final DiscoveryPeer peer3 =
         new DiscoveryPeer(
             id3,
             new Endpoint(
@@ -1745,13 +1747,13 @@ public class PeerDiscoveryControllerTest {
 
     final PeerBlacklist blacklist = new PeerBlacklist();
     final PermissioningConfiguration config = new PermissioningConfiguration();
-    NodeWhitelistController nodeWhitelistController = new NodeWhitelistController(config);
+    final NodeWhitelistController nodeWhitelistController = new NodeWhitelistController(config);
 
     // Whitelist peers
     nodeWhitelistController.addNode(discoPeer);
     nodeWhitelistController.addNode(otherPeer2);
 
-    OutboundMessageHandler outboundMessageHandler = mock(OutboundMessageHandler.class);
+    final OutboundMessageHandler outboundMessageHandler = mock(OutboundMessageHandler.class);
     controller =
         getControllerBuilder()
             .peers(discoPeer)
@@ -1812,9 +1814,9 @@ public class PeerDiscoveryControllerTest {
     final PeerBlacklist blacklist = new PeerBlacklist();
 
     // don't add disco peer to whitelist
-    PermissioningConfiguration config = PermissioningConfiguration.createDefault();
+    final PermissioningConfiguration config = PermissioningConfiguration.createDefault();
     config.setNodeWhitelist(new ArrayList<>());
-    NodeWhitelistController nodeWhitelistController = new NodeWhitelistController(config);
+    final NodeWhitelistController nodeWhitelistController = new NodeWhitelistController(config);
 
     controller =
         getControllerBuilder()
