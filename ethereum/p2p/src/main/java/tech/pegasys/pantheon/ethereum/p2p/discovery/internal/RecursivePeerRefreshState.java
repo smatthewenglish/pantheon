@@ -89,8 +89,7 @@ public class RecursivePeerRefreshState {
 
   private void addInitialPeers(final List<DiscoveryPeer> initialPeers) {
     for (final DiscoveryPeer peer : initialPeers) {
-      final MetadataPeer iterationParticipant =
-          new MetadataPeer(peer, distance(target, peer.getId()));
+      final MetadataPeer iterationParticipant = new MetadataPeer(peer, distance(target, peer.getId()));
       oneTrueMap.put(peer.getId(), iterationParticipant);
     }
   }
