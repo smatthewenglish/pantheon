@@ -42,29 +42,28 @@ import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 
 public class PeerDiscoveryTableRefreshTest {
-  private final PeerDiscoveryTestHelper helper = new PeerDiscoveryTestHelper();
 
   @Test
   public void tableRefreshSingleNode() {
     // final List<SECP256K1.KeyPair> keypairs = PeerDiscoveryTestHelper.generateKeyPairs(2);
 
-    String LOOPBACK_IP_ADDR = "127.0.0.1";
-    AtomicInteger nextAvailablePort = new AtomicInteger(1);
-    int port = nextAvailablePort.incrementAndGet();
+    final String LOOPBACK_IP_ADDR = "127.0.0.1";
+    final AtomicInteger nextAvailablePort = new AtomicInteger(1);
+    final int port = nextAvailablePort.incrementAndGet();
 
-    List<KeyPair> keyPairs = PeerDiscoveryTestHelper.generateKeyPairs(2);
+    final List<KeyPair> keyPairs = PeerDiscoveryTestHelper.generateKeyPairs(2);
 
-    KeyPair keyPair0 = keyPairs.get(0);
-    BytesValue id0 = keyPair0.getPublicKey().getEncodedBytes();
-    DiscoveryPeer peer0 = new DiscoveryPeer(id0, LOOPBACK_IP_ADDR, port, port);
+    final KeyPair keyPair0 = keyPairs.get(0);
+    final BytesValue id0 = keyPair0.getPublicKey().getEncodedBytes();
+    final DiscoveryPeer peer0 = new DiscoveryPeer(id0, LOOPBACK_IP_ADDR, port, port);
 
-    KeyPair keyPair1 = keyPairs.get(1);
-    BytesValue id1 = keyPair1.getPublicKey().getEncodedBytes();
-    DiscoveryPeer peer1 = new DiscoveryPeer(id1, LOOPBACK_IP_ADDR, port, port);
+    final KeyPair keyPair1 = keyPairs.get(1);
+    final BytesValue id1 = keyPair1.getPublicKey().getEncodedBytes();
+    final DiscoveryPeer peer1 = new DiscoveryPeer(id1, LOOPBACK_IP_ADDR, port, port);
 
     /* * */
 
-    List<DiscoveryPeer> peers = new ArrayList<>();
+    final List<DiscoveryPeer> peers = new ArrayList<>();
 
     peers.add(peer0);
     peers.add(peer1);
@@ -111,7 +110,7 @@ public class PeerDiscoveryTableRefreshTest {
       controller.getPeers().forEach(p -> p.setStatus(PeerDiscoveryStatus.KNOWN));
     }
     verify(outboundMessageHandler, atLeast(5)).send(any(), captor.capture());
-    List<Packet> capturedFindNeighborsPackets =
+    final List<Packet> capturedFindNeighborsPackets =
         captor
             .getAllValues()
             .stream()
@@ -122,7 +121,7 @@ public class PeerDiscoveryTableRefreshTest {
     // Collect targets from find neighbors packets
     final List<Endpoint> targets = new ArrayList<>();
     for (final Packet captured : capturedFindNeighborsPackets) {
-      Optional<PingPacketData> maybeData = captured.getPacketData(PingPacketData.class);
+      final Optional<PingPacketData> maybeData = captured.getPacketData(PingPacketData.class);
       assertThat(maybeData).isPresent();
       final PingPacketData pingPacketData = maybeData.get();
       targets.add(pingPacketData.getTo());

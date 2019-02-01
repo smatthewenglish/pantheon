@@ -163,6 +163,7 @@ public class PeerDiscoveryController {
             nodeWhitelist,
             this::bond,
             this::findNodes,
+            timerUtil,
             PEER_REFRESH_ROUND_TIMEOUT_IN_SECONDS);
 
     final List<DiscoveryPeer> initialDiscoveryPeers =
@@ -183,7 +184,6 @@ public class PeerDiscoveryController {
       return CompletableFuture.completedFuture(null);
     }
 
-    recursivePeerRefreshState.stop();
     tableRefreshTimerId.ifPresent(timerUtil::cancelTimer);
     tableRefreshTimerId = OptionalLong.empty();
     inflightInteractions.values().forEach(PeerInteractionState::cancelTimers);
