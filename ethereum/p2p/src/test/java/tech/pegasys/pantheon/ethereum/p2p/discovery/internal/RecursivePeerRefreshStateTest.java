@@ -107,7 +107,16 @@ public class RecursivePeerRefreshStateTest {
   }
 
   @Test
-  public void shouldOnlyBondWithUnbondedInitialNodes() {}
+  public void shouldOnlyBondWithUnbondedInitialNodes() {
+      peer1.setStatus(PeerDiscoveryStatus.BONDED);
+      peer2.setStatus(PeerDiscoveryStatus.KNOWN);
+
+      recursivePeerRefreshState.start(asList(peer1, peer2), TARGET);
+
+      verify(bondingAgent).performBonding(peer2);
+
+      verifyNoMoreInteractions(bondingAgent, neighborFinder);
+  }
 
   @Test
   public void shouldSkipStraightToFindNeighboursIfAllInitialNodesAreBonded() {
@@ -152,10 +161,92 @@ public class RecursivePeerRefreshStateTest {
   }
 
   @Test
-  public void shouldMoveToBondingRoundWhenNeighboursRoundTimesOut() {}
+  public void shouldMoveToBondingRoundWhenNeighboursRoundTimesOut() {
+      setupRelativePeerTree();
+
+      recursivePeerRefreshState.start(singletonList(peer_000), TARGET);
+
+      verify(bondingAgent).performBonding(peer_000);
+
+      peer_000.setStatus(PeerDiscoveryStatus.BONDED);
+
+      recursivePeerRefreshState.onBondingComplete(peer_000);
+
+      verify(neighborFinder).findNeighbours(peer_000, TARGET);
+
+      recursivePeerRefreshState.onNeighboursPacketReceived(peer_000, neighborsPacketData_000);
+
+      verify(bondingAgent).performBonding(peer_010);
+      verify(bondingAgent).performBonding(peer_011);
+      verify(bondingAgent).performBonding(peer_012);
+      verify(bondingAgent).performBonding(peer_013);
+
+      peer_010.setStatus(PeerDiscoveryStatus.BONDED);
+      peer_011.setStatus(PeerDiscoveryStatus.BONDED);
+      peer_012.setStatus(PeerDiscoveryStatus.BONDED);
+      peer_013.setStatus(PeerDiscoveryStatus.BONDED);
+
+      recursivePeerRefreshState.onBondingComplete(peer_010); // Trigger the next round...
+
+      verify(neighborFinder, never()).findNeighbours(peer_010, TARGET);
+      verify(neighborFinder).findNeighbours(peer_011, TARGET);
+      verify(neighborFinder).findNeighbours(peer_012, TARGET);
+      verify(neighborFinder).findNeighbours(peer_013, TARGET);
+
+      timerUtil.runTimerHandlers();
+
+      verify(neighborFinder).findNeighbours(peer_010, TARGET);
+
+      timerUtil.runTimerHandlers();
+
+      recursivePeerRefreshState.onNeighboursPacketReceived(peer_011, neighborsPacketData_011);
+
+      verify(bondingAgent).performBonding(peer_120);
+      verify(bondingAgent).performBonding(peer_121);
+      verify(bondingAgent).performBonding(peer_122);
+      verify(bondingAgent).performBonding(peer_123);
+
+  }
 
   @Test
-  public void shouldStopWhenAllNodesHaveBeenQueried() {}
+  public void shouldStopWhenAllNodesHaveBeenQueried() {
+      setupRelativePeerTree();
+
+      recursivePeerRefreshState.start(singletonList(peer_000), TARGET);
+
+      verify(bondingAgent).performBonding(peer_000);
+
+      peer_000.setStatus(PeerDiscoveryStatus.BONDED);
+
+      recursivePeerRefreshState.onBondingComplete(peer_000);
+
+      verify(neighborFinder).findNeighbours(peer_000, TARGET);
+
+      recursivePeerRefreshState.onNeighboursPacketReceived(peer_000, neighborsPacketData_000);
+
+      verify(bondingAgent).performBonding(peer_010);
+      verify(bondingAgent).performBonding(peer_011);
+      verify(bondingAgent).performBonding(peer_012);
+      verify(bondingAgent).performBonding(peer_013);
+
+      peer_010.setStatus(PeerDiscoveryStatus.BONDED);
+      peer_011.setStatus(PeerDiscoveryStatus.BONDED);
+      peer_012.setStatus(PeerDiscoveryStatus.BONDED);
+      peer_013.setStatus(PeerDiscoveryStatus.BONDED);
+
+      recursivePeerRefreshState.onBondingComplete(peer_010); // Trigger the next round...
+
+      verify(neighborFinder, never()).findNeighbours(peer_010, TARGET);
+      verify(neighborFinder).findNeighbours(peer_011, TARGET);
+      verify(neighborFinder).findNeighbours(peer_012, TARGET);
+      verify(neighborFinder).findNeighbours(peer_013, TARGET);
+
+      timerUtil.runTimerHandlers();
+
+      verify(neighborFinder).findNeighbours(peer_010, TARGET);
+
+      verifyNoMoreInteractions(bondingAgent);
+  }
 
   @Test
   public void shouldStopWhenMaximumNumberOfRoundsReached() {}
