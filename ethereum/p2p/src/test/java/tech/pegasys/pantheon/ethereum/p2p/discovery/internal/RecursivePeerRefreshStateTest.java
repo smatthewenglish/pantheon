@@ -251,40 +251,35 @@ public class RecursivePeerRefreshStateTest {
 
   @Test
   public void shouldBondWithNewNeighboursWhenSomeRequestsTimeOut() {
-      setupRelativePeerTree();
+    setupRelativePeerTree();
 
-      recursivePeerRefreshState.start(singletonList(peer_000), TARGET);
+    recursivePeerRefreshState.start(singletonList(peer_000), TARGET);
 
-      verify(bondingAgent).performBonding(peer_000);
+    verify(bondingAgent).performBonding(peer_000);
 
-      peer_000.setStatus(PeerDiscoveryStatus.BONDED);
+    peer_000.setStatus(PeerDiscoveryStatus.BONDED);
 
-      recursivePeerRefreshState.onBondingComplete(peer_000);
+    recursivePeerRefreshState.onBondingComplete(peer_000);
 
-      verify(neighborFinder).findNeighbours(peer_000, TARGET);
+    verify(neighborFinder).findNeighbours(peer_000, TARGET);
 
-      recursivePeerRefreshState.onNeighboursPacketReceived(peer_000, neighborsPacketData_000);
-      
-      recursivePeerRefreshState.kickstartBootstrapPeers(Collections.singletonList(peer_000));
-      recursivePeerRefreshState.executeTimeoutEvaluation();
+    recursivePeerRefreshState.onNeighboursPacketReceived(peer_000, neighborsPacketData_000);
 
-      verify(bondingAgent).performBonding(peer_000, true);
-      verify(neighborFinder).issueFindNodeRequest(peer_000, target);
+    peer_010.setStatus(PeerDiscoveryStatus.BONDED);
+    peer_011.setStatus(PeerDiscoveryStatus.BONDED);
+    peer_012.setStatus(PeerDiscoveryStatus.BONDED);
+    peer_013.setStatus(PeerDiscoveryStatus.BONDED);
 
-      recursivePeerRefreshState.onNeighboursPacketReceived(neighborsPacketData_000, peer_000);
-      assertThat(recursivePeerRefreshState.getOutstandingRequestList().size()).isLessThanOrEqualTo(3);
+    recursivePeerRefreshState.onBondingComplete(peer_010); // Trigger the next round...
 
-      recursivePeerRefreshState.executeTimeoutEvaluation();
+    verify(neighborFinder, never()).findNeighbours(peer_010, TARGET);
+    verify(neighborFinder).findNeighbours(peer_011, TARGET);
+    verify(neighborFinder).findNeighbours(peer_012, TARGET);
+    verify(neighborFinder).findNeighbours(peer_013, TARGET);
 
-      verify(neighborFinder, never()).issueFindNodeRequest(peer_010, target);
-      verify(neighborFinder).issueFindNodeRequest(peer_011, target);
-      verify(neighborFinder).issueFindNodeRequest(peer_012, target);
-      verify(neighborFinder).issueFindNodeRequest(peer_013, target);
+    timerUtil.runTimerHandlers();
 
-      recursivePeerRefreshState.executeTimeoutEvaluation();
-      assertThat(recursivePeerRefreshState.getOutstandingRequestList().size()).isLessThanOrEqualTo(3);
-
-      verify(neighborFinder).issueFindNodeRequest(peer_010, target);
+    verify(neighborFinder).findNeighbours(peer_010, TARGET);
   }
 
   @Test
