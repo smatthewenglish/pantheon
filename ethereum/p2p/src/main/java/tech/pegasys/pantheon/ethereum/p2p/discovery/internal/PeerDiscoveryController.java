@@ -25,7 +25,6 @@ import tech.pegasys.pantheon.ethereum.p2p.discovery.PeerDiscoveryStatus;
 import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
 import tech.pegasys.pantheon.ethereum.p2p.peers.PeerBlacklist;
 import tech.pegasys.pantheon.ethereum.p2p.permissioning.NodeWhitelistController;
-import tech.pegasys.pantheon.ethereum.permissioning.PermissioningConfiguration;
 import tech.pegasys.pantheon.util.Subscribers;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
@@ -162,27 +161,14 @@ public class PeerDiscoveryController {
         .filter(this::whitelistIfPresentIsNodePermitted)
         .forEach(peerTable::tryAdd);
 
-    if(nodeWhitelistController.isPresent()) {
-      recursivePeerRefreshState =
-              new RecursivePeerRefreshState(
-                      peerBlacklist,
-                      nodeWhitelistController.get(),
-                      this::bond,
-                      this::findNodes,
-                      timerUtil,
-                      PEER_REFRESH_ROUND_TIMEOUT_IN_SECONDS);
-    } else {
-      recursivePeerRefreshState =
-              new RecursivePeerRefreshState(
-                      peerBlacklist,
-                      new NodeWhitelistController(PermissioningConfiguration.createDefault()),
-                      this::bond,
-                      this::findNodes,
-                      timerUtil,
-                      PEER_REFRESH_ROUND_TIMEOUT_IN_SECONDS);
-    }
-
-
+    recursivePeerRefreshState =
+        new RecursivePeerRefreshState(
+            peerBlacklist,
+            nodeWhitelistController,
+            this::bond,
+            this::findNodes,
+            timerUtil,
+            PEER_REFRESH_ROUND_TIMEOUT_IN_SECONDS);
 
     final List<DiscoveryPeer> initialDiscoveryPeers =
         bootstrapNodes

@@ -170,7 +170,7 @@ public class PeerDiscoveryBootstrappingTest {
             discoveryConfiguration1,
             () -> true,
             new PeerBlacklist(),
-                Optional.of(new NodeWhitelistController(PermissioningConfiguration.createDefault())));
+            Optional.of(new NodeWhitelistController(PermissioningConfiguration.createDefault())));
     peerDiscoveryAgent1.start().join();
 
     await()
@@ -194,7 +194,7 @@ public class PeerDiscoveryBootstrappingTest {
             discoveryConfiguration_TEST,
             () -> true,
             new PeerBlacklist(),
-                Optional.of(new NodeWhitelistController(PermissioningConfiguration.createDefault())));
+            Optional.of(new NodeWhitelistController(PermissioningConfiguration.createDefault())));
     peerDiscoveryAgent_TEST.start().join();
 
     await()
