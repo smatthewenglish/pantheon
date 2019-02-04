@@ -12,386 +12,493 @@
  */
 package tech.pegasys.pantheon.ethereum.p2p.discovery.internal;
 
-import static java.util.Arrays.asList;
-import static java.util.Collections.singletonList;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.reset;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.when;
-
+import org.junit.Before;
+import org.junit.Test;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.DiscoveryPeer;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.PeerDiscoveryStatus;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.RecursivePeerRefreshState.BondingAgent;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.RecursivePeerRefreshState.FindNeighbourDispatcher;
 import tech.pegasys.pantheon.ethereum.p2p.peers.PeerBlacklist;
 import tech.pegasys.pantheon.ethereum.p2p.permissioning.NodeWhitelistController;
+import tech.pegasys.pantheon.ethereum.permissioning.PermissioningConfiguration;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import org.junit.Before;
-import org.junit.Test;
+import static java.util.Arrays.asList;
+import static java.util.Collections.singletonList;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.when;
 
 public class RecursivePeerRefreshState00 {
-    private static final BytesValue TARGET = createId(0);
-    private final PeerBlacklist peerBlacklist = mock(PeerBlacklist.class);
-    private final NodeWhitelistController peerWhitelist = mock(NodeWhitelistController.class);
-    private final BondingAgent bondingAgent = mock(BondingAgent.class);
-    private final FindNeighbourDispatcher neighborFinder = mock(FindNeighbourDispatcher.class);
-    private final MockTimerUtil timerUtil = new MockTimerUtil();
-
-    private final DiscoveryPeer peer1 = new DiscoveryPeer(createId(1), "127.0.0.1", 1, 1);
-    private final DiscoveryPeer peer2 = new DiscoveryPeer(createId(2), "127.0.0.2", 2, 2);
-    private final DiscoveryPeer peer3 = new DiscoveryPeer(createId(3), "127.0.0.3", 3, 3);
-    private final DiscoveryPeer peer4 = new DiscoveryPeer(createId(4), "127.0.0.3", 4, 4);
+  private static final BytesValue TARGET = createId(0);
+  private final PeerBlacklist peerBlacklist = mock(PeerBlacklist.class);
+  private final NodeWhitelistController peerWhitelist = mock(NodeWhitelistController.class);
+  private final BondingAgent bondingAgent = mock(BondingAgent.class);
+  private final FindNeighbourDispatcher neighborFinder = mock(FindNeighbourDispatcher.class);
+  private final MockTimerUtil timerUtil = new MockTimerUtil();
+
+  private final DiscoveryPeer peer1 = new DiscoveryPeer(createId(1), "127.0.0.1", 1, 1);
+  private final DiscoveryPeer peer2 = new DiscoveryPeer(createId(2), "127.0.0.2", 2, 2);
+  private final DiscoveryPeer peer3 = new DiscoveryPeer(createId(3), "127.0.0.3", 3, 3);
+  private final DiscoveryPeer peer4 = new DiscoveryPeer(createId(4), "127.0.0.3", 4, 4);
 
-    private final RecursivePeerRefreshState recursivePeerRefreshState =
-            new RecursivePeerRefreshState(
-                    peerBlacklist, peerWhitelist, bondingAgent, neighborFinder, timerUtil, 5);
+  private final RecursivePeerRefreshState recursivePeerRefreshState =
+      new RecursivePeerRefreshState(
+          peerBlacklist, peerWhitelist, bondingAgent, neighborFinder, timerUtil, 5);
 
-    @Before
-    public void setUp() {
-        when(peerWhitelist.contains(any(DiscoveryPeer.class))).thenReturn(true);
-    }
+  @Before
+  public void setUp() {
+    when(peerWhitelist.contains(any(DiscoveryPeer.class))).thenReturn(true);
+  }
 
-    @Test
-    public void shouldBondWithInitialNodesWhenStarted() {
-        recursivePeerRefreshState.start(asList(peer1, peer2, peer3), TARGET);
+  @Test
+  public void shouldBondWithInitialNodesWhenStarted() {
+    recursivePeerRefreshState.start(asList(peer1, peer2, peer3), TARGET);
 
-        verify(bondingAgent).performBonding(peer1);
-        verify(bondingAgent).performBonding(peer2);
-        verify(bondingAgent).performBonding(peer3);
-        verifyNoMoreInteractions(bondingAgent, neighborFinder);
-    }
+    verify(bondingAgent).performBonding(peer1);
+    verify(bondingAgent).performBonding(peer2);
+    verify(bondingAgent).performBonding(peer3);
+    verifyNoMoreInteractions(bondingAgent, neighborFinder);
+  }
 
-    @Test
-    public void shouldOnlyBondWithUnbondedInitialNodes() {
-        peer1.setStatus(PeerDiscoveryStatus.BONDED);
-        peer2.setStatus(PeerDiscoveryStatus.KNOWN);
+  @Test
+  public void shouldOnlyBondWithUnbondedInitialNodes() {
+    peer1.setStatus(PeerDiscoveryStatus.BONDED);
+    peer2.setStatus(PeerDiscoveryStatus.KNOWN);
 
-        recursivePeerRefreshState.start(asList(peer1, peer2), TARGET);
+    recursivePeerRefreshState.start(asList(peer1, peer2), TARGET);
 
-        verify(bondingAgent).performBonding(peer2);
-        verify(bondingAgent, never()).performBonding(peer1);
-        verifyNoMoreInteractions(bondingAgent, neighborFinder);
-    }
+    verify(bondingAgent).performBonding(peer2);
+    verify(bondingAgent, never()).performBonding(peer1);
+    verifyNoMoreInteractions(bondingAgent, neighborFinder);
+  }
 
-    @Test
-    public void shouldSkipStraightToFindNeighboursIfAllInitialNodesAreBonded() {
-        peer1.setStatus(PeerDiscoveryStatus.BONDED);
-        peer2.setStatus(PeerDiscoveryStatus.BONDED);
+  @Test
+  public void shouldSkipStraightToFindNeighboursIfAllInitialNodesAreBonded() {
+    peer1.setStatus(PeerDiscoveryStatus.BONDED);
+    peer2.setStatus(PeerDiscoveryStatus.BONDED);
 
-        recursivePeerRefreshState.start(asList(peer1, peer2), TARGET);
+    recursivePeerRefreshState.start(asList(peer1, peer2), TARGET);
 
-        verify(neighborFinder).findNeighbours(peer1, TARGET);
-        verify(neighborFinder).findNeighbours(peer2, TARGET);
-        verifyNoMoreInteractions(bondingAgent, neighborFinder);
-    }
+    verify(neighborFinder).findNeighbours(peer1, TARGET);
+    verify(neighborFinder).findNeighbours(peer2, TARGET);
+    verifyNoMoreInteractions(bondingAgent, neighborFinder);
+  }
 
-    @Test
-    public void shouldBondWithNewlyDiscoveredNodes() {
-        peer1.setStatus(PeerDiscoveryStatus.BONDED);
+  @Test
+  public void shouldBondWithNewlyDiscoveredNodes() {
+    peer1.setStatus(PeerDiscoveryStatus.BONDED);
 
-        recursivePeerRefreshState.start(singletonList(peer1), TARGET);
+    recursivePeerRefreshState.start(singletonList(peer1), TARGET);
 
-        verify(neighborFinder).findNeighbours(peer1, TARGET);
-        recursivePeerRefreshState.onNeighboursPacketReceived(
-                peer1, NeighborsPacketData.create(asList(peer2, peer3)));
+    verify(neighborFinder).findNeighbours(peer1, TARGET);
+    recursivePeerRefreshState.onNeighboursPacketReceived(
+        peer1, NeighborsPacketData.create(asList(peer2, peer3)));
 
-        verify(bondingAgent).performBonding(peer2);
-        verify(bondingAgent).performBonding(peer3);
-        verifyNoMoreInteractions(bondingAgent, neighborFinder);
-    }
-
-    @Test
-    public void shouldMoveToNeighboursRoundWhenBondingTimesOut() {
-        peer1.setStatus(PeerDiscoveryStatus.BONDED);
-        recursivePeerRefreshState.start(asList(peer1, peer2), TARGET);
-
-        verify(bondingAgent).performBonding(peer2);
-        timerUtil.runTimerHandlers();
-        verify(neighborFinder).findNeighbours(peer1, TARGET);
-        verifyNoMoreInteractions(bondingAgent, neighborFinder);
-    }
+    verify(bondingAgent).performBonding(peer2);
+    verify(bondingAgent).performBonding(peer3);
+    verifyNoMoreInteractions(bondingAgent, neighborFinder);
+  }
+
+  @Test
+  public void shouldMoveToNeighboursRoundWhenBondingTimesOut() {
+    peer1.setStatus(PeerDiscoveryStatus.BONDED);
+    recursivePeerRefreshState.start(asList(peer1, peer2), TARGET);
+
+    verify(bondingAgent).performBonding(peer2);
+    timerUtil.runTimerHandlers();
+    verify(neighborFinder).findNeighbours(peer1, TARGET);
+    verifyNoMoreInteractions(bondingAgent, neighborFinder);
+  }
+
+  @Test
+  public void shouldMoveToBondingRoundWhenNeighboursRoundTimesOut() {
+    peer1.setStatus(PeerDiscoveryStatus.KNOWN);
+    peer2.setStatus(PeerDiscoveryStatus.KNOWN);
+
+    recursivePeerRefreshState.start(asList(peer1, peer2), TARGET);
+
+    verify(bondingAgent).performBonding(peer2);
+    verify(bondingAgent).performBonding(peer2);
+
+    peer1.setStatus(PeerDiscoveryStatus.BONDED);
+
+    timerUtil.runTimerHandlers();
+
+    recursivePeerRefreshState.onBondingComplete(peer1);
+
+    verify(neighborFinder).findNeighbours(peer1, TARGET);
+    verify(neighborFinder, never()).findNeighbours(peer2, TARGET);
+  }
 
-    @Test
-    public void shouldMoveToBondingRoundWhenNeighboursRoundTimesOut() {
-        peer1.setStatus(PeerDiscoveryStatus.KNOWN);
-        peer2.setStatus(PeerDiscoveryStatus.KNOWN);
+  @Test
+  public void shouldStopWhenAllNodesHaveBeenQueried() {
+    peer1.setStatus(PeerDiscoveryStatus.KNOWN);
+    peer2.setStatus(PeerDiscoveryStatus.KNOWN);
 
-        recursivePeerRefreshState.start(asList(peer1, peer2), TARGET);
+    recursivePeerRefreshState.start(asList(peer1, peer2), TARGET);
 
-        verify(bondingAgent).performBonding(peer2);
-        verify(bondingAgent).performBonding(peer2);
+    verify(bondingAgent).performBonding(peer2);
+    verify(bondingAgent).performBonding(peer2);
 
-        peer1.setStatus(PeerDiscoveryStatus.BONDED);
+    peer1.setStatus(PeerDiscoveryStatus.BONDED);
+    peer2.setStatus(PeerDiscoveryStatus.BONDED);
 
-        timerUtil.runTimerHandlers();
+    recursivePeerRefreshState.onBondingComplete(peer2);
 
-        recursivePeerRefreshState.onBondingComplete(peer1);
+    verify(neighborFinder).findNeighbours(peer1, TARGET);
+    verify(neighborFinder).findNeighbours(peer2, TARGET);
 
-        verify(neighborFinder).findNeighbours(peer1, TARGET);
-        verify(neighborFinder, never()).findNeighbours(peer2, TARGET);
-    }
+    recursivePeerRefreshState.onNeighboursPacketReceived(
+        peer1, NeighborsPacketData.create(Collections.emptyList()));
+    recursivePeerRefreshState.onNeighboursPacketReceived(
+        peer2, NeighborsPacketData.create(Collections.emptyList()));
 
-    @Test
-    public void shouldStopWhenAllNodesHaveBeenQueried() {
-        peer1.setStatus(PeerDiscoveryStatus.KNOWN);
-        peer2.setStatus(PeerDiscoveryStatus.KNOWN);
+    verify(bondingAgent, times(2)).performBonding(any());
+    verifyNoMoreInteractions(neighborFinder);
+  }
 
-        recursivePeerRefreshState.start(asList(peer1, peer2), TARGET);
+  @Test
+  public void shouldStopWhenMaximumNumberOfRoundsReached() {
+    recursivePeerRefreshState.setMaxRounds(1);
 
-        verify(bondingAgent).performBonding(peer2);
-        verify(bondingAgent).performBonding(peer2);
+    peer1.setStatus(PeerDiscoveryStatus.KNOWN);
+    peer2.setStatus(PeerDiscoveryStatus.KNOWN);
 
-        peer1.setStatus(PeerDiscoveryStatus.BONDED);
-        peer2.setStatus(PeerDiscoveryStatus.BONDED);
+    recursivePeerRefreshState.start(asList(peer1, peer2), TARGET);
 
-        recursivePeerRefreshState.onBondingComplete(peer2);
+    verify(bondingAgent).performBonding(peer2);
+    verify(bondingAgent).performBonding(peer2);
 
-        verify(neighborFinder).findNeighbours(peer1, TARGET);
-        verify(neighborFinder).findNeighbours(peer2, TARGET);
+    peer1.setStatus(PeerDiscoveryStatus.BONDED);
+    peer2.setStatus(PeerDiscoveryStatus.BONDED);
 
-        recursivePeerRefreshState.onNeighboursPacketReceived(peer1, NeighborsPacketData.create(Collections.emptyList()));
-        recursivePeerRefreshState.onNeighboursPacketReceived(peer2, NeighborsPacketData.create(Collections.emptyList()));
+    recursivePeerRefreshState.onBondingComplete(peer2);
 
-        verify(bondingAgent, times(2)).performBonding(any());
-        verifyNoMoreInteractions(neighborFinder);
-    }
+    verify(neighborFinder).findNeighbours(peer1, TARGET);
+    verify(neighborFinder).findNeighbours(peer2, TARGET);
 
-    @Test
-    public void shouldStopWhenMaximumNumberOfRoundsReached() {
-        recursivePeerRefreshState.setMaxRounds(1);
+    recursivePeerRefreshState.onNeighboursPacketReceived(
+        peer1, NeighborsPacketData.create(Collections.singletonList(peer3)));
+    recursivePeerRefreshState.onNeighboursPacketReceived(
+        peer2, NeighborsPacketData.create(Collections.singletonList(peer4)));
 
-        peer1.setStatus(PeerDiscoveryStatus.KNOWN);
-        peer2.setStatus(PeerDiscoveryStatus.KNOWN);
+    verify(bondingAgent, times(4)).performBonding(any());
+    verify(neighborFinder).findNeighbours(peer1, TARGET);
+    verify(neighborFinder).findNeighbours(peer2, TARGET);
+    verify(neighborFinder, never()).findNeighbours(peer3, TARGET);
+    verify(neighborFinder, never()).findNeighbours(peer4, TARGET);
+    verifyNoMoreInteractions(bondingAgent, neighborFinder);
+  }
+
+  @Test
+  public void shouldOnlyQueryClosestThreeNeighbours() {
+    final BytesValue id0 =
+        BytesValue.fromHexString(
+            "0x11111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111");
+    final DiscoveryPeer peer0 = new DiscoveryPeer(id0, "0.0.0.0", 1, 1);
+    final BytesValue id1 =
+        BytesValue.fromHexString(
+            "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010000000000000000000");
+    final DiscoveryPeer peer1 = new DiscoveryPeer(id1, "0.0.0.0", 1, 1);
+    final BytesValue id2 =
+        BytesValue.fromHexString(
+            "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010");
+    final DiscoveryPeer peer2 = new DiscoveryPeer(id2, "0.0.0.0", 1, 1);
+    final BytesValue id3 =
+        BytesValue.fromHexString(
+            "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000100");
+    final DiscoveryPeer peer3 = new DiscoveryPeer(id3, "0.0.0.0", 1, 1);
+    final BytesValue id4 =
+        BytesValue.fromHexString(
+            "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001000");
+    final DiscoveryPeer peer4 = new DiscoveryPeer(id4, "0.0.0.0", 1, 1);
+    final List<DiscoveryPeer> peerTable = Arrays.asList(peer1, peer2, peer3, peer4);
+
+    final NeighborsPacketData neighborsPacketData = NeighborsPacketData.create(peerTable);
+
+    recursivePeerRefreshState.start(singletonList(peer0), TARGET);
+
+    verify(bondingAgent).performBonding(peer0);
+
+    peer0.setStatus(PeerDiscoveryStatus.BONDED);
+
+    recursivePeerRefreshState.onBondingComplete(peer0);
+
+    verify(neighborFinder).findNeighbours(peer0, TARGET);
+
+    recursivePeerRefreshState.onNeighboursPacketReceived(peer0, neighborsPacketData);
+
+    verify(bondingAgent).performBonding(peer1);
+    verify(bondingAgent).performBonding(peer2);
+    verify(bondingAgent).performBonding(peer3);
+    verify(bondingAgent).performBonding(peer4);
+
+    peer1.setStatus(PeerDiscoveryStatus.BONDED);
+    peer2.setStatus(PeerDiscoveryStatus.BONDED);
+    peer3.setStatus(PeerDiscoveryStatus.BONDED);
+    peer4.setStatus(PeerDiscoveryStatus.BONDED);
 
-        recursivePeerRefreshState.start(asList(peer1, peer2), TARGET);
+    recursivePeerRefreshState.onBondingComplete(peer1);
+
+    verify(neighborFinder, never()).findNeighbours(peer1, TARGET);
+    verify(neighborFinder).findNeighbours(peer2, TARGET);
+    verify(neighborFinder).findNeighbours(peer3, TARGET);
+    verify(neighborFinder).findNeighbours(peer4, TARGET);
+  }
 
-        verify(bondingAgent).performBonding(peer2);
-        verify(bondingAgent).performBonding(peer2);
+  @Test
+  public void shouldNotQueryNodeThatIsAlreadyQueried() {
+    peer1.setStatus(PeerDiscoveryStatus.KNOWN);
+    peer2.setStatus(PeerDiscoveryStatus.KNOWN);
 
-        peer1.setStatus(PeerDiscoveryStatus.BONDED);
-        peer2.setStatus(PeerDiscoveryStatus.BONDED);
+    recursivePeerRefreshState.start(asList(peer1, peer2), TARGET);
 
-        recursivePeerRefreshState.onBondingComplete(peer2);
+    verify(bondingAgent).performBonding(peer2);
+    verify(bondingAgent).performBonding(peer2);
 
-        verify(neighborFinder).findNeighbours(peer1, TARGET);
-        verify(neighborFinder).findNeighbours(peer2, TARGET);
+    peer1.setStatus(PeerDiscoveryStatus.BONDED);
+    peer2.setStatus(PeerDiscoveryStatus.BONDED);
 
-        recursivePeerRefreshState.onNeighboursPacketReceived(peer1, NeighborsPacketData.create(Collections.singletonList(peer3)));
-        recursivePeerRefreshState.onNeighboursPacketReceived(peer2, NeighborsPacketData.create(Collections.singletonList(peer4)));
+    recursivePeerRefreshState.onBondingComplete(peer2);
 
-        verify(bondingAgent, times(4)).performBonding(any());
-        verify(neighborFinder).findNeighbours(peer1, TARGET);
-        verify(neighborFinder).findNeighbours(peer2, TARGET);
-        verify(neighborFinder, never()).findNeighbours(peer3, TARGET);
-        verify(neighborFinder, never()).findNeighbours(peer4, TARGET);
-        verifyNoMoreInteractions(bondingAgent, neighborFinder);
-    }
+    verify(neighborFinder).findNeighbours(peer1, TARGET);
+    verify(neighborFinder).findNeighbours(peer2, TARGET);
 
-    @Test
-    public void shouldOnlyQueryClosestThreeNeighbours() {
-        final BytesValue id0 = BytesValue.fromHexString(
-                "0x11111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111");
-        final DiscoveryPeer peer0 = new DiscoveryPeer(id0, "0.0.0.0", 1, 1);
-        final BytesValue id1 = BytesValue.fromHexString(
-                "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010000000000000000000");
-        final DiscoveryPeer peer1 = new DiscoveryPeer(id1, "0.0.0.0", 1, 1);
-        final BytesValue id2 = BytesValue.fromHexString(
-                "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010");
-        final DiscoveryPeer peer2 = new DiscoveryPeer(id2, "0.0.0.0", 1, 1);
-        final BytesValue id3 = BytesValue.fromHexString(
-                "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000100");
-        final DiscoveryPeer peer3 = new DiscoveryPeer(id3, "0.0.0.0", 1, 1);
-        final BytesValue id4 = BytesValue.fromHexString(
-                "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001000");
-        final DiscoveryPeer peer4 = new DiscoveryPeer(id4, "0.0.0.0", 1, 1);
-        final List<DiscoveryPeer> peerTable = Arrays.asList(peer1, peer2, peer3, peer4);
+    recursivePeerRefreshState.onNeighboursPacketReceived(
+        peer1, NeighborsPacketData.create(Collections.singletonList(peer2)));
+    recursivePeerRefreshState.onNeighboursPacketReceived(
+        peer2, NeighborsPacketData.create(Collections.emptyList()));
 
-        final NeighborsPacketData neighborsPacketData = NeighborsPacketData.create(peerTable);
+    verify(bondingAgent, times(1)).performBonding(peer1);
+    verify(bondingAgent, times(1)).performBonding(peer2);
+    verify(neighborFinder).findNeighbours(peer1, TARGET);
+    verify(neighborFinder).findNeighbours(peer2, TARGET);
+    verifyNoMoreInteractions(bondingAgent, neighborFinder);
+  }
 
-        recursivePeerRefreshState.start(singletonList(peer0), TARGET);
+  @Test
+  public void shouldBondWithNewNeighboursWhenSomeRequestsTimeOut() {
+    final BytesValue id0 =
+        BytesValue.fromHexString(
+            "0x11111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111");
+    final DiscoveryPeer peer0 = new DiscoveryPeer(id0, "0.0.0.0", 1, 1);
+    final BytesValue id1 =
+        BytesValue.fromHexString(
+            "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010000000000000000000");
+    final DiscoveryPeer peer1 = new DiscoveryPeer(id1, "0.0.0.0", 1, 1);
+    final BytesValue id2 =
+        BytesValue.fromHexString(
+            "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010");
+    final DiscoveryPeer peer2 = new DiscoveryPeer(id2, "0.0.0.0", 1, 1);
+    final BytesValue id3 =
+        BytesValue.fromHexString(
+            "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000100");
+    final DiscoveryPeer peer3 = new DiscoveryPeer(id3, "0.0.0.0", 1, 1);
+    final BytesValue id4 =
+        BytesValue.fromHexString(
+            "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001000");
+    final DiscoveryPeer peer4 = new DiscoveryPeer(id4, "0.0.0.0", 1, 1);
+    final List<DiscoveryPeer> peerTable = Arrays.asList(peer1, peer2, peer3, peer4);
 
-        verify(bondingAgent).performBonding(peer0);
+    final NeighborsPacketData neighborsPacketData = NeighborsPacketData.create(peerTable);
 
-        peer0.setStatus(PeerDiscoveryStatus.BONDED);
+    recursivePeerRefreshState.start(singletonList(peer0), TARGET);
 
-        recursivePeerRefreshState.onBondingComplete(peer0);
+    verify(bondingAgent).performBonding(peer0);
 
-        verify(neighborFinder).findNeighbours(peer0, TARGET);
+    peer0.setStatus(PeerDiscoveryStatus.BONDED);
 
-        recursivePeerRefreshState.onNeighboursPacketReceived(peer0, neighborsPacketData);
+    recursivePeerRefreshState.onBondingComplete(peer0);
 
-        verify(bondingAgent).performBonding(peer1);
-        verify(bondingAgent).performBonding(peer2);
-        verify(bondingAgent).performBonding(peer3);
-        verify(bondingAgent).performBonding(peer4);
+    verify(neighborFinder).findNeighbours(peer0, TARGET);
 
-        peer1.setStatus(PeerDiscoveryStatus.BONDED);
-        peer2.setStatus(PeerDiscoveryStatus.BONDED);
-        peer3.setStatus(PeerDiscoveryStatus.BONDED);
-        peer4.setStatus(PeerDiscoveryStatus.BONDED);
+    recursivePeerRefreshState.onNeighboursPacketReceived(peer0, neighborsPacketData);
 
-        recursivePeerRefreshState.onBondingComplete(peer1);
+    verify(bondingAgent).performBonding(peer1);
+    verify(bondingAgent).performBonding(peer2);
+    verify(bondingAgent).performBonding(peer3);
+    verify(bondingAgent).performBonding(peer4);
 
-        verify(neighborFinder, never()).findNeighbours(peer1, TARGET);
-        verify(neighborFinder).findNeighbours(peer2, TARGET);
-        verify(neighborFinder).findNeighbours(peer3, TARGET);
-        verify(neighborFinder).findNeighbours(peer4, TARGET);
-    }
+    peer1.setStatus(PeerDiscoveryStatus.BONDED);
+    peer2.setStatus(PeerDiscoveryStatus.BONDED);
+    peer3.setStatus(PeerDiscoveryStatus.BONDED);
+    peer4.setStatus(PeerDiscoveryStatus.BONDED);
 
-    @Test
-    public void shouldNotQueryNodeThatIsAlreadyQueried() {
-        peer1.setStatus(PeerDiscoveryStatus.KNOWN);
-        peer2.setStatus(PeerDiscoveryStatus.KNOWN);
+    recursivePeerRefreshState.onBondingComplete(peer1);
 
-        recursivePeerRefreshState.start(asList(peer1, peer2), TARGET);
+    verify(neighborFinder, never()).findNeighbours(peer1, TARGET);
+    verify(neighborFinder).findNeighbours(peer2, TARGET);
+    verify(neighborFinder).findNeighbours(peer3, TARGET);
+    verify(neighborFinder).findNeighbours(peer4, TARGET);
 
-        verify(bondingAgent).performBonding(peer2);
-        verify(bondingAgent).performBonding(peer2);
+    timerUtil.runTimerHandlers();
 
-        peer1.setStatus(PeerDiscoveryStatus.BONDED);
-        peer2.setStatus(PeerDiscoveryStatus.BONDED);
+    verify(neighborFinder).findNeighbours(peer1, TARGET);
+  }
 
-        recursivePeerRefreshState.onBondingComplete(peer2);
+  @Test
+  public void shouldNotBondWithDiscoveredNodesThatAreAlreadyBonded() {
+    peer1.setStatus(PeerDiscoveryStatus.KNOWN);
+    peer2.setStatus(PeerDiscoveryStatus.KNOWN);
 
-        verify(neighborFinder).findNeighbours(peer1, TARGET);
-        verify(neighborFinder).findNeighbours(peer2, TARGET);
+    recursivePeerRefreshState.start(asList(peer1, peer2), TARGET);
 
-        recursivePeerRefreshState.onNeighboursPacketReceived(peer1, NeighborsPacketData.create(Collections.singletonList(peer2)));
-        recursivePeerRefreshState.onNeighboursPacketReceived(peer2, NeighborsPacketData.create(Collections.emptyList()));
+    verify(bondingAgent).performBonding(peer1);
+    verify(bondingAgent).performBonding(peer2);
 
-        verify(bondingAgent, times(1)).performBonding(peer1);
-        verify(bondingAgent, times(1)).performBonding(peer2);
-        verify(neighborFinder).findNeighbours(peer1, TARGET);
-        verify(neighborFinder).findNeighbours(peer2, TARGET);
-        verifyNoMoreInteractions(bondingAgent, neighborFinder);
-    }
+    verify(bondingAgent, times(1)).performBonding(peer1);
+    verify(bondingAgent, times(1)).performBonding(peer2);
 
-    @Test
-    public void shouldBondWithNewNeighboursWhenSomeRequestsTimeOut() {
+    peer1.setStatus(PeerDiscoveryStatus.BONDED);
+    peer2.setStatus(PeerDiscoveryStatus.BONDED);
 
-    }
+    recursivePeerRefreshState.onBondingComplete(peer1);
+    recursivePeerRefreshState.onBondingComplete(peer2);
 
-    @Test
-    public void shouldNotBondWithDiscoveredNodesThatAreAlreadyBonded() {
-        peer1.setStatus(PeerDiscoveryStatus.KNOWN);
-        peer2.setStatus(PeerDiscoveryStatus.KNOWN);
+    verify(neighborFinder).findNeighbours(peer1, TARGET);
+    verify(neighborFinder).findNeighbours(peer2, TARGET);
 
-        recursivePeerRefreshState.start(asList(peer1, peer2), TARGET);
+    recursivePeerRefreshState.onNeighboursPacketReceived(
+        peer1, NeighborsPacketData.create(Collections.singletonList(peer2)));
+    recursivePeerRefreshState.onNeighboursPacketReceived(
+        peer2, NeighborsPacketData.create(Collections.emptyList()));
 
-        verify(bondingAgent).performBonding(peer1);
-        verify(bondingAgent).performBonding(peer2);
+    verify(bondingAgent, times(1)).performBonding(peer2);
+  }
 
-        verify(bondingAgent, times(1)).performBonding(peer1);
-        verify(bondingAgent, times(1)).performBonding(peer2);
+  @Test
+  public void shouldQueryNodeThatTimedOutWithBondingButLaterCompletedBonding() {
+    peer1.setStatus(PeerDiscoveryStatus.KNOWN);
+    peer2.setStatus(PeerDiscoveryStatus.KNOWN);
 
-        peer1.setStatus(PeerDiscoveryStatus.BONDED);
-        peer2.setStatus(PeerDiscoveryStatus.BONDED);
+    recursivePeerRefreshState.start(asList(peer1, peer2), TARGET);
 
-        recursivePeerRefreshState.onBondingComplete(peer1);
-        recursivePeerRefreshState.onBondingComplete(peer2);
+    verify(bondingAgent).performBonding(peer1);
+    verify(bondingAgent).performBonding(peer2);
 
-        verify(neighborFinder).findNeighbours(peer1, TARGET);
-        verify(neighborFinder).findNeighbours(peer2, TARGET);
+    verify(bondingAgent, times(1)).performBonding(peer1);
+    verify(bondingAgent, times(1)).performBonding(peer2);
 
-        recursivePeerRefreshState.onNeighboursPacketReceived(peer1, NeighborsPacketData.create(Collections.singletonList(peer2)));
-        recursivePeerRefreshState.onNeighboursPacketReceived(peer2, NeighborsPacketData.create(Collections.emptyList()));
+    peer1.setStatus(PeerDiscoveryStatus.BONDED);
+    peer2.setStatus(PeerDiscoveryStatus.BONDING);
 
-        verify(bondingAgent, times(1)).performBonding(peer2);
-    }
+    timerUtil.runTimerHandlers();
 
-    @Test
-    public void shouldQueryNodeThatTimedOutWithBondingButLaterCompletedBonding() {
-        peer1.setStatus(PeerDiscoveryStatus.KNOWN);
-        peer2.setStatus(PeerDiscoveryStatus.KNOWN);
+    recursivePeerRefreshState.onBondingComplete(peer1);
 
-        recursivePeerRefreshState.start(asList(peer1, peer2), TARGET);
+    verify(neighborFinder).findNeighbours(peer1, TARGET);
+    verify(neighborFinder, never()).findNeighbours(peer2, TARGET);
 
-        verify(bondingAgent).performBonding(peer1);
-        verify(bondingAgent).performBonding(peer2);
+    recursivePeerRefreshState.onNeighboursPacketReceived(
+        peer1, NeighborsPacketData.create(Collections.emptyList()));
 
-        verify(bondingAgent, times(1)).performBonding(peer1);
-        verify(bondingAgent, times(1)).performBonding(peer2);
+    verify(bondingAgent, times(1)).performBonding(peer2);
 
-        peer1.setStatus(PeerDiscoveryStatus.BONDED);
-        peer2.setStatus(PeerDiscoveryStatus.BONDING);
+    peer2.setStatus(PeerDiscoveryStatus.BONDED);
 
-        timerUtil.runTimerHandlers();
+    recursivePeerRefreshState.onBondingComplete(peer2);
 
-        recursivePeerRefreshState.onBondingComplete(peer1);
+    verify(neighborFinder).findNeighbours(peer2, TARGET);
+  }
 
-        verify(neighborFinder).findNeighbours(peer1, TARGET);
-        verify(neighborFinder, never()).findNeighbours(peer2, TARGET);
+  @Test
+  public void shouldBondWithPeersInNeighboursResponseReceivedAfterTimeout() {
+    peer1.setStatus(PeerDiscoveryStatus.KNOWN);
+    peer2.setStatus(PeerDiscoveryStatus.KNOWN);
 
-        recursivePeerRefreshState.onNeighboursPacketReceived(peer1, NeighborsPacketData.create(Collections.emptyList()));
+    recursivePeerRefreshState.start(asList(peer1, peer2), TARGET);
 
-        verify(bondingAgent, times(1)).performBonding(peer2);
+    verify(bondingAgent).performBonding(peer1);
+    verify(bondingAgent).performBonding(peer2);
 
-        peer2.setStatus(PeerDiscoveryStatus.BONDED);
+    peer1.setStatus(PeerDiscoveryStatus.BONDED);
+    peer2.setStatus(PeerDiscoveryStatus.BONDED);
 
-        recursivePeerRefreshState.onBondingComplete(peer2);
+    recursivePeerRefreshState.onBondingComplete(peer1);
+    recursivePeerRefreshState.onBondingComplete(peer2);
 
-        verify(neighborFinder).findNeighbours(peer2, TARGET);
-    }
+    verify(neighborFinder).findNeighbours(peer1, TARGET);
+    verify(neighborFinder).findNeighbours(peer2, TARGET);
 
-    @Test
-    public void shouldBondWithPeersInNeighboursResponseReceivedAfterTimeout() {
-        peer1.setStatus(PeerDiscoveryStatus.KNOWN);
-        peer2.setStatus(PeerDiscoveryStatus.KNOWN);
+    recursivePeerRefreshState.onNeighboursPacketReceived(
+        peer1, NeighborsPacketData.create(Collections.emptyList()));
 
-        recursivePeerRefreshState.start(asList(peer1, peer2), TARGET);
+    timerUtil.runTimerHandlers();
 
-        verify(bondingAgent).performBonding(peer1);
-        verify(bondingAgent).performBonding(peer2);
+    recursivePeerRefreshState.onNeighboursPacketReceived(
+        peer2, NeighborsPacketData.create(Collections.singletonList(peer3)));
 
-        peer1.setStatus(PeerDiscoveryStatus.BONDED);
-        peer2.setStatus(PeerDiscoveryStatus.BONDED);
+    peer3.setStatus(PeerDiscoveryStatus.KNOWN);
 
-        recursivePeerRefreshState.onBondingComplete(peer1);
-        recursivePeerRefreshState.onBondingComplete(peer2);
+    verify(bondingAgent).performBonding(peer3);
 
-        verify(neighborFinder).findNeighbours(peer1, TARGET);
-        verify(neighborFinder).findNeighbours(peer2, TARGET);
+    peer3.setStatus(PeerDiscoveryStatus.BONDED);
 
-        recursivePeerRefreshState.onNeighboursPacketReceived(peer1, NeighborsPacketData.create(Collections.emptyList()));
+    recursivePeerRefreshState.onBondingComplete(peer3);
 
-        timerUtil.runTimerHandlers();
+    verify(neighborFinder).findNeighbours(peer3, TARGET);
 
-        recursivePeerRefreshState.onNeighboursPacketReceived(peer2, NeighborsPacketData.create(Collections.singletonList(peer3)));
+    verifyNoMoreInteractions(bondingAgent, neighborFinder);
+  }
 
-        peer3.setStatus(PeerDiscoveryStatus.KNOWN);
+  @Test
+  public void shouldNotBondWithNodesOnBlacklist() {
+    final DiscoveryPeer peerA = new DiscoveryPeer(createId(1), "127.0.0.1", 1, 1);
+    final DiscoveryPeer peerB = new DiscoveryPeer(createId(2), "127.0.0.2", 2, 2);
 
-        verify(bondingAgent).performBonding(peer3);
+    final PeerBlacklist blacklist = new PeerBlacklist();
+    blacklist.add(peerB);
 
-        peer3.setStatus(PeerDiscoveryStatus.BONDED);
+    final RecursivePeerRefreshState recursivePeerRefreshState = new RecursivePeerRefreshState(blacklist, peerWhitelist, bondingAgent, neighborFinder, timerUtil, 5);
+    recursivePeerRefreshState.start(Collections.singletonList(peerA), TARGET);
 
-        recursivePeerRefreshState.onBondingComplete(peer3);
+    verify(bondingAgent).performBonding(peerA);
 
-        verify(neighborFinder).findNeighbours(peer3, TARGET);
+    peerA.setStatus(PeerDiscoveryStatus.BONDED);
 
-        verifyNoMoreInteractions(bondingAgent, neighborFinder);
-    }
+    recursivePeerRefreshState.onBondingComplete(peerA);
 
-    @Test
-    public void shouldNotBondWithNodesOnBlacklist() {
-    }
+    verify(neighborFinder).findNeighbours(peerA, TARGET);
 
-    @Test
-    public void shouldNotBondWithNodesRejectedByWhitelist() {
-        reset(peerWhitelist);
+    recursivePeerRefreshState.onNeighboursPacketReceived(peerB, NeighborsPacketData.create(Collections.emptyList()));
 
-    }
+    verify(bondingAgent, never()).performBonding(peerB);
+  }
 
-    private static BytesValue createId(final int id) {
-        return BytesValue.fromHexString(String.format("%0128x", id));
-    }
+  @Test
+  public void shouldNotBondWithNodesRejectedByWhitelist() {
+    final DiscoveryPeer peerA = new DiscoveryPeer(createId(1), "127.0.0.1", 1, 1);
+    final DiscoveryPeer peerB = new DiscoveryPeer(createId(2), "127.0.0.2", 2, 2);
+
+    final NodeWhitelistController peerWhitelist = new NodeWhitelistController(PermissioningConfiguration.createDefault());
+    peerWhitelist.removeNodes(Collections.singletonList(peerB));
+
+    final RecursivePeerRefreshState recursivePeerRefreshState = new RecursivePeerRefreshState(peerBlacklist, peerWhitelist, bondingAgent, neighborFinder, timerUtil, 5);
+    recursivePeerRefreshState.start(Collections.singletonList(peerA), TARGET);
+
+    verify(bondingAgent).performBonding(peerA);
+
+    peerA.setStatus(PeerDiscoveryStatus.BONDED);
+
+    recursivePeerRefreshState.onBondingComplete(peerA);
+
+    verify(neighborFinder).findNeighbours(peerA, TARGET);
+
+    recursivePeerRefreshState.onNeighboursPacketReceived(peerB, NeighborsPacketData.create(Collections.emptyList()));
+
+    verify(bondingAgent, never()).performBonding(peerB);
+  }
+
+  private static BytesValue createId(final int id) {
+    return BytesValue.fromHexString(String.format("%0128x", id));
+  }
 }
