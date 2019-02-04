@@ -33,6 +33,7 @@ import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 import io.vertx.core.Vertx;
@@ -154,7 +155,7 @@ public class PeerDiscoveryBootstrappingTest {
             discoveryConfiguration0,
             () -> true,
             new PeerBlacklist(),
-            new NodeWhitelistController(PermissioningConfiguration.createDefault()));
+            Optional.of(new NodeWhitelistController(PermissioningConfiguration.createDefault())));
     peerDiscoveryAgent0.start().join();
 
     // Start another agent, pointing to the above agent as a bootstrap peer.
@@ -169,7 +170,7 @@ public class PeerDiscoveryBootstrappingTest {
             discoveryConfiguration1,
             () -> true,
             new PeerBlacklist(),
-            new NodeWhitelistController(PermissioningConfiguration.createDefault()));
+                Optional.of(new NodeWhitelistController(PermissioningConfiguration.createDefault())));
     peerDiscoveryAgent1.start().join();
 
     await()
@@ -193,7 +194,7 @@ public class PeerDiscoveryBootstrappingTest {
             discoveryConfiguration_TEST,
             () -> true,
             new PeerBlacklist(),
-            new NodeWhitelistController(PermissioningConfiguration.createDefault()));
+                Optional.of(new NodeWhitelistController(PermissioningConfiguration.createDefault())));
     peerDiscoveryAgent_TEST.start().join();
 
     await()

@@ -12,8 +12,18 @@
  */
 package tech.pegasys.pantheon.ethereum.p2p.discovery.internal;
 
-import org.junit.Before;
-import org.junit.Test;
+import static java.util.Arrays.asList;
+import static java.util.Collections.singletonList;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.when;
+
+import org.junit.BeforeClass;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.DiscoveryPeer;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.PeerDiscoveryStatus;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.RecursivePeerRefreshState.BondingAgent;
@@ -26,16 +36,10 @@ import tech.pegasys.pantheon.util.bytes.BytesValue;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
-import static java.util.Arrays.asList;
-import static java.util.Collections.singletonList;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.when;
+import org.junit.Before;
+import org.junit.Test;
 
 public class RecursivePeerRefreshState00 {
   private static final BytesValue TARGET = createId(0);
@@ -56,7 +60,7 @@ public class RecursivePeerRefreshState00 {
 
   @Before
   public void setUp() {
-    when(peerWhitelist.contains(any(DiscoveryPeer.class))).thenReturn(true);
+    when(peerWhitelist.isPermitted(any(DiscoveryPeer.class))).thenReturn(true);
   }
 
   @Test
@@ -380,8 +384,6 @@ public class RecursivePeerRefreshState00 {
     peer1.setStatus(PeerDiscoveryStatus.KNOWN);
     peer2.setStatus(PeerDiscoveryStatus.KNOWN);
 
-    recursivePeerRefreshState.start(asList(peer1, peer2), TARGET);
-
     verify(bondingAgent).performBonding(peer1);
     verify(bondingAgent).performBonding(peer2);
 
@@ -458,7 +460,9 @@ public class RecursivePeerRefreshState00 {
     final PeerBlacklist blacklist = new PeerBlacklist();
     blacklist.add(peerB);
 
-    final RecursivePeerRefreshState recursivePeerRefreshState = new RecursivePeerRefreshState(blacklist, peerWhitelist, bondingAgent, neighborFinder, timerUtil, 5);
+    final RecursivePeerRefreshState recursivePeerRefreshState =
+        new RecursivePeerRefreshState(
+            blacklist, peerWhitelist, bondingAgent, neighborFinder, timerUtil, 5);
     recursivePeerRefreshState.start(Collections.singletonList(peerA), TARGET);
 
     verify(bondingAgent).performBonding(peerA);
@@ -469,7 +473,8 @@ public class RecursivePeerRefreshState00 {
 
     verify(neighborFinder).findNeighbours(peerA, TARGET);
 
-    recursivePeerRefreshState.onNeighboursPacketReceived(peerB, NeighborsPacketData.create(Collections.emptyList()));
+    recursivePeerRefreshState.onNeighboursPacketReceived(
+        peerB, NeighborsPacketData.create(Collections.emptyList()));
 
     verify(bondingAgent, never()).performBonding(peerB);
   }
@@ -479,10 +484,13 @@ public class RecursivePeerRefreshState00 {
     final DiscoveryPeer peerA = new DiscoveryPeer(createId(1), "127.0.0.1", 1, 1);
     final DiscoveryPeer peerB = new DiscoveryPeer(createId(2), "127.0.0.2", 2, 2);
 
-    final NodeWhitelistController peerWhitelist = new NodeWhitelistController(PermissioningConfiguration.createDefault());
+    final NodeWhitelistController peerWhitelist =
+        new NodeWhitelistController(PermissioningConfiguration.createDefault());
     peerWhitelist.removeNodes(Collections.singletonList(peerB));
 
-    final RecursivePeerRefreshState recursivePeerRefreshState = new RecursivePeerRefreshState(peerBlacklist, peerWhitelist, bondingAgent, neighborFinder, timerUtil, 5);
+    final RecursivePeerRefreshState recursivePeerRefreshState =
+        new RecursivePeerRefreshState(
+            peerBlacklist, peerWhitelist, bondingAgent, neighborFinder, timerUtil, 5);
     recursivePeerRefreshState.start(Collections.singletonList(peerA), TARGET);
 
     verify(bondingAgent).performBonding(peerA);
@@ -493,7 +501,8 @@ public class RecursivePeerRefreshState00 {
 
     verify(neighborFinder).findNeighbours(peerA, TARGET);
 
-    recursivePeerRefreshState.onNeighboursPacketReceived(peerB, NeighborsPacketData.create(Collections.emptyList()));
+    recursivePeerRefreshState.onNeighboursPacketReceived(
+        peerB, NeighborsPacketData.create(Collections.emptyList()));
 
     verify(bondingAgent, never()).performBonding(peerB);
   }

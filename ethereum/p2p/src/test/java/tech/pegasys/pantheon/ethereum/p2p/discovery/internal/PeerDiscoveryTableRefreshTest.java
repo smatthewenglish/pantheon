@@ -27,8 +27,6 @@ import tech.pegasys.pantheon.ethereum.p2p.discovery.PeerDiscoveryStatus;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.PeerDiscoveryTestHelper;
 import tech.pegasys.pantheon.ethereum.p2p.peers.Endpoint;
 import tech.pegasys.pantheon.ethereum.p2p.peers.PeerBlacklist;
-import tech.pegasys.pantheon.ethereum.p2p.permissioning.NodeWhitelistController;
-import tech.pegasys.pantheon.ethereum.permissioning.PermissioningConfiguration;
 import tech.pegasys.pantheon.util.Subscribers;
 
 import java.util.ArrayList;
@@ -65,7 +63,7 @@ public class PeerDiscoveryTableRefreshTest {
                 0,
                 () -> true,
                 new PeerBlacklist(),
-                new NodeWhitelistController(PermissioningConfiguration.createDefault()),
+                Optional.empty(),
                 new Subscribers<>()));
     controller.start();
 

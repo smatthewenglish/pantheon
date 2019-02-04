@@ -25,6 +25,7 @@ import tech.pegasys.pantheon.ethereum.p2p.discovery.PeerDiscoveryStatus;
 import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
 import tech.pegasys.pantheon.ethereum.p2p.peers.PeerBlacklist;
 import tech.pegasys.pantheon.ethereum.p2p.permissioning.NodeWhitelistController;
+import tech.pegasys.pantheon.ethereum.permissioning.PermissioningConfiguration;
 import tech.pegasys.pantheon.util.Subscribers;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
@@ -109,7 +110,7 @@ public class PeerDiscoveryController {
   private final DiscoveryPeer localPeer;
   private final OutboundMessageHandler outboundMessageHandler;
   private final PeerBlacklist peerBlacklist;
-  private final NodeWhitelistController nodeWhitelist;
+  private final Optional<NodeWhitelistController> nodeWhitelistController;
 
   private RetryDelayFunction retryDelayFunction = RetryDelayFunction.linear(1.5, 2000, 60000);
 
@@ -136,7 +137,7 @@ public class PeerDiscoveryController {
       final long tableRefreshIntervalMs,
       final PeerRequirement peerRequirement,
       final PeerBlacklist peerBlacklist,
-      final NodeWhitelistController nodeWhitelist,
+      final Optional<NodeWhitelistController> nodeWhitelistController,
       final Subscribers<Consumer<PeerBondedEvent>> peerBondedObservers) {
     this.timerUtil = timerUtil;
     this.keypair = keypair;
@@ -146,7 +147,7 @@ public class PeerDiscoveryController {
     this.tableRefreshIntervalMs = tableRefreshIntervalMs;
     this.peerRequirement = peerRequirement;
     this.peerBlacklist = peerBlacklist;
-    this.nodeWhitelist = nodeWhitelist;
+    this.nodeWhitelistController = nodeWhitelistController;
     this.outboundMessageHandler = outboundMessageHandler;
     this.peerBondedObservers = peerBondedObservers;
   }
@@ -156,18 +157,38 @@ public class PeerDiscoveryController {
       throw new IllegalStateException("The peer table had already been started");
     }
 
-    bootstrapNodes.stream().filter(nodeWhitelist::contains).forEach(peerTable::tryAdd);
-    recursivePeerRefreshState =
-        new RecursivePeerRefreshState(
-            peerBlacklist,
-            nodeWhitelist,
-            this::bond,
-            this::findNodes,
-            timerUtil,
-            PEER_REFRESH_ROUND_TIMEOUT_IN_SECONDS);
+    bootstrapNodes
+        .stream()
+        .filter(this::whitelistIfPresentIsNodePermitted)
+        .forEach(peerTable::tryAdd);
+
+    if(nodeWhitelistController.isPresent()) {
+      recursivePeerRefreshState =
+              new RecursivePeerRefreshState(
+                      peerBlacklist,
+                      nodeWhitelistController.get(),
+                      this::bond,
+                      this::findNodes,
+                      timerUtil,
+                      PEER_REFRESH_ROUND_TIMEOUT_IN_SECONDS);
+    } else {
+      recursivePeerRefreshState =
+              new RecursivePeerRefreshState(
+                      peerBlacklist,
+                      new NodeWhitelistController(PermissioningConfiguration.createDefault()),
+                      this::bond,
+                      this::findNodes,
+                      timerUtil,
+                      PEER_REFRESH_ROUND_TIMEOUT_IN_SECONDS);
+    }
+
+
 
     final List<DiscoveryPeer> initialDiscoveryPeers =
-        bootstrapNodes.stream().filter(nodeWhitelist::contains).collect(Collectors.toList());
+        bootstrapNodes
+            .stream()
+            .filter(this::whitelistIfPresentIsNodePermitted)
+            .collect(Collectors.toList());
     recursivePeerRefreshState.start(initialDiscoveryPeers, localPeer.getId());
 
     final long timerId =
@@ -189,6 +210,12 @@ public class PeerDiscoveryController {
     inflightInteractions.values().forEach(PeerInteractionState::cancelTimers);
     inflightInteractions.clear();
     return CompletableFuture.completedFuture(null);
+  }
+
+  private boolean whitelistIfPresentIsNodePermitted(final DiscoveryPeer sender) {
+    return nodeWhitelistController
+        .map(nodeWhitelistController -> nodeWhitelistController.isPermitted(sender))
+        .orElse(true);
   }
 
   /**
@@ -215,7 +242,7 @@ public class PeerDiscoveryController {
       return;
     }
 
-    if (!nodeWhitelist.isPermitted(sender)) {
+    if (!whitelistIfPresentIsNodePermitted(sender)) {
       return;
     }
 
