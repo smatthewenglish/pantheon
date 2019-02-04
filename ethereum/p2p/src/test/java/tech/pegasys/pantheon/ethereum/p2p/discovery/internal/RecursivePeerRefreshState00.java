@@ -430,6 +430,40 @@ public class RecursivePeerRefreshState00 {
 
     @Test
     public void shouldBondWithPeersInNeighboursResponseReceivedAfterTimeout() {
+        peer1.setStatus(PeerDiscoveryStatus.KNOWN);
+        peer2.setStatus(PeerDiscoveryStatus.KNOWN);
+
+        recursivePeerRefreshState.start(asList(peer1, peer2), TARGET);
+
+        verify(bondingAgent).performBonding(peer1);
+        verify(bondingAgent).performBonding(peer2);
+
+        peer1.setStatus(PeerDiscoveryStatus.BONDED);
+        peer2.setStatus(PeerDiscoveryStatus.BONDED);
+
+        recursivePeerRefreshState.onBondingComplete(peer1);
+        recursivePeerRefreshState.onBondingComplete(peer2);
+
+        verify(neighborFinder).findNeighbours(peer1, TARGET);
+        verify(neighborFinder).findNeighbours(peer2, TARGET);
+
+        recursivePeerRefreshState.onNeighboursPacketReceived(peer1, NeighborsPacketData.create(Collections.emptyList()));
+
+        timerUtil.runTimerHandlers();
+
+        recursivePeerRefreshState.onNeighboursPacketReceived(peer2, NeighborsPacketData.create(Collections.singletonList(peer3)));
+
+        peer3.setStatus(PeerDiscoveryStatus.KNOWN);
+
+        verify(bondingAgent).performBonding(peer3);
+
+        peer3.setStatus(PeerDiscoveryStatus.BONDED);
+
+        recursivePeerRefreshState.onBondingComplete(peer3);
+
+        verify(neighborFinder).findNeighbours(peer3, TARGET);
+
+        verifyNoMoreInteractions(bondingAgent, neighborFinder);
     }
 
     @Test
@@ -439,6 +473,7 @@ public class RecursivePeerRefreshState00 {
     @Test
     public void shouldNotBondWithNodesRejectedByWhitelist() {
         reset(peerWhitelist);
+
     }
 
     private static BytesValue createId(final int id) {
