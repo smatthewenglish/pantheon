@@ -46,13 +46,13 @@ public class RecursivePeerRefreshState {
   private Optional<RoundTimeout> currentRoundTimeout = Optional.empty();
   private boolean iterativeSearchInProgress = false;
 
+  private static int MAX_ROUNDS = 100;
   private int currentRound;
 
   private final SortedMap<BytesValue, MetadataPeer> oneTrueMap = new TreeMap<>();
 
   private final TimerUtil timerUtil;
   private final int timeoutPeriodInSeconds;
-  private static final int MAX_ROUNDS = 100;
 
   RecursivePeerRefreshState(
       final PeerBlacklist peerBlacklist,
@@ -84,7 +84,7 @@ public class RecursivePeerRefreshState {
   }
 
   private boolean reachedMaximumNumberOfRounds() {
-    return currentRound > MAX_ROUNDS;
+    return currentRound >= MAX_ROUNDS;
   }
 
   private void addInitialPeers(final List<DiscoveryPeer> initialPeers) {
@@ -241,6 +241,11 @@ public class RecursivePeerRefreshState {
         .limit(MAX_CONCURRENT_REQUESTS)
         .map(MetadataPeer::getPeer)
         .collect(Collectors.toList());
+  }
+
+  @VisibleForTesting
+  void setMaxRounds(final int threshold) {
+    MAX_ROUNDS = threshold;
   }
 
   @VisibleForTesting
