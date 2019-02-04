@@ -363,6 +363,30 @@ public class RecursivePeerRefreshState00 {
 
     @Test
     public void shouldNotQueryNodeThatIsAlreadyQueried() {
+        peer1.setStatus(PeerDiscoveryStatus.KNOWN);
+        peer2.setStatus(PeerDiscoveryStatus.KNOWN);
+
+        recursivePeerRefreshState.start(asList(peer1, peer2), TARGET);
+
+        verify(bondingAgent).performBonding(peer2);
+        verify(bondingAgent).performBonding(peer2);
+
+        peer1.setStatus(PeerDiscoveryStatus.BONDED);
+        peer2.setStatus(PeerDiscoveryStatus.BONDED);
+
+        recursivePeerRefreshState.onBondingComplete(peer2);
+
+        verify(neighborFinder).findNeighbours(peer1, TARGET);
+        verify(neighborFinder).findNeighbours(peer2, TARGET);
+
+        recursivePeerRefreshState.onNeighboursPacketReceived(peer1, NeighborsPacketData.create(Collections.singletonList(peer2)));
+        recursivePeerRefreshState.onNeighboursPacketReceived(peer2, NeighborsPacketData.create(Collections.emptyList()));
+
+        verify(bondingAgent, times(1)).performBonding(peer1);
+        verify(bondingAgent, times(1)).performBonding(peer2);
+        verify(neighborFinder).findNeighbours(peer1, TARGET);
+        verify(neighborFinder).findNeighbours(peer2, TARGET);
+        verifyNoMoreInteractions(bondingAgent, neighborFinder);
     }
 
     @Test
