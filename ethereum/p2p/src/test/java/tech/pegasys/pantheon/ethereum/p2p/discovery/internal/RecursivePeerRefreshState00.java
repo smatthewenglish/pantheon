@@ -56,166 +56,6 @@ public class RecursivePeerRefreshState00 {
             new RecursivePeerRefreshState(
                     peerBlacklist, peerWhitelist, bondingAgent, neighborFinder, timerUtil, 5);
 
-    private DiscoveryPeer peer_000 =
-            new DiscoveryPeer(
-                    BytesValue.fromHexString(
-                            "0x11111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111"),
-                    "0.0.0.0",
-                    1,
-                    1);
-    private DiscoveryPeer peer_010 =
-            new DiscoveryPeer(
-                    BytesValue.fromHexString(
-                            "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010000000000000000000"),
-                    "0.0.0.0",
-                    1,
-                    1);
-    private DiscoveryPeer peer_020 =
-            new DiscoveryPeer(
-                    BytesValue.fromHexString(
-                            "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010000"),
-                    "0.0.0.0",
-                    1,
-                    1);
-    private DiscoveryPeer peer_021 =
-            new DiscoveryPeer(
-                    BytesValue.fromHexString(
-                            "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000100000"),
-                    "0.0.0.0",
-                    1,
-                    1);
-    private DiscoveryPeer peer_022 =
-            new DiscoveryPeer(
-                    BytesValue.fromHexString(
-                            "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001000000"),
-                    "0.0.0.0",
-                    1,
-                    1);
-    private DiscoveryPeer peer_023 =
-            new DiscoveryPeer(
-                    BytesValue.fromHexString(
-                            "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010000000"),
-                    "0.0.0.0",
-                    1,
-                    1);
-    private DiscoveryPeer peer_011 =
-            new DiscoveryPeer(
-                    BytesValue.fromHexString(
-                            "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010"),
-                    "0.0.0.0",
-                    1,
-                    1);
-    private DiscoveryPeer peer_120 =
-            new DiscoveryPeer(
-                    BytesValue.fromHexString(
-                            "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000100000000"),
-                    "0.0.0.0",
-                    1,
-                    1);
-    private DiscoveryPeer peer_121 =
-            new DiscoveryPeer(
-                    BytesValue.fromHexString(
-                            "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001000000000"),
-                    "0.0.0.0",
-                    1,
-                    1);
-    private DiscoveryPeer peer_122 =
-            new DiscoveryPeer(
-                    BytesValue.fromHexString(
-                            "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010000000000"),
-                    "0.0.0.0",
-                    1,
-                    1);
-    private DiscoveryPeer peer_123 =
-            new DiscoveryPeer(
-                    BytesValue.fromHexString(
-                            "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000100000000000"),
-                    "0.0.0.0",
-                    1,
-                    1);
-    private DiscoveryPeer peer_012 =
-            new DiscoveryPeer(
-                    BytesValue.fromHexString(
-                            "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000100"),
-                    "0.0.0.0",
-                    1,
-                    1);
-    private DiscoveryPeer peer_220 =
-            new DiscoveryPeer(
-                    BytesValue.fromHexString(
-                            "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001000000000000"),
-                    "0.0.0.0",
-                    1,
-                    1);
-    private DiscoveryPeer peer_221 =
-            new DiscoveryPeer(
-                    BytesValue.fromHexString(
-                            "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010000000000000"),
-                    "0.0.0.0",
-                    1,
-                    1);
-    private DiscoveryPeer peer_222 =
-            new DiscoveryPeer(
-                    BytesValue.fromHexString(
-                            "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000100000000000000"),
-                    "0.0.0.0",
-                    1,
-                    1);
-    private DiscoveryPeer peer_223 =
-            new DiscoveryPeer(
-                    BytesValue.fromHexString(
-                            "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001000000000000000"),
-                    "0.0.0.0",
-                    1,
-                    1);
-    private DiscoveryPeer peer_013 =
-            new DiscoveryPeer(
-                    BytesValue.fromHexString(
-                            "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001000"),
-                    "0.0.0.0",
-                    1,
-                    1);
-    private DiscoveryPeer peer_320 =
-            new DiscoveryPeer(
-                    BytesValue.fromHexString(
-                            "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010000000000000000"),
-                    "0.0.0.0",
-                    1,
-                    1);
-    private DiscoveryPeer peer_321 =
-            new DiscoveryPeer(
-                    BytesValue.fromHexString(
-                            "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000100000000000000000"),
-                    "0.0.0.0",
-                    1,
-                    1);
-    private DiscoveryPeer peer_322 =
-            new DiscoveryPeer(
-                    BytesValue.fromHexString(
-                            "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001000000000000000000"),
-                    "0.0.0.0",
-                    1,
-                    1);
-    private DiscoveryPeer peer_323 =
-            new DiscoveryPeer(
-                    BytesValue.fromHexString(
-                            "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001"),
-                    "0.0.0.0",
-                    1,
-                    1);
-
-    List<DiscoveryPeer> peerTable_000 = Arrays.asList(peer_010, peer_011, peer_012, peer_013);
-    List<DiscoveryPeer> peerTable_010 = Arrays.asList(peer_020, peer_021, peer_022, peer_023);
-    List<DiscoveryPeer> peerTable_011 = Arrays.asList(peer_120, peer_121, peer_122, peer_123);
-    List<DiscoveryPeer> peerTable_012 = Arrays.asList(peer_220, peer_221, peer_222, peer_223);
-    List<DiscoveryPeer> peerTable_013 = Arrays.asList(peer_320, peer_321, peer_322, peer_323);
-
-    private NeighborsPacketData neighborsPacketData_000 = NeighborsPacketData.create(peerTable_000);
-    private NeighborsPacketData neighborsPacketData_010 = NeighborsPacketData.create(peerTable_010);
-    private NeighborsPacketData neighborsPacketData_011 = NeighborsPacketData.create(peerTable_011);
-    private NeighborsPacketData neighborsPacketData_012 = NeighborsPacketData.create(peerTable_012);
-    private NeighborsPacketData neighborsPacketData_013 = NeighborsPacketData.create(peerTable_013);
-
     @Before
     public void setUp() {
         when(peerWhitelist.contains(any(DiscoveryPeer.class))).thenReturn(true);
@@ -359,6 +199,53 @@ public class RecursivePeerRefreshState00 {
 
     @Test
     public void shouldOnlyQueryClosestThreeNeighbours() {
+        final BytesValue id0 = BytesValue.fromHexString(
+                "0x11111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111");
+        final DiscoveryPeer peer0 = new DiscoveryPeer(id0, "0.0.0.0", 1, 1);
+        final BytesValue id1 = BytesValue.fromHexString(
+                "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010000000000000000000");
+        final DiscoveryPeer peer1 = new DiscoveryPeer(id1, "0.0.0.0", 1, 1);
+        final BytesValue id2 = BytesValue.fromHexString(
+                "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010");
+        final DiscoveryPeer peer2 = new DiscoveryPeer(id2, "0.0.0.0", 1, 1);
+        final BytesValue id3 = BytesValue.fromHexString(
+                "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000100");
+        final DiscoveryPeer peer3 = new DiscoveryPeer(id3, "0.0.0.0", 1, 1);
+        final BytesValue id4 = BytesValue.fromHexString(
+                "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001000");
+        final DiscoveryPeer peer4 = new DiscoveryPeer(id4, "0.0.0.0", 1, 1);
+        final List<DiscoveryPeer> peerTable = Arrays.asList(peer1, peer2, peer3, peer4);
+
+        final NeighborsPacketData neighborsPacketData = NeighborsPacketData.create(peerTable);
+
+        recursivePeerRefreshState.start(singletonList(peer0), TARGET);
+
+        verify(bondingAgent).performBonding(peer0);
+
+        peer0.setStatus(PeerDiscoveryStatus.BONDED);
+
+        recursivePeerRefreshState.onBondingComplete(peer0);
+
+        verify(neighborFinder).findNeighbours(peer0, TARGET);
+
+        recursivePeerRefreshState.onNeighboursPacketReceived(peer0, neighborsPacketData);
+
+        verify(bondingAgent).performBonding(peer1);
+        verify(bondingAgent).performBonding(peer2);
+        verify(bondingAgent).performBonding(peer3);
+        verify(bondingAgent).performBonding(peer4);
+
+        peer1.setStatus(PeerDiscoveryStatus.BONDED);
+        peer2.setStatus(PeerDiscoveryStatus.BONDED);
+        peer3.setStatus(PeerDiscoveryStatus.BONDED);
+        peer4.setStatus(PeerDiscoveryStatus.BONDED);
+
+        recursivePeerRefreshState.onBondingComplete(peer1);
+
+        verify(neighborFinder, never()).findNeighbours(peer1, TARGET);
+        verify(neighborFinder).findNeighbours(peer2, TARGET);
+        verify(neighborFinder).findNeighbours(peer3, TARGET);
+        verify(neighborFinder).findNeighbours(peer4, TARGET);
     }
 
     @Test
@@ -391,41 +278,69 @@ public class RecursivePeerRefreshState00 {
 
     @Test
     public void shouldBondWithNewNeighboursWhenSomeRequestsTimeOut() {
-        recursivePeerRefreshState.start(singletonList(peer_000), TARGET);
 
-        verify(bondingAgent).performBonding(peer_000);
-
-        peer_000.setStatus(PeerDiscoveryStatus.BONDED);
-
-        recursivePeerRefreshState.onBondingComplete(peer_000);
-
-        verify(neighborFinder).findNeighbours(peer_000, TARGET);
-
-        recursivePeerRefreshState.onNeighboursPacketReceived(peer_000, neighborsPacketData_000);
-
-        peer_010.setStatus(PeerDiscoveryStatus.BONDED);
-        peer_011.setStatus(PeerDiscoveryStatus.BONDED);
-        peer_012.setStatus(PeerDiscoveryStatus.BONDED);
-        peer_013.setStatus(PeerDiscoveryStatus.BONDED);
-
-        recursivePeerRefreshState.onBondingComplete(peer_010);
-
-        verify(neighborFinder, never()).findNeighbours(peer_010, TARGET);
-        verify(neighborFinder).findNeighbours(peer_011, TARGET);
-        verify(neighborFinder).findNeighbours(peer_012, TARGET);
-        verify(neighborFinder).findNeighbours(peer_013, TARGET);
-
-        timerUtil.runTimerHandlers();
-
-        verify(neighborFinder).findNeighbours(peer_010, TARGET);
     }
 
     @Test
     public void shouldNotBondWithDiscoveredNodesThatAreAlreadyBonded() {
+        peer1.setStatus(PeerDiscoveryStatus.KNOWN);
+        peer2.setStatus(PeerDiscoveryStatus.KNOWN);
+
+        recursivePeerRefreshState.start(asList(peer1, peer2), TARGET);
+
+        verify(bondingAgent).performBonding(peer1);
+        verify(bondingAgent).performBonding(peer2);
+
+        verify(bondingAgent, times(1)).performBonding(peer1);
+        verify(bondingAgent, times(1)).performBonding(peer2);
+
+        peer1.setStatus(PeerDiscoveryStatus.BONDED);
+        peer2.setStatus(PeerDiscoveryStatus.BONDED);
+
+        recursivePeerRefreshState.onBondingComplete(peer1);
+        recursivePeerRefreshState.onBondingComplete(peer2);
+
+        verify(neighborFinder).findNeighbours(peer1, TARGET);
+        verify(neighborFinder).findNeighbours(peer2, TARGET);
+
+        recursivePeerRefreshState.onNeighboursPacketReceived(peer1, NeighborsPacketData.create(Collections.singletonList(peer2)));
+        recursivePeerRefreshState.onNeighboursPacketReceived(peer2, NeighborsPacketData.create(Collections.emptyList()));
+
+        verify(bondingAgent, times(1)).performBonding(peer2);
     }
 
     @Test
     public void shouldQueryNodeThatTimedOutWithBondingButLaterCompletedBonding() {
+        peer1.setStatus(PeerDiscoveryStatus.KNOWN);
+        peer2.setStatus(PeerDiscoveryStatus.KNOWN);
+
+        recursivePeerRefreshState.start(asList(peer1, peer2), TARGET);
+
+        verify(bondingAgent).performBonding(peer1);
+        verify(bondingAgent).performBonding(peer2);
+
+        verify(bondingAgent, times(1)).performBonding(peer1);
+        verify(bondingAgent, times(1)).performBonding(peer2);
+
+        peer1.setStatus(PeerDiscoveryStatus.BONDED);
+        peer2.setStatus(PeerDiscoveryStatus.BONDING);
+
+        timerUtil.runTimerHandlers();
+
+        recursivePeerRefreshState.onBondingComplete(peer1);
+
+        verify(neighborFinder).findNeighbours(peer1, TARGET);
+        verify(neighborFinder, never()).findNeighbours(peer2, TARGET);
+
+        recursivePeerRefreshState.onNeighboursPacketReceived(peer1, NeighborsPacketData.create(Collections.emptyList()));
+
+        verify(bondingAgent, times(1)).performBonding(peer2);
+
+        peer2.setStatus(PeerDiscoveryStatus.BONDED);
+
+        recursivePeerRefreshState.onBondingComplete(peer2);
+
+        verify(neighborFinder).findNeighbours(peer2, TARGET);
     }
 
     @Test
