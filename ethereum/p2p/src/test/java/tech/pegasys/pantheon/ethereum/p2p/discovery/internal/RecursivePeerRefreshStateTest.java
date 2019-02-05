@@ -50,7 +50,7 @@ public class RecursivePeerRefreshStateTest {
 
   private RecursivePeerRefreshState recursivePeerRefreshState =
       new RecursivePeerRefreshState(
-          peerBlacklist, Optional.empty(), bondingAgent, neighborFinder, timerUtil, 5);
+          peerBlacklist, Optional.empty(), bondingAgent, neighborFinder, timerUtil, 5, 100);
 
   @Test
   public void shouldBondWithInitialNodesWhenStarted() {
@@ -157,7 +157,9 @@ public class RecursivePeerRefreshStateTest {
 
   @Test
   public void shouldStopWhenMaximumNumberOfRoundsReached() {
-    recursivePeerRefreshState.setMaxRounds(1);
+    recursivePeerRefreshState =
+        new RecursivePeerRefreshState(
+            peerBlacklist, Optional.empty(), bondingAgent, neighborFinder, timerUtil, 5, 1);
 
     peer1.setStatus(PeerDiscoveryStatus.KNOWN);
     peer2.setStatus(PeerDiscoveryStatus.KNOWN);
@@ -431,7 +433,7 @@ public class RecursivePeerRefreshStateTest {
 
     recursivePeerRefreshState =
         new RecursivePeerRefreshState(
-            blacklist, Optional.empty(), bondingAgent, neighborFinder, timerUtil, 5);
+            blacklist, Optional.empty(), bondingAgent, neighborFinder, timerUtil, 5, 100);
     recursivePeerRefreshState.start(singletonList(peerA), TARGET);
 
     verify(bondingAgent).performBonding(peerA);
@@ -457,7 +459,13 @@ public class RecursivePeerRefreshStateTest {
 
     recursivePeerRefreshState =
         new RecursivePeerRefreshState(
-            peerBlacklist, Optional.of(peerWhitelist), bondingAgent, neighborFinder, timerUtil, 5);
+            peerBlacklist,
+            Optional.of(peerWhitelist),
+            bondingAgent,
+            neighborFinder,
+            timerUtil,
+            5,
+            100);
     recursivePeerRefreshState.start(singletonList(peerA), TARGET);
 
     verify(bondingAgent).performBonding(peerA);

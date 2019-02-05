@@ -168,7 +168,8 @@ public class PeerDiscoveryController {
             this::bond,
             this::findNodes,
             timerUtil,
-            PEER_REFRESH_ROUND_TIMEOUT_IN_SECONDS);
+            PEER_REFRESH_ROUND_TIMEOUT_IN_SECONDS,
+            100);
 
     final List<DiscoveryPeer> initialDiscoveryPeers =
         bootstrapNodes

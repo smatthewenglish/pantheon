@@ -45,9 +45,8 @@ public class RecursivePeerRefreshState {
   private final FindNeighbourDispatcher findNeighbourDispatcher;
   private Optional<RoundTimeout> currentRoundTimeout = Optional.empty();
   private boolean iterativeSearchInProgress = false;
+  private final int maxRounds;
 
-  // TODO: Inject this in the constructor.
-  private int maxRounds = 100;
   private int currentRound;
 
   private final SortedMap<BytesValue, MetadataPeer> oneTrueMap = new TreeMap<>();
@@ -61,13 +60,15 @@ public class RecursivePeerRefreshState {
       final BondingAgent bondingAgent,
       final FindNeighbourDispatcher neighborFinder,
       final TimerUtil timerUtil,
-      final int timeoutPeriodInSeconds) {
+      final int timeoutPeriodInSeconds,
+      final int maxRounds) {
     this.peerBlacklist = peerBlacklist;
     this.peerWhitelist = peerWhitelist;
     this.bondingAgent = bondingAgent;
     this.findNeighbourDispatcher = neighborFinder;
     this.timerUtil = timerUtil;
     this.timeoutPeriodInSeconds = timeoutPeriodInSeconds;
+    this.maxRounds = maxRounds;
   }
 
   synchronized void start(final List<DiscoveryPeer> initialPeers, final BytesValue target) {
@@ -89,27 +90,16 @@ public class RecursivePeerRefreshState {
   }
 
   private void addInitialPeers(final List<DiscoveryPeer> initialPeers) {
-
-    System.out.println("~~~");
-
     for (final DiscoveryPeer peer : initialPeers) {
       final MetadataPeer iterationParticipant =
           new MetadataPeer(peer, distance(target, peer.getId()));
-
-      System.out.println("INITIAL: " + peer.getId());
-
       oneTrueMap.put(peer.getId(), iterationParticipant);
     }
-
-    System.out.println("oneTrueMap: " + oneTrueMap.size());
   }
 
   private void bondingInitiateRound() {
     currentRoundTimeout.ifPresent(RoundTimeout::cancelTimeout);
     final List<MetadataPeer> candidates = bondingRoundCandidates();
-
-    System.out.println("bondingRoundCandidates: " + candidates.size());
-
     if (candidates.isEmpty()) {
       // All peers are already bonded (or failed to bond) so immediately switch to neighbours round
       LOG.debug("Skipping bonding round because no candidates are available");
@@ -118,8 +108,6 @@ public class RecursivePeerRefreshState {
     }
     LOG.debug("Initiating bonding round with {} candidates", candidates.size());
     for (final MetadataPeer peer : candidates) {
-
-      System.out.println(" bonding with ... ---> " + peer.getPeer().getId());
       peer.bondingStarted();
       bondingAgent.performBonding(peer.getPeer());
     }
@@ -154,14 +142,8 @@ public class RecursivePeerRefreshState {
   }
 
   private void neighboursInitiateRound() {
-
-    System.out.println("neighboursInitiateRound");
-
     currentRoundTimeout.ifPresent(RoundTimeout::cancelTimeout);
     final List<MetadataPeer> candidates = neighboursRoundCandidates();
-
-    System.out.println("candidates: " + candidates.size());
-
     if (candidates.isEmpty() || reachedMaximumNumberOfRounds()) {
       LOG.debug("Iterative peer search complete");
       iterativeSearchInProgress = false;
@@ -172,11 +154,7 @@ public class RecursivePeerRefreshState {
         candidates.size(),
         oneTrueMap.size());
     for (final MetadataPeer peer : candidates) {
-
-      System.out.println(" ##### deploy fn to... " + peer.getPeer().getId());
-
       peer.findNeighboursStarted();
-
       findNeighbourDispatcher.findNeighbours(peer.getPeer(), target);
     }
     currentRoundTimeout = Optional.of(scheduleTimeout(this::neighboursCancelOutstandingRequests));
@@ -224,33 +202,15 @@ public class RecursivePeerRefreshState {
   }
 
   synchronized void onBondingComplete(final DiscoveryPeer peer) {
-
-    System.out.println("completed bonding with: " + peer.getId());
-
     final MetadataPeer iterationParticipant = oneTrueMap.get(peer.getId());
-
-    System.out.println("190-000");
-
     if (iterationParticipant == null) {
-
-      System.out.println("290-000");
-
       return;
     }
     if (!iterationParticipant.hasOutstandingBondRequest()) {
-
-      System.out.println("390-000");
-
       return;
     }
-
     iterationParticipant.bondingComplete();
-
-    System.out.println("090-000");
-
-    // TODO: Bail out if this peer didn't have an outstanding bonding request.
     if (bondingRoundTermination()) {
-
       neighboursInitiateRound();
     }
   }
@@ -266,25 +226,12 @@ public class RecursivePeerRefreshState {
   }
 
   private boolean bondingRoundTermination() {
-
-    System.out.println("000");
-
     for (final Map.Entry<BytesValue, MetadataPeer> entry : oneTrueMap.entrySet()) {
-
-      System.out.println("bondingRoundTermination " + entry.getValue().getPeer().getId());
-
       final MetadataPeer metadataPeer = entry.getValue();
-
       if (metadataPeer.hasOutstandingBondRequest()) {
-
-        System.out.println("false");
-
         return false;
       }
     }
-
-    System.out.println("true");
-
     return true;
   }
 
@@ -297,19 +244,12 @@ public class RecursivePeerRefreshState {
   }
 
   private List<MetadataPeer> neighboursRoundCandidates() {
-    List<MetadataPeer> d =
-        oneTrueMap
-            .values()
-            .stream()
-            .filter(MetadataPeer::isNeighboursRoundCandidate)
-            .limit(MAX_CONCURRENT_REQUESTS)
-            .collect(Collectors.toList());
-    return d;
-  }
-
-  @VisibleForTesting
-  void setMaxRounds(final int threshold) {
-    maxRounds = threshold;
+    return oneTrueMap
+        .values()
+        .stream()
+        .filter(MetadataPeer::isNeighboursRoundCandidate)
+        .limit(MAX_CONCURRENT_REQUESTS)
+        .collect(Collectors.toList());
   }
 
   @VisibleForTesting
