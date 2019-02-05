@@ -236,13 +236,17 @@ public class RecursivePeerRefreshState {
   }
 
   private List<MetadataPeer> bondingRoundCandidates() {
-    return oneTrueMap.values().stream()
+    return oneTrueMap
+        .values()
+        .stream()
         .filter(MetadataPeer::isBondingCandidate)
         .collect(Collectors.toList());
   }
 
   private List<MetadataPeer> neighboursRoundCandidates() {
-    return oneTrueMap.values().stream()
+    return oneTrueMap
+        .values()
+        .stream()
         .filter(MetadataPeer::isNeighboursRoundCandidate)
         .limit(MAX_CONCURRENT_REQUESTS)
         .collect(Collectors.toList());
