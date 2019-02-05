@@ -348,10 +348,7 @@ public class PeerDiscoveryControllerTest {
                 .send(eq(peers.get(0)), matchPacketOfType(PacketType.PING));
 
         // Simulate a PONG message from peer[0].
-        final PongPacketData packetData =
-                PongPacketData.create(localPeer.getEndpoint(), mockPacket.getHash());
-        final Packet pongPacket = Packet.create(PacketType.PONG, packetData, keyPairs.get(0));
-        controller.onMessage(pongPacket, peers.get(0));
+        respondWithPong(peers.get(0), keyPairs.get(0), mockPacket.getHash());
 
         // Verify that the FIND_NEIGHBORS packet was sent with target == localPeer.
         final ArgumentCaptor<Packet> captor = ArgumentCaptor.forClass(Packet.class);
@@ -380,6 +377,12 @@ public class PeerDiscoveryControllerTest {
                 .keyPair(localKeyPair)
                 .localPeer(localPeer)
                 .peerTable(peerTable);
+    }
+
+    private void respondWithPong(DiscoveryPeer discoveryPeer, KeyPair keyPair, BytesValue hash) {
+        final PongPacketData packetData0 = PongPacketData.create(localPeer.getEndpoint(), hash);
+        final Packet pongPacket0 = Packet.create(PacketType.PONG, packetData0, keyPair);
+        controller.onMessage(pongPacket0, discoveryPeer);
     }
 
     @Test
@@ -413,10 +416,7 @@ public class PeerDiscoveryControllerTest {
                 .send(eq(peers.get(1)), matchPacketOfType(PacketType.PING));
 
         // Simulate a PONG message from peer[0].
-        final PongPacketData packetData0 =
-                PongPacketData.create(localPeer.getEndpoint(), mockPacket.getHash());
-        final Packet pongPacket0 = Packet.create(PacketType.PONG, packetData0, keyPairs.get(0));
-        controller.onMessage(pongPacket0, peers.get(0));
+        respondWithPong(peers.get(0), keyPairs.get(0), mockPacket.getHash());
 
         // Assert that we're bonding with the third peer.
         assertThat(controller.getPeers()).hasSize(2);
@@ -696,33 +696,7 @@ public class PeerDiscoveryControllerTest {
     @Test
     public void shouldRespondToNeighborsRequestFromKnownPeer()
             throws InterruptedException, ExecutionException, TimeoutException {
-        final List<DiscoveryPeer> peers = new ArrayList<>();
-
-        // Flipping the most significant bit of the keccak256 will place the peer
-        // in the last bucket for the corresponding host peer.
-        final Bytes32 keccak256 = localPeer.keccak256();
-        final MutableBytesValue template = MutableBytesValue.create(keccak256.size());
-        byte msb = keccak256.get(0);
-        msb ^= MOST_SIGNFICANT_BIT_MASK;
-        template.set(0, msb);
-
-        /* * */
-
-        template.setInt(template.size() - 4, 0);
-        final Bytes32 keccak0 = Bytes32.leftPad(template.copy());
-        final MutableBytesValue id0 = MutableBytesValue.create(64);
-        UInt256.of(0).getBytes().copyTo(id0, id0.size() - UInt256Value.SIZE);
-        final DiscoveryPeer peer0 =
-                new DiscoveryPeer(
-                        id0,
-                        new Endpoint(
-                                localPeer.getEndpoint().getHost(),
-                                100 + counter.incrementAndGet(),
-                                OptionalInt.empty()));
-        peer0.setKeccak256(keccak0);
-        peers.add(peer0);
-
-        /* * */
+        final List<DiscoveryPeer> peers = createPeersInLastBucket(localPeer, 1);
 
         final DiscoveryPeer discoPeer = peers.get(0);
 
