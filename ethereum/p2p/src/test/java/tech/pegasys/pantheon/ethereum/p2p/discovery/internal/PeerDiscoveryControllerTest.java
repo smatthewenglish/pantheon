@@ -372,7 +372,8 @@ public class PeerDiscoveryControllerTest {
         .peerTable(peerTable);
   }
 
-  private void respondWithPong(DiscoveryPeer discoveryPeer, KeyPair keyPair, BytesValue hash) {
+  private void respondWithPong(
+      final DiscoveryPeer discoveryPeer, final KeyPair keyPair, final BytesValue hash) {
     final PongPacketData packetData0 = PongPacketData.create(localPeer.getEndpoint(), hash);
     final Packet pongPacket0 = Packet.create(PacketType.PONG, packetData0, keyPair);
     controller.onMessage(pongPacket0, discoveryPeer);
@@ -899,7 +900,7 @@ public class PeerDiscoveryControllerTest {
     assertThat(evictedPeerFromBucket(bootstrapPeers, controller)).isTrue();
   }
 
-  private void neighborsPacketGenerator(List<DiscoveryPeer> peers) {
+  private void neighborsPacketGenerator(final List<DiscoveryPeer> peers) {
     for (int i = 0; i <= 15; i++) {
       final Packet neighborsPacket =
           MockPacketDataFactory.mockNeighborsPacket(peers.get(i), peers.get(16));
@@ -907,7 +908,7 @@ public class PeerDiscoveryControllerTest {
     }
   }
 
-  private void pongPacketGenerator(List<DiscoveryPeer> peers, Packet pingPacket) {
+  private void pongPacketGenerator(final List<DiscoveryPeer> peers, final Packet pingPacket) {
     for (int i = 0; i <= 14; i++) {
       final Packet pongPacket =
           MockPacketDataFactory.mockPongPacket(peers.get(i), pingPacket.getHash());

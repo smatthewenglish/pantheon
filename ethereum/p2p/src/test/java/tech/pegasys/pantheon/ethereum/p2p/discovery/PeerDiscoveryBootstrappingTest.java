@@ -27,8 +27,6 @@ import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PacketType;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PingPacketData;
 import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
 import tech.pegasys.pantheon.ethereum.p2p.peers.PeerBlacklist;
-import tech.pegasys.pantheon.ethereum.p2p.permissioning.NodeWhitelistController;
-import tech.pegasys.pantheon.ethereum.permissioning.PermissioningConfiguration;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.util.Collections;
@@ -155,7 +153,7 @@ public class PeerDiscoveryBootstrappingTest {
             discoveryConfiguration0,
             () -> true,
             new PeerBlacklist(),
-            Optional.of(new NodeWhitelistController(PermissioningConfiguration.createDefault())));
+            Optional.empty());
     peerDiscoveryAgent0.start().join();
 
     // Start another agent, pointing to the above agent as a bootstrap peer.
@@ -170,7 +168,7 @@ public class PeerDiscoveryBootstrappingTest {
             discoveryConfiguration1,
             () -> true,
             new PeerBlacklist(),
-            Optional.of(new NodeWhitelistController(PermissioningConfiguration.createDefault())));
+            Optional.empty());
     peerDiscoveryAgent1.start().join();
 
     await()
@@ -194,7 +192,7 @@ public class PeerDiscoveryBootstrappingTest {
             discoveryConfiguration_TEST,
             () -> true,
             new PeerBlacklist(),
-            Optional.of(new NodeWhitelistController(PermissioningConfiguration.createDefault())));
+            Optional.empty());
     peerDiscoveryAgent_TEST.start().join();
 
     await()
