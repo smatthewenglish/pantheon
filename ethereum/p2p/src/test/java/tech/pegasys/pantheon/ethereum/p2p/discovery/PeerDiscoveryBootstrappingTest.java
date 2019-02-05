@@ -130,11 +130,22 @@ public class PeerDiscoveryBootstrappingTest {
     assertThat(bootstrapAgent.getPeers())
         .allMatch(p -> p.getStatus() == PeerDiscoveryStatus.BONDED);
 
+    for (DiscoveryPeer p : bootstrapAgent.getPeers()) {
+      System.out.println("\n********** " + p.getId() + "\n");
+    }
+
     // This agent will bootstrap off the bootstrap peer, will add all nodes returned by the latter,
     // and will
     // bond with them, ultimately adding all 7 nodes in the network to its table.
     final PeerDiscoveryAgent newAgent =
         helper.startDiscoveryAgent(bootstrapAgent.getAdvertisedPeer());
+
+    System.out.println("\n??? " + bootstrapAgent.getAdvertisedPeer().getId() + "\n");
+
+    for (DiscoveryPeer p : newAgent.getPeers()) {
+      System.out.println("\n--> " + p.getId() + "\n");
+    }
+
     assertThat(newAgent.getPeers()).hasSize(6);
   }
 
