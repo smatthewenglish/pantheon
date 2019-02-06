@@ -121,8 +121,8 @@ public class PeerDiscoveryControllerTest {
     for (int i = 0; i < timeouts; i++) {
       timer.runTimerHandlers();
     }
-    final int expectedTimerEvents = 1 + (timeouts + 1) * peerCount;
-    verify(timer, times(expectedTimerEvents)).setTimer(anyLong(), any());
+    final int expectedTimerEvents = (timeouts + 1) * peerCount;
+    verify(timer, atLeast(expectedTimerEvents)).setTimer(anyLong(), any());
 
     // Within this time period, 4 timers should be placed with these timeouts.
     final long[] expectedTimeouts = {100, 200, 400, 800};
@@ -228,7 +228,6 @@ public class PeerDiscoveryControllerTest {
         .hasSize(3);
 
     // Simulate PONG messages from all peers
-
     for (int i = 0; i < 3; i++) {
       final PongPacketData packetData =
           PongPacketData.create(localPeer.getEndpoint(), mockPacket.getHash());
@@ -237,21 +236,17 @@ public class PeerDiscoveryControllerTest {
     }
 
     // Ensure that the peer controller is now sending FIND_NEIGHBORS messages for this peer.
-    verify(outboundMessageHandler, times(1))
-        .send(eq(peers.get(0)), matchPacketOfType(PacketType.FIND_NEIGHBORS));
-    verify(outboundMessageHandler, times(1))
-        .send(eq(peers.get(1)), matchPacketOfType(PacketType.FIND_NEIGHBORS));
-    verify(outboundMessageHandler, times(1))
-        .send(eq(peers.get(2)), matchPacketOfType(PacketType.FIND_NEIGHBORS));
+    for (int i = 0; i < 3; i++) {
+      verify(outboundMessageHandler, times(1))
+          .send(eq(peers.get(i)), matchPacketOfType(PacketType.FIND_NEIGHBORS));
+    }
 
     // Invoke timeouts and check that we resent our neighbors request
     timer.runTimerHandlers();
-    verify(outboundMessageHandler, times(2))
-        .send(eq(peers.get(0)), matchPacketOfType(PacketType.FIND_NEIGHBORS));
-    verify(outboundMessageHandler, times(2))
-        .send(eq(peers.get(1)), matchPacketOfType(PacketType.FIND_NEIGHBORS));
-    verify(outboundMessageHandler, times(2))
-        .send(eq(peers.get(2)), matchPacketOfType(PacketType.FIND_NEIGHBORS));
+    for (int i = 0; i < 3; i++) {
+      verify(outboundMessageHandler, times(2))
+          .send(eq(peers.get(i)), matchPacketOfType(PacketType.FIND_NEIGHBORS));
+    }
 
     assertThat(
             controller
