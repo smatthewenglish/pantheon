@@ -227,7 +227,7 @@ public class PeerDiscoveryControllerTest {
                 .filter(p -> p.getStatus() == PeerDiscoveryStatus.BONDING))
         .hasSize(3);
 
-    // Simulate a PONG message from peer 0.
+    // Simulate PONG messages from all peers
 
     for (int i = 0; i < 3; i++) {
       final PongPacketData packetData =
