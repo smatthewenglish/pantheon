@@ -70,22 +70,24 @@ public class PeerDiscoveryTableRefreshTest {
     // Send a PING, so as to add a Peer in the controller.
     final PingPacketData ping =
         PingPacketData.create(peers.get(1).getEndpoint(), peers.get(0).getEndpoint());
-    // final Packet packet = Packet.create(PacketType.PING, ping, keyPairs.get(1));
     final Packet packet = Packet.create(PacketType.PING, ping, keypairs.get(1));
     controller.onMessage(packet, peers.get(1));
 
     // Wait until the controller has added the newly found peer.
     assertThat(controller.getPeers()).hasSize(1);
 
-    // As the controller performs refreshes, it'll send FIND_NEIGHBORS packets with random target
-    // IDs every time.
-    // We capture the packets so that we can later assert on them.
-    // Within 1000ms, there should be ~10 packets. But let's be less ambitious and expect at least
-    // 5.
+    /**
+     * The mechanism to refresh the peer table is managed by the {@link PeerDiscoveryController} but
+     * is effectuated in the {@link RecursivePeerRefreshState}. As the recursive refresh process
+     * proceeds in rounds it is necessary to first cancel the current round, before a refresh (and
+     * accordingly the instantiation of a fresh round) can occur. This action will precipitate a new
+     * "bonding round", which is characterized by the dissemination of {@link PacketType.PING}
+     * messages between peers.
+     */
     final ArgumentCaptor<Packet> captor = ArgumentCaptor.forClass(Packet.class);
     for (int i = 0; i < 6; i++) {
-      timer.runPeriodicHandlers();
       controller.getRecursivePeerRefreshState().cancelCurrentRound();
+      timer.runPeriodicHandlers();
       controller.getPeers().forEach(p -> p.setStatus(PeerDiscoveryStatus.KNOWN));
     }
     verify(outboundMessageHandler, atLeast(5)).send(any(), captor.capture());

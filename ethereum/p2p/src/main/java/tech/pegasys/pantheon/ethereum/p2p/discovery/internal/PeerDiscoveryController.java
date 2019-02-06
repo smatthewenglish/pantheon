@@ -341,7 +341,7 @@ public class PeerDiscoveryController {
   }
 
   @VisibleForTesting
-  public RecursivePeerRefreshState getRecursivePeerRefreshState() {
+  RecursivePeerRefreshState getRecursivePeerRefreshState() {
     return recursivePeerRefreshState;
   }
 
