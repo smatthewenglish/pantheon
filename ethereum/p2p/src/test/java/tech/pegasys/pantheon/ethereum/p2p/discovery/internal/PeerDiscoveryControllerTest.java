@@ -221,9 +221,7 @@ public class PeerDiscoveryControllerTest {
     controller.start();
 
     assertThat(
-            controller
-                .getPeers()
-                .stream()
+            controller.getPeers().stream()
                 .filter(p -> p.getStatus() == PeerDiscoveryStatus.BONDING))
         .hasSize(3);
 
@@ -249,9 +247,7 @@ public class PeerDiscoveryControllerTest {
     }
 
     assertThat(
-            controller
-                .getPeers()
-                .stream()
+            controller.getPeers().stream()
                 .filter(p -> p.getStatus() == PeerDiscoveryStatus.BONDING))
         .hasSize(0);
     assertThat(
@@ -281,9 +277,7 @@ public class PeerDiscoveryControllerTest {
     controller.start();
 
     assertThat(
-            controller
-                .getPeers()
-                .stream()
+            controller.getPeers().stream()
                 .filter(p -> p.getStatus() == PeerDiscoveryStatus.BONDING))
         .hasSize(3);
 
@@ -298,9 +292,7 @@ public class PeerDiscoveryControllerTest {
         .send(eq(peers.get(1)), matchPacketOfType(PacketType.FIND_NEIGHBORS));
 
     assertThat(
-            controller
-                .getPeers()
-                .stream()
+            controller.getPeers().stream()
                 .filter(p -> p.getStatus() == PeerDiscoveryStatus.BONDING))
         .hasSize(3);
   }
@@ -342,9 +334,7 @@ public class PeerDiscoveryControllerTest {
     final ArgumentCaptor<Packet> captor = ArgumentCaptor.forClass(Packet.class);
     verify(outboundMessageHandler, atLeast(1)).send(eq(peers.get(0)), captor.capture());
     final List<Packet> neighborsPackets =
-        captor
-            .getAllValues()
-            .stream()
+        captor.getAllValues().stream()
             .filter(p -> p.getType().equals(PacketType.FIND_NEIGHBORS))
             .collect(Collectors.toList());
     assertThat(neighborsPackets.size()).isEqualTo(1);

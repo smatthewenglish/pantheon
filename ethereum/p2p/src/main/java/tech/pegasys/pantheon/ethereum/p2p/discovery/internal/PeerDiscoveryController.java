@@ -156,8 +156,7 @@ public class PeerDiscoveryController {
       throw new IllegalStateException("The peer table had already been started");
     }
 
-    bootstrapNodes
-        .stream()
+    bootstrapNodes.stream()
         .filter(this::whitelistIfPresentIsNodePermitted)
         .forEach(peerTable::tryAdd);
 
@@ -172,8 +171,7 @@ public class PeerDiscoveryController {
             100);
 
     final List<DiscoveryPeer> initialDiscoveryPeers =
-        bootstrapNodes
-            .stream()
+        bootstrapNodes.stream()
             .filter(this::whitelistIfPresentIsNodePermitted)
             .collect(Collectors.toList());
     recursivePeerRefreshState.start(initialDiscoveryPeers, localPeer.getId());

@@ -178,8 +178,7 @@ public class PeerTable {
    */
   public List<DiscoveryPeer> nearestPeers(final BytesValue target, final int limit) {
     final BytesValue keccak256 = Hash.keccak256(target);
-    return getAllPeers()
-        .stream()
+    return getAllPeers().stream()
         .sorted(comparingInt((peer) -> distance(peer.keccak256(), keccak256)))
         .limit(limit)
         .collect(toList());
