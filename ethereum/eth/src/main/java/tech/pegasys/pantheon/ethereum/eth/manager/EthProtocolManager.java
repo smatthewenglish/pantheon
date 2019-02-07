@@ -44,7 +44,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
-  static final int DEFAULT_REQUEST_LIMIT = 200;
+  public static final int DEFAULT_REQUEST_LIMIT = 200;
   private static final Logger LOG = LogManager.getLogger();
   private static final List<Capability> FAST_SYNC_CAPS =
       Collections.singletonList(EthProtocol.ETH63);
@@ -64,13 +64,13 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
   private List<Capability> supportedCapabilities;
   private final Blockchain blockchain;
 
-  EthProtocolManager(
-      final Blockchain blockchain,
-      final WorldStateArchive worldStateArchive,
-      final int networkId,
-      final boolean fastSyncEnabled,
-      final int requestLimit,
-      final EthScheduler scheduler) {
+  public EthProtocolManager(
+          final Blockchain blockchain,
+          final WorldStateArchive worldStateArchive,
+          final int networkId,
+          final boolean fastSyncEnabled,
+          final int requestLimit,
+          final EthScheduler scheduler) {
     this.networkId = networkId;
 
     this.scheduler = scheduler;
