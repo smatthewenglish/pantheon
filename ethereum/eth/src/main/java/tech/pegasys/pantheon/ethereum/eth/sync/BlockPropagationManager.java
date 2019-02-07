@@ -22,6 +22,7 @@ import tech.pegasys.pantheon.ethereum.eth.manager.AbstractPeerTask;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthContext;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthMessage;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthPeer;
+import tech.pegasys.pantheon.ethereum.eth.manager.EthPeers;
 import tech.pegasys.pantheon.ethereum.eth.messages.EthPV62;
 import tech.pegasys.pantheon.ethereum.eth.messages.NewBlockHashesMessage;
 import tech.pegasys.pantheon.ethereum.eth.messages.NewBlockHashesMessage.NewBlockHash;
@@ -141,6 +142,21 @@ public class BlockPropagationManager<C> {
       final long head = blockchain.getChainHeadBlockNumber();
       final long cutoff = head + config.blockPropagationRange().lowerEndpoint();
       pendingBlocks.purgeBlocksOlderThan(cutoff);
+    }
+  }
+
+  // Predicated on the type of information requested, announce a block's availability
+  // or propagate it to a subset of peers: "Announced block" vs. "Propagated block".
+  private void broadcastBlock(Block block) {
+
+    // Determine total difficulty of block...
+
+    // If propagation is requested, send to a subset of peers
+    List<EthPeer> availablePeers = ethContext.getEthPeers().availablePeers().collect(Collectors.toList());
+
+    // Send the block...
+    for(EthPeer ethPeer : availablePeers) {
+      ethPeer.send();
     }
   }
 

@@ -14,6 +14,7 @@ package tech.pegasys.pantheon.ethereum.eth.manager;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
+import tech.pegasys.pantheon.ethereum.core.Block;
 import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.ethereum.eth.manager.ChainState.EstimatedHeightListener;
 import tech.pegasys.pantheon.ethereum.eth.manager.RequestManager.ResponseStream;
@@ -128,6 +129,13 @@ public class EthPeer {
         connection.sendForProtocol(protocolName, messageData);
         return null;
     }
+  }
+
+  // Sends block to a peer...
+  public void propagateBlock(Block block, UInt256 totalDifficulty) {
+
+    // New Block Message...
+    connection.
   }
 
   public ResponseStream getHeadersByHash(
