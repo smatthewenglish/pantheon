@@ -64,10 +64,6 @@ public class SynchronizerConfiguration {
   private final int transactionsParallelism;
   private final int computationParallelism;
 
-//            worldStateHashCountPerRequest
-//    worldStateRequestParallelism
-//            computationParallelism
-
   public SynchronizerConfiguration(
           final SyncMode requestedSyncMode,
           final int fastSyncPivotDistance,

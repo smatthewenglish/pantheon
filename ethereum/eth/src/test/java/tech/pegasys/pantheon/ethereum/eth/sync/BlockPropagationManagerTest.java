@@ -688,7 +688,7 @@ public class BlockPropagationManagerTest {
                 worldStateArchive,
                 1,
                 false,
-                EthProtocolManager.DEFAULT_REQUEST_LIMIT,
+                200,
                 new DeterministicEthScheduler(DeterministicEthScheduler.TimeoutPolicy.NEVER));
 
         BlockPropagationManager blockPropagationManager00 = new BlockPropagationManager<>(

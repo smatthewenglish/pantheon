@@ -44,7 +44,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
-  public static final int DEFAULT_REQUEST_LIMIT = 200;
+  static final int DEFAULT_REQUEST_LIMIT = 200;
   private static final Logger LOG = LogManager.getLogger();
   private static final List<Capability> FAST_SYNC_CAPS =
       Collections.singletonList(EthProtocol.ETH63);
