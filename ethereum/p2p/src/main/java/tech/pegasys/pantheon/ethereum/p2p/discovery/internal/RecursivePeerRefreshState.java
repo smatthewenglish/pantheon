@@ -71,7 +71,7 @@ public class RecursivePeerRefreshState {
     this.maxRounds = maxRounds;
   }
 
-  synchronized void start(final List<DiscoveryPeer> initialPeers, final BytesValue target) {
+  void start(final List<DiscoveryPeer> initialPeers, final BytesValue target) {
     if (iterativeSearchInProgress) {
       LOG.debug("Skipping discovery because previous search is still in progress.");
       return;
@@ -123,7 +123,7 @@ public class RecursivePeerRefreshState {
     return new RoundTimeout(timeoutCancelled, timerId);
   }
 
-  private synchronized void performIfNotCancelled(
+  private void performIfNotCancelled(
       final Runnable action, final AtomicBoolean cancelled) {
     if (!cancelled.get()) {
       action.run();
@@ -161,7 +161,7 @@ public class RecursivePeerRefreshState {
     currentRound++;
   }
 
-  private synchronized void neighboursCancelOutstandingRequests() {
+  private void neighboursCancelOutstandingRequests() {
     LOG.debug("Neighbours round timed out");
     for (final Map.Entry<BytesValue, MetadataPeer> entry : oneTrueMap.entrySet()) {
       final MetadataPeer metadataPeer = entry.getValue();
@@ -172,7 +172,7 @@ public class RecursivePeerRefreshState {
     bondingInitiateRound();
   }
 
-  synchronized void onNeighboursPacketReceived(
+  void onNeighboursPacketReceived(
       final DiscoveryPeer peer, final NeighborsPacketData neighboursPacket) {
     final MetadataPeer metadataPeer = oneTrueMap.get(peer.getId());
     if (metadataPeer == null) {
@@ -201,7 +201,7 @@ public class RecursivePeerRefreshState {
     }
   }
 
-  synchronized void onBondingComplete(final DiscoveryPeer peer) {
+  void onBondingComplete(final DiscoveryPeer peer) {
     final MetadataPeer iterationParticipant = oneTrueMap.get(peer.getId());
     if (iterationParticipant == null) {
       return;
