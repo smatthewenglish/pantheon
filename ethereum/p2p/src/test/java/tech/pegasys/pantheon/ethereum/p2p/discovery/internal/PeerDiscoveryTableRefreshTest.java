@@ -86,7 +86,7 @@ public class PeerDiscoveryTableRefreshTest {
 
       controller.onMessage(pongPacket, peers.get(0));
 
-      controller.getRecursivePeerRefreshState().cancelCurrentRound();
+      controller.getRecursivePeerRefreshState().cancel();
       timer.runPeriodicHandlers();
       controller.getPeers().forEach(p -> p.setStatus(PeerDiscoveryStatus.KNOWN));
       controller.onMessage(pingPacket, peers.get(1));

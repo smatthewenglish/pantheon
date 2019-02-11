@@ -148,6 +148,7 @@ public class RecursivePeerRefreshState {
     for (final Map.Entry<BytesValue, MetadataPeer> entry : oneTrueMap.entrySet()) {
       final MetadataPeer metadataPeer = entry.getValue();
       if (metadataPeer.hasOutstandingBondRequest()) {
+        // We're setting bonding to "complete" here, by "cancelling" the outstanding request.
         metadataPeer.bondingComplete();
       }
     }
@@ -262,12 +263,7 @@ public class RecursivePeerRefreshState {
   }
 
   @VisibleForTesting
-  public BytesValue getTarget() {
-    return target;
-  }
-
-  @VisibleForTesting
-  void cancelCurrentRound() {
+  void cancel() {
     iterativeSearchInProgress = false;
   }
 
@@ -281,7 +277,7 @@ public class RecursivePeerRefreshState {
     boolean findNeighboursStarted = false;
     boolean findNeighboursComplete = false;
 
-    public MetadataPeer(final DiscoveryPeer peer, final int distance) {
+    MetadataPeer(final DiscoveryPeer peer, final int distance) {
       this.peer = peer;
       this.distance = distance;
     }
