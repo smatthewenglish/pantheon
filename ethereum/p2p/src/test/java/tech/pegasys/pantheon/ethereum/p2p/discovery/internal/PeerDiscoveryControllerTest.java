@@ -1068,13 +1068,14 @@ public class PeerDiscoveryControllerTest {
       final MutableBytesValue id = MutableBytesValue.create(64);
       UInt256.of(i).getBytes().copyTo(id, id.size() - UInt256Value.SIZE);
       final DiscoveryPeer peer =
-          new DiscoveryPeer(
-              id,
-              new Endpoint(
-                  localPeer.getEndpoint().getHost(),
-                  100 + counter.incrementAndGet(),
-                  OptionalInt.empty()));
-      peer.setKeccak256(keccak);
+          spy(
+              new DiscoveryPeer(
+                  id,
+                  new Endpoint(
+                      localPeer.getEndpoint().getHost(),
+                      100 + counter.incrementAndGet(),
+                      OptionalInt.empty())));
+      doReturn(keccak).when(peer).keccak256();
       newPeers.add(peer);
     }
 

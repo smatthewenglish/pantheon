@@ -18,8 +18,6 @@ import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.util.Objects;
 
-import com.google.common.annotations.VisibleForTesting;
-
 public class DefaultPeerId implements PeerId {
   protected final BytesValue id;
   private Bytes32 keccak256;
@@ -39,11 +37,6 @@ public class DefaultPeerId implements PeerId {
       keccak256 = Hash.keccak256(getId());
     }
     return keccak256;
-  }
-
-  @VisibleForTesting
-  public void setKeccak256(final Bytes32 keccak256) {
-    this.keccak256 = keccak256;
   }
 
   @Override
