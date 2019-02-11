@@ -31,6 +31,7 @@ import tech.pegasys.pantheon.ethereum.p2p.permissioning.NodeWhitelistController;
 import tech.pegasys.pantheon.ethereum.permissioning.PermissioningConfiguration;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
+import java.nio.file.Files;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -450,12 +451,17 @@ public class RecursivePeerRefreshStateTest {
   }
 
   @Test
-  public void shouldNotBondWithNodesRejectedByWhitelist() {
+  public void shouldNotBondWithNodesRejectedByWhitelist() throws Exception {
     final DiscoveryPeer peerA = new DiscoveryPeer(createId(1), "127.0.0.1", 1, 1);
     final DiscoveryPeer peerB = new DiscoveryPeer(createId(2), "127.0.0.2", 2, 2);
 
+    final PermissioningConfiguration permissioningConfiguration =
+        PermissioningConfiguration.createDefault();
+    permissioningConfiguration.setConfigurationFilePath(
+        Files.createTempFile("test", "test").toAbsolutePath().toString());
+
     final NodeWhitelistController peerWhitelist =
-        new NodeWhitelistController(PermissioningConfiguration.createDefault());
+        new NodeWhitelistController(permissioningConfiguration);
     peerWhitelist.addNode(peerA);
 
     recursivePeerRefreshState =

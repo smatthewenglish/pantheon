@@ -954,8 +954,6 @@ public class PeerDiscoveryControllerTest {
     final DiscoveryPeer otherPeer2 = peers.get(2);
 
     final PeerBlacklist blacklist = new PeerBlacklist();
-//    final PermissioningConfiguration config = new PermissioningConfiguration();
-//    final NodeWhitelistController nodeWhitelistController = new NodeWhitelistController(config);
     final PermissioningConfiguration config = permissioningConfigurationWithTempFile();
     final NodeWhitelistController nodeWhitelistController = new NodeWhitelistController(config);
 
@@ -968,7 +966,7 @@ public class PeerDiscoveryControllerTest {
         getControllerBuilder()
             .peers(discoPeer)
             .blacklist(blacklist)
-            .whitelist(Optional.of(nodeWhitelistController))
+            .whitelist(nodeWhitelistController)
             .outboundMessageHandler(outboundMessageHandler)
             .build();
 
@@ -1024,10 +1022,6 @@ public class PeerDiscoveryControllerTest {
     final PeerBlacklist blacklist = new PeerBlacklist();
 
     // don't add disco peer to whitelist
-//    final PermissioningConfiguration config = PermissioningConfiguration.createDefault();
-//    config.setNodeWhitelist(new ArrayList<>());
-//    Optional<NodeWhitelistController> nodeWhitelistController =
-//        Optional.of(new NodeWhitelistController(config));
     PermissioningConfiguration config = permissioningConfigurationWithTempFile();
     config.setNodeWhitelist(new ArrayList<>());
     NodeWhitelistController nodeWhitelistController = new NodeWhitelistController(config);
