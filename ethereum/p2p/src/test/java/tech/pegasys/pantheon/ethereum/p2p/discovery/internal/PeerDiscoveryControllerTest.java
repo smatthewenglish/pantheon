@@ -44,6 +44,8 @@ import tech.pegasys.pantheon.util.bytes.MutableBytesValue;
 import tech.pegasys.pantheon.util.uint.UInt256;
 import tech.pegasys.pantheon.util.uint.UInt256Value;
 
+import java.io.IOException;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -944,7 +946,7 @@ public class PeerDiscoveryControllerTest {
   }
 
   @Test
-  public void shouldNotBondWithNonWhitelistedPeer() {
+  public void shouldNotBondWithNonWhitelistedPeer() throws IOException {
     final List<DiscoveryPeer> peers = createPeersInLastBucket(localPeer, 3);
 
     final DiscoveryPeer discoPeer = peers.get(0);
@@ -952,7 +954,9 @@ public class PeerDiscoveryControllerTest {
     final DiscoveryPeer otherPeer2 = peers.get(2);
 
     final PeerBlacklist blacklist = new PeerBlacklist();
-    final PermissioningConfiguration config = new PermissioningConfiguration();
+//    final PermissioningConfiguration config = new PermissioningConfiguration();
+//    final NodeWhitelistController nodeWhitelistController = new NodeWhitelistController(config);
+    final PermissioningConfiguration config = permissioningConfigurationWithTempFile();
     final NodeWhitelistController nodeWhitelistController = new NodeWhitelistController(config);
 
     // Whitelist peers
@@ -1013,17 +1017,20 @@ public class PeerDiscoveryControllerTest {
   }
 
   @Test
-  public void shouldNotRespondToPingFromNonWhitelistedDiscoveryPeer() {
+  public void shouldNotRespondToPingFromNonWhitelistedDiscoveryPeer() throws IOException {
     final List<DiscoveryPeer> peers = createPeersInLastBucket(localPeer, 3);
     final DiscoveryPeer discoPeer = peers.get(0);
 
     final PeerBlacklist blacklist = new PeerBlacklist();
 
     // don't add disco peer to whitelist
-    final PermissioningConfiguration config = PermissioningConfiguration.createDefault();
+//    final PermissioningConfiguration config = PermissioningConfiguration.createDefault();
+//    config.setNodeWhitelist(new ArrayList<>());
+//    Optional<NodeWhitelistController> nodeWhitelistController =
+//        Optional.of(new NodeWhitelistController(config));
+    PermissioningConfiguration config = permissioningConfigurationWithTempFile();
     config.setNodeWhitelist(new ArrayList<>());
-    Optional<NodeWhitelistController> nodeWhitelistController =
-        Optional.of(new NodeWhitelistController(config));
+    NodeWhitelistController nodeWhitelistController = new NodeWhitelistController(config);
 
     controller =
         getControllerBuilder()
@@ -1096,6 +1103,13 @@ public class PeerDiscoveryControllerTest {
     return controller;
   }
 
+  private PermissioningConfiguration permissioningConfigurationWithTempFile() throws IOException {
+    final PermissioningConfiguration config = PermissioningConfiguration.createDefault();
+    config.setConfigurationFilePath(
+        Files.createTempFile("test", "test").toAbsolutePath().toString());
+    return config;
+  }
+
   static class ControllerBuilder {
     private Collection<DiscoveryPeer> discoPeers = Collections.emptyList();
     private PeerBlacklist blacklist = new PeerBlacklist();
@@ -1126,8 +1140,8 @@ public class PeerDiscoveryControllerTest {
       return this;
     }
 
-    ControllerBuilder whitelist(final Optional<NodeWhitelistController> whitelist) {
-      this.whitelist = whitelist;
+    ControllerBuilder whitelist(final NodeWhitelistController whitelist) {
+      this.whitelist = Optional.of(whitelist);
       return this;
     }
 
