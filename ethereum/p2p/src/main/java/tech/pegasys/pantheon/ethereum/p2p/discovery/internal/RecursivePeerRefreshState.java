@@ -40,13 +40,14 @@ public class RecursivePeerRefreshState {
   private BytesValue target;
   private final PeerBlacklist peerBlacklist;
   private final Optional<NodeWhitelistController> peerWhitelist;
+  private final PeerTable peerTable;
+  private final BytesValue localPeerId;
 
   private final BondingAgent bondingAgent;
   private final FindNeighbourDispatcher findNeighbourDispatcher;
   private Optional<RoundTimeout> currentRoundTimeout = Optional.empty();
   private boolean iterativeSearchInProgress = false;
   private final int maxRounds;
-
   private int currentRound;
 
   private final SortedMap<BytesValue, MetadataPeer> oneTrueMap = new TreeMap<>();
@@ -54,12 +55,16 @@ public class RecursivePeerRefreshState {
   private final TimerUtil timerUtil;
   private final int timeoutPeriodInSeconds;
 
+  List<DiscoveryPeer> initialPeers;
+
   RecursivePeerRefreshState(
       final PeerBlacklist peerBlacklist,
       final Optional<NodeWhitelistController> peerWhitelist,
       final BondingAgent bondingAgent,
       final FindNeighbourDispatcher neighborFinder,
       final TimerUtil timerUtil,
+      final BytesValue localPeerId,
+      final PeerTable peerTable,
       final int timeoutPeriodInSeconds,
       final int maxRounds) {
     this.peerBlacklist = peerBlacklist;
@@ -67,6 +72,8 @@ public class RecursivePeerRefreshState {
     this.bondingAgent = bondingAgent;
     this.findNeighbourDispatcher = neighborFinder;
     this.timerUtil = timerUtil;
+    this.localPeerId = localPeerId;
+    this.peerTable = peerTable;
     this.timeoutPeriodInSeconds = timeoutPeriodInSeconds;
     this.maxRounds = maxRounds;
   }
@@ -90,6 +97,7 @@ public class RecursivePeerRefreshState {
   }
 
   private void addInitialPeers(final List<DiscoveryPeer> initialPeers) {
+    this.initialPeers = initialPeers;
     for (final DiscoveryPeer peer : initialPeers) {
       final MetadataPeer iterationParticipant =
           new MetadataPeer(peer, distance(target, peer.getId()));
@@ -108,8 +116,14 @@ public class RecursivePeerRefreshState {
     }
     LOG.debug("Initiating bonding round with {} candidates", candidates.size());
     for (final MetadataPeer peer : candidates) {
-      peer.bondingStarted();
-      bondingAgent.performBonding(peer.getPeer());
+      if (initialPeers.contains(peer.getPeer())) {
+        peer.bondingStarted();
+        bondingAgent.performBonding(peer.getPeer());
+      } else if (!peerTable.get(peer.getPeer()).isPresent()
+          && !peer.getPeer().getId().equals(localPeerId)) {
+        peer.bondingStarted();
+        bondingAgent.performBonding(peer.getPeer());
+      }
     }
     currentRoundTimeout = Optional.of(scheduleTimeout(this::bondingCancelOutstandingRequests));
   }

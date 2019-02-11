@@ -167,6 +167,8 @@ public class PeerDiscoveryController {
             this::bond,
             this::findNodes,
             timerUtil,
+            localPeer.getId(),
+            peerTable,
             PEER_REFRESH_ROUND_TIMEOUT_IN_SECONDS,
             100);
 
@@ -245,22 +247,19 @@ public class PeerDiscoveryController {
           final PingPacketData ping = packet.getPacketData(PingPacketData.class).get();
           respondToPing(ping, packet.getHash(), peer);
         }
-
         break;
       case PONG:
-        {
-          LOG.trace("Received PONG packet from {}", sender.getEnodeURI());
-          matchInteraction(packet)
-              .ifPresent(
-                  interaction -> {
-                    if (peerBlacklisted) {
-                      return;
-                    }
-                    addToPeerTable(peer);
-                    recursivePeerRefreshState.onBondingComplete(peer);
-                  });
-          break;
-        }
+        LOG.trace("Received PONG packet from {}", sender.getEnodeURI());
+        matchInteraction(packet)
+            .ifPresent(
+                interaction -> {
+                  if (peerBlacklisted) {
+                    return;
+                  }
+                  addToPeerTable(peer);
+                  recursivePeerRefreshState.onBondingComplete(peer);
+                });
+        break;
       case NEIGHBORS:
         LOG.trace("Received NEIGHBORS packet from {}", sender.getEnodeURI());
         matchInteraction(packet)
@@ -269,7 +268,6 @@ public class PeerDiscoveryController {
                     recursivePeerRefreshState.onNeighboursPacketReceived(
                         peer, packet.getPacketData(NeighborsPacketData.class).orElse(null)));
         break;
-
       case FIND_NEIGHBORS:
         LOG.trace("Received FIND_NEIGHBORS packet from {}", sender.getEnodeURI());
         if (!peerKnown || peerBlacklisted) {

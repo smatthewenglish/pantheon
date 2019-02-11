@@ -52,7 +52,15 @@ public class RecursivePeerRefreshStateTest {
 
   private RecursivePeerRefreshState recursivePeerRefreshState =
       new RecursivePeerRefreshState(
-          peerBlacklist, Optional.empty(), bondingAgent, neighborFinder, timerUtil, 5, 100);
+          peerBlacklist,
+          Optional.empty(),
+          bondingAgent,
+          neighborFinder,
+          timerUtil,
+          createId(999),
+          new PeerTable(createId(999), 16),
+          5,
+          100);
 
   @Test
   public void shouldBondWithInitialNodesWhenStarted() {
@@ -161,7 +169,15 @@ public class RecursivePeerRefreshStateTest {
   public void shouldStopWhenMaximumNumberOfRoundsReached() {
     recursivePeerRefreshState =
         new RecursivePeerRefreshState(
-            peerBlacklist, Optional.empty(), bondingAgent, neighborFinder, timerUtil, 5, 1);
+            peerBlacklist,
+            Optional.empty(),
+            bondingAgent,
+            neighborFinder,
+            timerUtil,
+            createId(999),
+            new PeerTable(createId(999), 16),
+            5,
+            1);
 
     peer1.setStatus(PeerDiscoveryStatus.KNOWN);
     peer2.setStatus(PeerDiscoveryStatus.KNOWN);
@@ -435,7 +451,15 @@ public class RecursivePeerRefreshStateTest {
 
     recursivePeerRefreshState =
         new RecursivePeerRefreshState(
-            blacklist, Optional.empty(), bondingAgent, neighborFinder, timerUtil, 5, 100);
+            blacklist,
+            Optional.empty(),
+            bondingAgent,
+            neighborFinder,
+            timerUtil,
+            createId(999),
+            new PeerTable(createId(999), 16),
+            5,
+            100);
     recursivePeerRefreshState.start(singletonList(peerA), TARGET);
 
     verify(bondingAgent).performBonding(peerA);
@@ -471,6 +495,8 @@ public class RecursivePeerRefreshStateTest {
             bondingAgent,
             neighborFinder,
             timerUtil,
+            createId(999),
+            new PeerTable(createId(999), 16),
             5,
             100);
     recursivePeerRefreshState.start(singletonList(peerA), TARGET);
