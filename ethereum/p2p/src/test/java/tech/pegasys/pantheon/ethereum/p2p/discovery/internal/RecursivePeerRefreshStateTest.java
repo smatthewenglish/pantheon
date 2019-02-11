@@ -137,7 +137,7 @@ public class RecursivePeerRefreshStateTest {
 
     recursivePeerRefreshState.start(asList(peer1, peer2), TARGET);
 
-    verify(bondingAgent).performBonding(peer2);
+    verify(bondingAgent).performBonding(peer1);
     verify(bondingAgent).performBonding(peer2);
 
     completeBonding(peer1);
