@@ -443,7 +443,7 @@ public class RecursivePeerRefreshStateTest {
     verify(neighborFinder).findNeighbours(peerA, TARGET);
 
     recursivePeerRefreshState.onNeighboursPacketReceived(
-        peerB, NeighborsPacketData.create(emptyList()));
+        peerA, NeighborsPacketData.create(Collections.singletonList(peerB)));
 
     verify(bondingAgent, never()).performBonding(peerB);
   }
