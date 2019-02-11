@@ -123,8 +123,7 @@ public class RecursivePeerRefreshState {
     return new RoundTimeout(timeoutCancelled, timerId);
   }
 
-  private void performIfNotCancelled(
-      final Runnable action, final AtomicBoolean cancelled) {
+  private void performIfNotCancelled(final Runnable action, final AtomicBoolean cancelled) {
     if (!cancelled.get()) {
       action.run();
     }

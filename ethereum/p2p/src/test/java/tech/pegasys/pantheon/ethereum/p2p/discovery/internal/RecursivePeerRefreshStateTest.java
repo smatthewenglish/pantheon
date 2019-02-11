@@ -31,6 +31,7 @@ import tech.pegasys.pantheon.ethereum.p2p.permissioning.NodeWhitelistController;
 import tech.pegasys.pantheon.ethereum.permissioning.PermissioningConfiguration;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
