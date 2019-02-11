@@ -455,7 +455,7 @@ public class RecursivePeerRefreshStateTest {
 
     final NodeWhitelistController peerWhitelist =
         new NodeWhitelistController(PermissioningConfiguration.createDefault());
-    peerWhitelist.removeNodes(singletonList(peerB));
+    peerWhitelist.addNode(peerA);
 
     recursivePeerRefreshState =
         new RecursivePeerRefreshState(
