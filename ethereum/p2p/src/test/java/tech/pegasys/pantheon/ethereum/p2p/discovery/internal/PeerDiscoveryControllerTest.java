@@ -452,8 +452,6 @@ public class PeerDiscoveryControllerTest {
         .filteredOn(p -> p.equals(peers.get(2)) && p.getStatus() == PeerDiscoveryStatus.BONDED)
         .hasSize(1);
 
-    // Wait for 1 second and ensure that only 1 PING was ever sent to peer[2].
-    Thread.sleep(1000);
     verify(outboundMessageHandler, times(1))
         .send(eq(peers.get(2)), matchPacketOfType(PacketType.PING));
   }
