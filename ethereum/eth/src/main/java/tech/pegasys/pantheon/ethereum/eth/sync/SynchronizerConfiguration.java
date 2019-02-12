@@ -64,27 +64,27 @@ public class SynchronizerConfiguration {
   private final int transactionsParallelism;
   private final int computationParallelism;
 
-  public SynchronizerConfiguration(
-          final SyncMode requestedSyncMode,
-          final int fastSyncPivotDistance,
-          final float fastSyncFullValidationRate,
-          final int fastSyncMinimumPeerCount,
-          final Duration fastSyncMaximumPeerWaitTime,
-          final int worldStateHashCountPerRequest,
-          final int worldStateRequestParallelism,
-          final Range<Long> blockPropagationRange,
-          final Optional<SyncMode> syncMode,
-          final long downloaderChangeTargetThresholdByHeight,
-          final UInt256 downloaderChangeTargetThresholdByTd,
-          final int downloaderHeaderRequestSize,
-          final int downloaderCheckpointTimeoutsPermitted,
-          final int downloaderChainSegmentTimeoutsPermitted,
-          final int downloaderChainSegmentSize,
-          final long trailingPeerBlocksBehindThreshold,
-          final int maxTrailingPeers,
-          final int downloaderParallelism,
-          final int transactionsParallelism,
-          final int computationParallelism) {
+  private SynchronizerConfiguration(
+      final SyncMode requestedSyncMode,
+      final int fastSyncPivotDistance,
+      final float fastSyncFullValidationRate,
+      final int fastSyncMinimumPeerCount,
+      final Duration fastSyncMaximumPeerWaitTime,
+      final int worldStateHashCountPerRequest,
+      final int worldStateRequestParallelism,
+      final Range<Long> blockPropagationRange,
+      final Optional<SyncMode> syncMode,
+      final long downloaderChangeTargetThresholdByHeight,
+      final UInt256 downloaderChangeTargetThresholdByTd,
+      final int downloaderHeaderRequestSize,
+      final int downloaderCheckpointTimeoutsPermitted,
+      final int downloaderChainSegmentTimeoutsPermitted,
+      final int downloaderChainSegmentSize,
+      final long trailingPeerBlocksBehindThreshold,
+      final int maxTrailingPeers,
+      final int downloaderParallelism,
+      final int transactionsParallelism,
+      final int computationParallelism) {
     this.requestedSyncMode = requestedSyncMode;
     this.fastSyncPivotDistance = fastSyncPivotDistance;
     this.fastSyncFullValidationRate = fastSyncFullValidationRate;
