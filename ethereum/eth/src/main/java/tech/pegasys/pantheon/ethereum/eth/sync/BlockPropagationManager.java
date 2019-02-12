@@ -144,10 +144,6 @@ public class BlockPropagationManager<C> {
     }
   }
 
-  /**
-   * Predicated on the type of information requested, announce a block's availability or propagate
-   * it to a subset of peers: "Announced block" vs. "Propagated block".
-   */
   private void broadcastBlock(final Block block, final UInt256 difficulty) {
     final List<EthPeer> availablePeers =
         ethContext.getEthPeers().availablePeers().collect(Collectors.toList());
