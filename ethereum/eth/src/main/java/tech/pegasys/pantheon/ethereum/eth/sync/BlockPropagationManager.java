@@ -144,7 +144,7 @@ public class BlockPropagationManager<C> {
     }
   }
 
-  private void broadcastBlock(final Block block, final UInt256 difficulty) {
+  void broadcastBlock(final Block block, final UInt256 difficulty) {
     final List<EthPeer> availablePeers =
         ethContext.getEthPeers().availablePeers().collect(Collectors.toList());
     for (EthPeer ethPeer : availablePeers) {
@@ -152,7 +152,7 @@ public class BlockPropagationManager<C> {
     }
   }
 
-  private void handleNewBlockFromNetwork(final EthMessage message) {
+  void handleNewBlockFromNetwork(final EthMessage message) {
     final Blockchain blockchain = protocolContext.getBlockchain();
     final NewBlockMessage newBlockMessage = NewBlockMessage.readFrom(message.getData());
     try {

@@ -566,4 +566,61 @@ public class BlockPropagationManagerTest {
 
     verify(ethScheduler, times(1)).scheduleSyncWorkerTask(any(Supplier.class));
   }
+
+  @SuppressWarnings("unchecked")
+  @Test
+  public void broadcastBlockTest() {
+    BlockchainSetupUtil<Void> blockchainUtil = BlockchainSetupUtil.forTesting();
+
+    MutableBlockchain blockchain = spy(blockchainUtil.getBlockchain());
+    ProtocolSchedule<Void> protocolSchedule = blockchainUtil.getProtocolSchedule();
+    ProtocolContext<Void> tempProtocolContext = blockchainUtil.getProtocolContext();
+    ProtocolContext<Void> protocolContext =
+        new ProtocolContext<>(
+            blockchain,
+            tempProtocolContext.getWorldStateArchive(),
+            tempProtocolContext.getConsensusState());
+
+    EthProtocolManager ethProtocolManager =
+        EthProtocolManagerTestUtil.create(blockchain, blockchainUtil.getWorldArchive());
+
+    SynchronizerConfiguration syncConfig =
+        SynchronizerConfiguration.builder()
+            .blockPropagationRange(-3, 5)
+            .build()
+            .validated(blockchain);
+    SyncState syncState = new SyncState(blockchain, ethProtocolManager.ethContext().getEthPeers());
+    BlockPropagationManager<Void> blockPropagationManager =
+        spy(
+            new BlockPropagationManager<>(
+                syncConfig,
+                protocolSchedule,
+                protocolContext,
+                ethProtocolManager.ethContext(),
+                syncState,
+                pendingBlocks,
+                ethTasksTimer));
+
+    blockchainUtil.importFirstBlocks(2);
+    final Block nextBlock = blockchainUtil.getBlock(2);
+
+    blockPropagationManager.start();
+
+    // Setup peer and messages
+    final RespondingEthPeer peer0 = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 0);
+    final RespondingEthPeer peer1 = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 0);
+    final RespondingEthPeer peer2 = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 0);
+
+    final UInt256 totalDifficulty =
+        fullBlockchain.getTotalDifficultyByHash(nextBlock.getHash()).get();
+    final NewBlockMessage newBlockMessage = NewBlockMessage.create(nextBlock, totalDifficulty);
+
+    // Broadcast message
+    EthProtocolManagerTestUtil.broadcastMessage(ethProtocolManager, peer0, newBlockMessage);
+
+    final Responder responder = RespondingEthPeer.blockchainResponder(fullBlockchain);
+    peer0.respondWhile(responder, peer0::hasOutstandingRequests);
+
+    verify(blockPropagationManager, times(1)).broadcastBlock(any(), any());
+  }
 }
