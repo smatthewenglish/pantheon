@@ -116,14 +116,8 @@ public class RecursivePeerRefreshState {
     }
     LOG.debug("Initiating bonding round with {} candidates", candidates.size());
     for (final MetadataPeer peer : candidates) {
-      if (initialPeers.contains(peer.getPeer())) {
-        peer.bondingStarted();
-        bondingAgent.performBonding(peer.getPeer());
-      } else if (!peerTable.get(peer.getPeer()).isPresent()
-          && !peer.getPeer().getId().equals(localPeerId)) {
-        peer.bondingStarted();
-        bondingAgent.performBonding(peer.getPeer());
-      }
+      peer.bondingStarted();
+      bondingAgent.performBonding(peer.getPeer());
     }
     currentRoundTimeout = Optional.of(scheduleTimeout(this::bondingCancelOutstandingRequests));
   }
@@ -186,6 +180,14 @@ public class RecursivePeerRefreshState {
     bondingInitiateRound();
   }
 
+  private boolean satisfiesMapAdditionCriteria(final DiscoveryPeer discoPeer) {
+    return !oneTrueMap.containsKey(discoPeer.getId())
+        && !peerBlacklist.contains(discoPeer)
+        && peerWhitelist.map(whitelist -> whitelist.isPermitted(discoPeer)).orElse(true)
+        && (initialPeers.contains(discoPeer) || !peerTable.get(discoPeer).isPresent())
+        && !discoPeer.getId().equals(localPeerId);
+  }
+
   void onNeighboursPacketReceived(
       final DiscoveryPeer peer, final NeighborsPacketData neighboursPacket) {
     final MetadataPeer metadataPeer = oneTrueMap.get(peer.getId());
@@ -194,12 +196,7 @@ public class RecursivePeerRefreshState {
     }
     LOG.debug("Received neighbours packet with {} neighbours", neighboursPacket.getNodes().size());
     for (final DiscoveryPeer receivedDiscoPeer : neighboursPacket.getNodes()) {
-      if (!oneTrueMap.containsKey(receivedDiscoPeer.getId())
-          && !peerBlacklist.contains(receivedDiscoPeer)
-          && peerWhitelist
-              .map(whitelist -> whitelist.isPermitted(receivedDiscoPeer))
-              .orElse(true)) {
-
+      if (satisfiesMapAdditionCriteria(receivedDiscoPeer)) {
         final MetadataPeer receivedMetadataPeer =
             new MetadataPeer(receivedDiscoPeer, distance(target, receivedDiscoPeer.getId()));
         oneTrueMap.put(receivedDiscoPeer.getId(), receivedMetadataPeer);

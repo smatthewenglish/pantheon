@@ -862,7 +862,7 @@ public class PeerDiscoveryControllerTest {
 
     for (int i = 0; i <= 14; i++) {
       final Packet pongPacket =
-              MockPacketDataFactory.mockPongPacket(peers.get(i), pingPacket.getHash());
+          MockPacketDataFactory.mockPongPacket(peers.get(i), pingPacket.getHash());
       controller.onMessage(pongPacket, peers.get(i));
     }
 
@@ -878,7 +878,7 @@ public class PeerDiscoveryControllerTest {
 
     for (int i = 0; i <= 15; i++) {
       final Packet neighborsPacket =
-              MockPacketDataFactory.mockNeighborsPacket(peers.get(i), peers.get(16));
+          MockPacketDataFactory.mockNeighborsPacket(peers.get(i), peers.get(16));
       controller.onMessage(neighborsPacket, peers.get(i));
     }
 

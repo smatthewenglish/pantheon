@@ -12,7 +12,6 @@
  */
 package tech.pegasys.pantheon.ethereum.vm;
 
-import com.google.common.collect.ImmutableMap;
 import tech.pegasys.pantheon.config.GenesisConfigOptions;
 import tech.pegasys.pantheon.config.StubGenesisConfigOptions;
 import tech.pegasys.pantheon.ethereum.core.PrivacyParameters;
@@ -21,6 +20,8 @@ import tech.pegasys.pantheon.ethereum.mainnet.ProtocolScheduleBuilder;
 
 import java.util.Map;
 import java.util.function.Function;
+
+import com.google.common.collect.ImmutableMap;
 
 public class ReferenceTestProtocolSchedules {
 
