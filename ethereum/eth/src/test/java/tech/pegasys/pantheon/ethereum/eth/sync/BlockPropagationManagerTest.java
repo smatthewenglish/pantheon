@@ -12,17 +12,10 @@
  */
 package tech.pegasys.pantheon.ethereum.eth.sync;
 
-import static java.util.Collections.singletonList;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static sun.security.krb5.Confounder.bytes;
-
 import com.google.common.collect.Range;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
 import tech.pegasys.pantheon.config.GenesisConfigFile;
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
 import tech.pegasys.pantheon.ethereum.chain.Blockchain;
@@ -80,9 +73,15 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import static java.util.Collections.singletonList;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static sun.security.krb5.Confounder.bytes;
 
 public class BlockPropagationManagerTest {
 
@@ -151,11 +150,11 @@ public class BlockPropagationManagerTest {
         final RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 0);
         final NewBlockHashesMessage nextAnnouncement =
                 NewBlockHashesMessage.create(
-                        singletonList(
+                        Collections.singletonList(
                                 new NewBlockHash(nextBlock.getHash(), nextBlock.getHeader().getNumber())));
         final NewBlockHashesMessage nextNextAnnouncement =
                 NewBlockHashesMessage.create(
-                        singletonList(
+                        Collections.singletonList(
                                 new NewBlockHash(nextNextBlock.getHash(), nextNextBlock.getHeader().getNumber())));
         final Responder responder = RespondingEthPeer.blockchainResponder(fullBlockchain);
 
@@ -186,11 +185,11 @@ public class BlockPropagationManagerTest {
         final RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 0);
         final NewBlockHashesMessage nextAnnouncement =
                 NewBlockHashesMessage.create(
-                        singletonList(
+                        Collections.singletonList(
                                 new NewBlockHash(nextBlock.getHash(), nextBlock.getHeader().getNumber())));
         final NewBlockHashesMessage nextNextAnnouncement =
                 NewBlockHashesMessage.create(
-                        singletonList(
+                        Collections.singletonList(
                                 new NewBlockHash(nextNextBlock.getHash(), nextNextBlock.getHeader().getNumber())));
         final Responder responder = RespondingEthPeer.blockchainResponder(fullBlockchain);
 
@@ -291,14 +290,14 @@ public class BlockPropagationManagerTest {
         final RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 0);
         final NewBlockHashesMessage block1Msg =
                 NewBlockHashesMessage.create(
-                        singletonList(
+                        Collections.singletonList(
                                 new NewBlockHash(block1.getHash(), block1.getHeader().getNumber())));
         final NewBlockMessage block2Msg =
                 NewBlockMessage.create(
                         block2, fullBlockchain.getTotalDifficultyByHash(block2.getHash()).get());
         final NewBlockHashesMessage block3Msg =
                 NewBlockHashesMessage.create(
-                        singletonList(
+                        Collections.singletonList(
                                 new NewBlockHash(block3.getHash(), block3.getHeader().getNumber())));
         final NewBlockMessage block4Msg =
                 NewBlockMessage.create(
@@ -335,7 +334,7 @@ public class BlockPropagationManagerTest {
         final RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 0);
         final NewBlockHashesMessage newBlockHash =
                 NewBlockHashesMessage.create(
-                        singletonList(
+                        Collections.singletonList(
                                 new NewBlockHash(nextBlock.getHash(), nextBlock.getHeader().getNumber())));
         final NewBlockMessage newBlock =
                 NewBlockMessage.create(
@@ -370,7 +369,7 @@ public class BlockPropagationManagerTest {
         final RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 0);
         final NewBlockHashesMessage newBlockHash =
                 NewBlockHashesMessage.create(
-                        singletonList(
+                        Collections.singletonList(
                                 new NewBlockHash(nextBlock.getHash(), nextBlock.getHeader().getNumber())));
         final NewBlockMessage newBlock =
                 NewBlockMessage.create(
@@ -402,7 +401,7 @@ public class BlockPropagationManagerTest {
         final RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 0);
         final NewBlockHashesMessage futureAnnouncement =
                 NewBlockHashesMessage.create(
-                        singletonList(
+                        Collections.singletonList(
                                 new NewBlockHash(futureBlock.getHash(), futureBlock.getHeader().getNumber())));
 
         // Broadcast
@@ -454,7 +453,7 @@ public class BlockPropagationManagerTest {
         final RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 0);
         final NewBlockHashesMessage oldAnnouncement =
                 NewBlockHashesMessage.create(
-                        singletonList(
+                        Collections.singletonList(
                                 new NewBlockHash(oldBlock.getHash(), oldBlock.getHeader().getNumber())));
 
         // Broadcast
@@ -553,6 +552,8 @@ public class BlockPropagationManagerTest {
 
         // Setup peer and messages
         final RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 0);
+        final UInt256 parentTotalDifficulty =
+                fullBlockchain.getTotalDifficultyByHash(nextBlock.getHeader().getParentHash()).get();
         final UInt256 totalDifficulty =
                 fullBlockchain.getTotalDifficultyByHash(nextBlock.getHash()).get();
         final NewBlockMessage nextAnnouncement = NewBlockMessage.create(nextBlock, totalDifficulty);
@@ -563,11 +564,11 @@ public class BlockPropagationManagerTest {
         peer.respondWhile(responder, peer::hasOutstandingRequests);
 
         assertThat(peer.getEthPeer().chainState().getBestBlock().getHash())
-                .isEqualTo(nextBlock.getHash());
+                .isEqualTo(nextBlock.getHeader().getParentHash());
         assertThat(peer.getEthPeer().chainState().getEstimatedHeight())
-                .isEqualTo(nextBlock.getHeader().getNumber());
+                .isEqualTo(nextBlock.getHeader().getNumber() - 1);
         assertThat(peer.getEthPeer().chainState().getBestBlock().getTotalDifficulty())
-                .isEqualTo(totalDifficulty);
+                .isEqualTo(parentTotalDifficulty);
     }
 
     @SuppressWarnings("unchecked")
@@ -595,121 +596,5 @@ public class BlockPropagationManagerTest {
         blockPropagationManager.importOrSavePendingBlock(nextBlock);
 
         verify(ethScheduler, times(1)).scheduleSyncWorkerTask(any(Supplier.class));
-    }
-
-    private MutableBlockchain generateBlockchain(BlockchainStorage blockchainStorage, Block genesisBlock, int head) {
-        DefaultMutableBlockchain blockchain = new DefaultMutableBlockchain(genesisBlock, blockchainStorage, new NoOpMetricsSystem());
-        for (int i = 1; i <= head; i++) {
-            BlockHeader header =
-                    BlockHeaderBuilder.create()
-                            .parentHash(blockchain.getBlockHashByNumber(Long.valueOf(i - 1)).get())
-                            .ommersHash(Hash.ZERO)
-                            .coinbase(Address.fromHexString("0x0000000000000000000000000000000000000000"))
-                            .stateRoot(Hash.ZERO)
-                            .transactionsRoot(Hash.ZERO)
-                            .receiptsRoot(Hash.ZERO)
-                            .logsBloom(new LogsBloomFilter(BytesValue.of(bytes(LogsBloomFilter.BYTE_SIZE))))
-                            .difficulty(UInt256.ZERO)
-                            .number(Long.valueOf(i))
-                            .gasLimit(1L)
-                            .gasUsed(1L)
-                            .timestamp(Instant.now().truncatedTo(ChronoUnit.SECONDS).getEpochSecond())
-                            .extraData(Bytes32.wrap(bytes(Bytes32.SIZE)))
-                            .mixHash(Hash.ZERO)
-                            .nonce(0L)
-                            .blockHashFunction(MainnetBlockHashFunction::createHash)
-                            .buildBlockHeader();
-            BlockBody body = new BlockBody(Collections.emptyList(), Collections.emptyList());
-            Block block = new Block(header, body);
-            List<TransactionReceipt> receipts = Collections.emptyList();
-            blockchain.appendBlock(block, receipts);
-        }
-        return blockchain;
-    }
-
-    @Test
-    public void blockPropagationManager_functionalityAssessment() {
-        BlockHeader genesisHeader =
-                BlockHeaderBuilder.create()
-                        .parentHash(Hash.ZERO)
-                        .ommersHash(Hash.ZERO)
-                        .coinbase(Address.fromHexString("0x0000000000000000000000000000000000000000"))
-                        .stateRoot(Hash.ZERO)
-                        .transactionsRoot(Hash.ZERO)
-                        .receiptsRoot(Hash.ZERO)
-                        .logsBloom(new LogsBloomFilter(BytesValue.of(bytes(LogsBloomFilter.BYTE_SIZE))))
-                        .difficulty(UInt256.ZERO)
-                        .number(0L)
-                        .gasLimit(1L)
-                        .gasUsed(1L)
-                        .timestamp(Instant.now().truncatedTo(ChronoUnit.SECONDS).getEpochSecond())
-                        .extraData(Bytes32.wrap(bytes(Bytes32.SIZE)))
-                        .mixHash(Hash.ZERO)
-                        .nonce(0L)
-                        .blockHashFunction(MainnetBlockHashFunction::createHash)
-                        .buildBlockHeader();
-        BlockBody genesisBody = new BlockBody(Collections.emptyList(), Collections.emptyList());
-        Block genesisBlock = new Block(genesisHeader, genesisBody);
-
-        BlockchainStorage blockchainStorage00 = new InMemoryStorageProvider().createBlockchainStorage(MainnetProtocolSchedule.create());
-        MutableBlockchain blockchain00 = generateBlockchain(blockchainStorage00, genesisBlock, 4);
-        assertThat(blockchain00.getChainHeadBlockNumber()).isEqualTo(4L);
-
-        BlockchainStorage blockchainStorage01 = new InMemoryStorageProvider().createBlockchainStorage(MainnetProtocolSchedule.create());
-        MutableBlockchain blockchain01 = generateBlockchain(blockchainStorage01, genesisBlock, 3);
-        assertThat(blockchain01.getChainHeadBlockNumber()).isEqualTo(3L);
-
-        SynchronizerConfiguration synchronizerConfiguration = new SynchronizerConfiguration(
-                SyncMode.FULL,
-                500,
-                .1f,
-                5,
-                Duration.ofMinutes(3),
-                0,
-                0,
-                Range.closed(-10L, 30L),
-                Optional.of(SyncMode.FULL),
-                20L,
-                UInt256.of(1_000_000_000L),
-                10,
-                5,
-                5,
-                20,
-                3L,
-                Integer.MAX_VALUE,
-                2,
-                2,
-                0);
-
-        WorldStateArchive worldStateArchive = new WorldStateArchive(new KeyValueStorageWorldStateStorage(new InMemoryKeyValueStorage()));
-
-        EthProtocolManager ethProtocolManager00 = new EthProtocolManager(
-                blockchain00,
-                worldStateArchive,
-                1,
-                false,
-                200,
-                new DeterministicEthScheduler(DeterministicEthScheduler.TimeoutPolicy.NEVER));
-
-        BlockPropagationManager blockPropagationManager00 = new BlockPropagationManager<>(
-                synchronizerConfiguration,
-                new ProtocolScheduleBuilder<>(GenesisConfigFile.mainnet().getConfigOptions(), 1, Function.identity(), PrivacyParameters.noPrivacy()).createProtocolSchedule(),
-                new ProtocolContext(blockchain00, worldStateArchive, null),
-                ethProtocolManager00.ethContext(),
-                new SyncState(blockchain00, ethProtocolManager00.ethContext().getEthPeers()),
-                new PendingBlocks(),
-                NoOpMetricsSystem.NO_OP_LABELLED_TIMER);
-
-        blockPropagationManager00.start();
-
-        // Setup peer and messages
-        final RespondingEthPeer respondingEthPeer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 0);
-        final NewBlockHashesMessage newBlockHashesMessage = NewBlockHashesMessage.create(singletonList(new NewBlockHash(blockchain00.getBlockHashByNumber(4L).get(), 4L)));
-        final Responder responder = RespondingEthPeer.blockchainResponder(blockchain01);
-
-        // Broadcast first message
-        EthProtocolManagerTestUtil.broadcastMessage(ethProtocolManager, respondingEthPeer, newBlockHashesMessage);
-        respondingEthPeer.respondWhile(responder, respondingEthPeer::hasOutstandingRequests);
-        assertThat(blockchain00.contains(blockchain00.getBlockHashByNumber(4L).get())).isTrue();
     }
 }

@@ -24,9 +24,11 @@ import tech.pegasys.pantheon.ethereum.eth.messages.GetBlockBodiesMessage;
 import tech.pegasys.pantheon.ethereum.eth.messages.GetBlockHeadersMessage;
 import tech.pegasys.pantheon.ethereum.eth.messages.GetNodeDataMessage;
 import tech.pegasys.pantheon.ethereum.eth.messages.GetReceiptsMessage;
+import tech.pegasys.pantheon.ethereum.eth.messages.NewBlockMessage;
 import tech.pegasys.pantheon.ethereum.p2p.api.MessageData;
 import tech.pegasys.pantheon.ethereum.p2p.api.PeerConnection;
 import tech.pegasys.pantheon.ethereum.p2p.api.PeerConnection.PeerNotConnected;
+import tech.pegasys.pantheon.ethereum.p2p.wire.Capability;
 import tech.pegasys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage.DisconnectReason;
 import tech.pegasys.pantheon.util.Subscribers;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
@@ -131,11 +133,16 @@ public class EthPeer {
     }
   }
 
-  // Sends block to a peer...
-  public void propagateBlock(Block block, UInt256 totalDifficulty) {
-
-    // New Block Message...
-    connection.
+  /**
+   * Sends block to a peer...
+   */
+  public void propagateBlock(final Block block, final UInt256 totalDifficulty) {
+    final NewBlockMessage newBlockMessage = NewBlockMessage.create(block, totalDifficulty);
+    final Capability capability = Capability.create("eth", 63);
+    try {
+      connection.send(capability, newBlockMessage);
+    } catch (Exception ignored) {
+    }
   }
 
   public ResponseStream getHeadersByHash(
