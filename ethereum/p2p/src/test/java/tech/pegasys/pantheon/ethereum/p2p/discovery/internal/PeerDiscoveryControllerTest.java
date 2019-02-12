@@ -860,7 +860,11 @@ public class PeerDiscoveryControllerTest {
 
     verify(outboundMessageHandler, times(16)).send(any(), matchPacketOfType(PacketType.PING));
 
-    pongPacketGenerator(peers, pingPacket);
+    for (int i = 0; i <= 14; i++) {
+      final Packet pongPacket =
+              MockPacketDataFactory.mockPongPacket(peers.get(i), pingPacket.getHash());
+      controller.onMessage(pongPacket, peers.get(i));
+    }
 
     verify(outboundMessageHandler, times(0))
         .send(any(), matchPacketOfType(PacketType.FIND_NEIGHBORS));
@@ -872,7 +876,11 @@ public class PeerDiscoveryControllerTest {
     verify(outboundMessageHandler, times(3))
         .send(any(), matchPacketOfType(PacketType.FIND_NEIGHBORS));
 
-    neighborsPacketGenerator(peers);
+    for (int i = 0; i <= 15; i++) {
+      final Packet neighborsPacket =
+              MockPacketDataFactory.mockNeighborsPacket(peers.get(i), peers.get(16));
+      controller.onMessage(neighborsPacket, peers.get(i));
+    }
 
     verify(outboundMessageHandler, times(1))
         .send(eq(peers.get(16)), matchPacketOfType(PacketType.PING));
@@ -884,22 +892,6 @@ public class PeerDiscoveryControllerTest {
     assertThat(controller.getPeers()).contains(peers.get(16));
     assertThat(controller.getPeers().size()).isEqualTo(16);
     assertThat(evictedPeerFromBucket(bootstrapPeers, controller)).isTrue();
-  }
-
-  private void neighborsPacketGenerator(final List<DiscoveryPeer> peers) {
-    for (int i = 0; i <= 15; i++) {
-      final Packet neighborsPacket =
-          MockPacketDataFactory.mockNeighborsPacket(peers.get(i), peers.get(16));
-      controller.onMessage(neighborsPacket, peers.get(i));
-    }
-  }
-
-  private void pongPacketGenerator(final List<DiscoveryPeer> peers, final Packet pingPacket) {
-    for (int i = 0; i <= 14; i++) {
-      final Packet pongPacket =
-          MockPacketDataFactory.mockPongPacket(peers.get(i), pingPacket.getHash());
-      controller.onMessage(pongPacket, peers.get(i));
-    }
   }
 
   private boolean evictedPeerFromBucket(

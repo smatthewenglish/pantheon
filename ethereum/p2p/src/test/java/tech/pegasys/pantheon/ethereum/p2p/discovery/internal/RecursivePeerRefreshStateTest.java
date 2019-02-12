@@ -123,7 +123,7 @@ public class RecursivePeerRefreshStateTest {
   }
 
   @Test
-  public void shouldMoveToBondingRoundWhenNeighboursRoundTimesOut() {
+  public void shouldMoveToNeighboursRoundWhenBondingTimesOutVariant() {
     peer1.setStatus(PeerDiscoveryStatus.KNOWN);
     peer2.setStatus(PeerDiscoveryStatus.KNOWN);
 
