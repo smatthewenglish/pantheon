@@ -86,7 +86,8 @@ public class DefaultSynchronizer<C> implements Synchronizer {
             ethContext,
             syncState,
             new PendingBlocks(),
-            ethTasksTimer);
+            ethTasksTimer,
+            null);
 
     ChainHeadTracker.trackChainHeadForPeers(
         ethContext, protocolSchedule, protocolContext.getBlockchain(), syncConfig, ethTasksTimer);

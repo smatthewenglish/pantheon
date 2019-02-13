@@ -28,7 +28,6 @@ import tech.pegasys.pantheon.ethereum.eth.messages.NewBlockMessage;
 import tech.pegasys.pantheon.ethereum.p2p.api.MessageData;
 import tech.pegasys.pantheon.ethereum.p2p.api.PeerConnection;
 import tech.pegasys.pantheon.ethereum.p2p.api.PeerConnection.PeerNotConnected;
-import tech.pegasys.pantheon.ethereum.p2p.wire.Capability;
 import tech.pegasys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage.DisconnectReason;
 import tech.pegasys.pantheon.util.Subscribers;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
@@ -135,9 +134,8 @@ public class EthPeer {
 
   public void propagateBlock(final Block block, final UInt256 totalDifficulty) {
     final NewBlockMessage newBlockMessage = NewBlockMessage.create(block, totalDifficulty);
-    final Capability capability = Capability.create("eth", 63);
     try {
-      connection.send(capability, newBlockMessage);
+      connection.sendForProtocol(protocolName, newBlockMessage);
     } catch (Exception ignored) {
     }
   }

@@ -63,6 +63,7 @@ public class BlockPropagationManager<C> {
   private final EthContext ethContext;
   private final SyncState syncState;
   private final LabelledMetric<OperationTimer> ethTasksTimer;
+  private BlockBroadcaster<C> blockBroadcaster;
 
   private final AtomicBoolean started = new AtomicBoolean(false);
 
@@ -77,12 +78,14 @@ public class BlockPropagationManager<C> {
       final EthContext ethContext,
       final SyncState syncState,
       final PendingBlocks pendingBlocks,
-      final LabelledMetric<OperationTimer> ethTasksTimer) {
+      final LabelledMetric<OperationTimer> ethTasksTimer,
+      final BlockBroadcaster<C> blockBroadcaster) {
     this.config = config;
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
     this.ethContext = ethContext;
     this.ethTasksTimer = ethTasksTimer;
+    this.blockBroadcaster = blockBroadcaster;
 
     this.syncState = syncState;
     this.pendingBlocks = pendingBlocks;
@@ -108,6 +111,10 @@ public class BlockPropagationManager<C> {
   private void onBlockAdded(final BlockAddedEvent blockAddedEvent, final Blockchain blockchain) {
     // Check to see if any of our pending blocks are now ready for import
     final Block newBlock = blockAddedEvent.getBlock();
+
+    blockBroadcaster =
+        new BlockBroadcaster<>(protocolSchedule, protocolContext, ethContext, newBlock);
+    blockBroadcaster.effectuateBroadcast();
 
     final List<Block> readyForImport;
     synchronized (pendingBlocks) {
@@ -144,21 +151,12 @@ public class BlockPropagationManager<C> {
     }
   }
 
-  void broadcastBlock(final Block block, final UInt256 difficulty) {
-    final List<EthPeer> availablePeers =
-        ethContext.getEthPeers().availablePeers().collect(Collectors.toList());
-    for (EthPeer ethPeer : availablePeers) {
-      ethPeer.propagateBlock(block, difficulty);
-    }
-  }
-
   void handleNewBlockFromNetwork(final EthMessage message) {
     final Blockchain blockchain = protocolContext.getBlockchain();
     final NewBlockMessage newBlockMessage = NewBlockMessage.readFrom(message.getData());
     try {
       final Block block = newBlockMessage.block(protocolSchedule);
       final UInt256 totalDifficulty = newBlockMessage.totalDifficulty(protocolSchedule);
-      broadcastBlock(block, totalDifficulty);
 
       message.getPeer().chainState().update(block.getHeader(), totalDifficulty);
 

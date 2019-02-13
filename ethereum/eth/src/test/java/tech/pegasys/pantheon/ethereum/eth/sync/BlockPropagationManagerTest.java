@@ -94,6 +94,7 @@ public class BlockPropagationManagerTest {
             .build()
             .validated(blockchain);
     syncState = new SyncState(blockchain, ethProtocolManager.ethContext().getEthPeers());
+    BlockBroadcaster blockBroadcaster = mock(BlockBroadcaster.class);
     blockPropagationManager =
         new BlockPropagationManager<>(
             syncConfig,
@@ -102,7 +103,8 @@ public class BlockPropagationManagerTest {
             ethProtocolManager.ethContext(),
             syncState,
             pendingBlocks,
-            ethTasksTimer);
+            ethTasksTimer,
+            blockBroadcaster);
   }
 
   @Test
@@ -470,6 +472,7 @@ public class BlockPropagationManagerTest {
             .blockPropagationRange(-oldBlocksToImport, 5)
             .build()
             .validated(blockchain);
+    BlockBroadcaster blockBroadcaster = mock(BlockBroadcaster.class);
     final BlockPropagationManager<Void> blockPropagationManager =
         new BlockPropagationManager<>(
             syncConfig,
@@ -478,7 +481,8 @@ public class BlockPropagationManagerTest {
             ethProtocolManager.ethContext(),
             syncState,
             pendingBlocks,
-            ethTasksTimer);
+            ethTasksTimer,
+            blockBroadcaster);
 
     final BlockDataGenerator gen = new BlockDataGenerator();
     // Import some blocks
@@ -548,6 +552,7 @@ public class BlockPropagationManagerTest {
         .thenReturn(new CompletableFuture<>());
     final EthContext ethContext =
         new EthContext("eth", new EthPeers("eth"), new EthMessages(), ethScheduler);
+    BlockBroadcaster blockBroadcaster = mock(BlockBroadcaster.class);
     final BlockPropagationManager<Void> blockPropagationManager =
         new BlockPropagationManager<>(
             syncConfig,
@@ -556,7 +561,8 @@ public class BlockPropagationManagerTest {
             ethContext,
             syncState,
             pendingBlocks,
-            ethTasksTimer);
+            ethTasksTimer,
+            blockBroadcaster);
 
     blockchainUtil.importFirstBlocks(2);
     final Block nextBlock = blockchainUtil.getBlock(2);
@@ -567,7 +573,6 @@ public class BlockPropagationManagerTest {
     verify(ethScheduler, times(1)).scheduleSyncWorkerTask(any(Supplier.class));
   }
 
-  @SuppressWarnings("unchecked")
   @Test
   public void broadcastBlockTest() {
     BlockchainSetupUtil<Void> blockchainUtil = BlockchainSetupUtil.forTesting();
@@ -590,16 +595,19 @@ public class BlockPropagationManagerTest {
             .build()
             .validated(blockchain);
     SyncState syncState = new SyncState(blockchain, ethProtocolManager.ethContext().getEthPeers());
+
+    BlockBroadcaster blockBroadcaster = mock(BlockBroadcaster.class);
+
     BlockPropagationManager<Void> blockPropagationManager =
-        spy(
-            new BlockPropagationManager<>(
-                syncConfig,
-                protocolSchedule,
-                protocolContext,
-                ethProtocolManager.ethContext(),
-                syncState,
-                pendingBlocks,
-                ethTasksTimer));
+        new BlockPropagationManager<>(
+            syncConfig,
+            protocolSchedule,
+            protocolContext,
+            ethProtocolManager.ethContext(),
+            syncState,
+            pendingBlocks,
+            ethTasksTimer,
+            blockBroadcaster);
 
     blockchainUtil.importFirstBlocks(2);
     final Block nextBlock = blockchainUtil.getBlock(2);
@@ -621,6 +629,6 @@ public class BlockPropagationManagerTest {
     final Responder responder = RespondingEthPeer.blockchainResponder(fullBlockchain);
     peer0.respondWhile(responder, peer0::hasOutstandingRequests);
 
-    verify(blockPropagationManager, times(1)).broadcastBlock(any(), any());
+    verify(blockBroadcaster, times(1)).broadcastBlock(any(), any());
   }
 }
