@@ -75,6 +75,7 @@ public class BlockPropagationManagerTest {
     fullBlockchain = BlockchainSetupUtil.forTesting().importAllBlocks();
   }
 
+  @SuppressWarnings("unchecked")
   @Before
   public void setup() {
     blockchainUtil = BlockchainSetupUtil.forTesting();
@@ -94,7 +95,7 @@ public class BlockPropagationManagerTest {
             .build()
             .validated(blockchain);
     syncState = new SyncState(blockchain, ethProtocolManager.ethContext().getEthPeers());
-    BlockBroadcaster blockBroadcaster = mock(BlockBroadcaster.class);
+    final BlockBroadcaster<Void> blockBroadcaster = mock(BlockBroadcaster.class);
     blockPropagationManager =
         new BlockPropagationManager<>(
             syncConfig,
@@ -464,6 +465,7 @@ public class BlockPropagationManagerTest {
     assertThat(blockchain.contains(oldBlock.getHash())).isFalse();
   }
 
+  @SuppressWarnings("unchecked")
   @Test
   public void purgesOldBlocks() {
     final int oldBlocksToImport = 3;
@@ -472,7 +474,7 @@ public class BlockPropagationManagerTest {
             .blockPropagationRange(-oldBlocksToImport, 5)
             .build()
             .validated(blockchain);
-    BlockBroadcaster blockBroadcaster = mock(BlockBroadcaster.class);
+    BlockBroadcaster<Void> blockBroadcaster = mock(BlockBroadcaster.class);
     final BlockPropagationManager<Void> blockPropagationManager =
         new BlockPropagationManager<>(
             syncConfig,
@@ -552,7 +554,7 @@ public class BlockPropagationManagerTest {
         .thenReturn(new CompletableFuture<>());
     final EthContext ethContext =
         new EthContext("eth", new EthPeers("eth"), new EthMessages(), ethScheduler);
-    BlockBroadcaster blockBroadcaster = mock(BlockBroadcaster.class);
+    final BlockBroadcaster<Void> blockBroadcaster = mock(BlockBroadcaster.class);
     final BlockPropagationManager<Void> blockPropagationManager =
         new BlockPropagationManager<>(
             syncConfig,
@@ -571,64 +573,5 @@ public class BlockPropagationManagerTest {
     blockPropagationManager.importOrSavePendingBlock(nextBlock);
 
     verify(ethScheduler, times(1)).scheduleSyncWorkerTask(any(Supplier.class));
-  }
-
-  @Test
-  public void broadcastBlockTest() {
-    BlockchainSetupUtil<Void> blockchainUtil = BlockchainSetupUtil.forTesting();
-
-    MutableBlockchain blockchain = spy(blockchainUtil.getBlockchain());
-    ProtocolSchedule<Void> protocolSchedule = blockchainUtil.getProtocolSchedule();
-    ProtocolContext<Void> tempProtocolContext = blockchainUtil.getProtocolContext();
-    ProtocolContext<Void> protocolContext =
-        new ProtocolContext<>(
-            blockchain,
-            tempProtocolContext.getWorldStateArchive(),
-            tempProtocolContext.getConsensusState());
-
-    EthProtocolManager ethProtocolManager =
-        EthProtocolManagerTestUtil.create(blockchain, blockchainUtil.getWorldArchive());
-
-    SynchronizerConfiguration syncConfig =
-        SynchronizerConfiguration.builder()
-            .blockPropagationRange(-3, 5)
-            .build()
-            .validated(blockchain);
-    SyncState syncState = new SyncState(blockchain, ethProtocolManager.ethContext().getEthPeers());
-
-    BlockBroadcaster blockBroadcaster = mock(BlockBroadcaster.class);
-
-    BlockPropagationManager<Void> blockPropagationManager =
-        new BlockPropagationManager<>(
-            syncConfig,
-            protocolSchedule,
-            protocolContext,
-            ethProtocolManager.ethContext(),
-            syncState,
-            pendingBlocks,
-            ethTasksTimer,
-            blockBroadcaster);
-
-    blockchainUtil.importFirstBlocks(2);
-    final Block nextBlock = blockchainUtil.getBlock(2);
-
-    blockPropagationManager.start();
-
-    // Setup peer and messages
-    final RespondingEthPeer peer0 = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 0);
-    final RespondingEthPeer peer1 = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 0);
-    final RespondingEthPeer peer2 = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 0);
-
-    final UInt256 totalDifficulty =
-        fullBlockchain.getTotalDifficultyByHash(nextBlock.getHash()).get();
-    final NewBlockMessage newBlockMessage = NewBlockMessage.create(nextBlock, totalDifficulty);
-
-    // Broadcast message
-    EthProtocolManagerTestUtil.broadcastMessage(ethProtocolManager, peer0, newBlockMessage);
-
-    final Responder responder = RespondingEthPeer.blockchainResponder(fullBlockchain);
-    peer0.respondWhile(responder, peer0::hasOutstandingRequests);
-
-    verify(blockBroadcaster, times(1)).broadcastBlock(any(), any());
   }
 }

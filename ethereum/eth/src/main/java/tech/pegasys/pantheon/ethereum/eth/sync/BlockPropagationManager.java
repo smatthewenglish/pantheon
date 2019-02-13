@@ -151,7 +151,7 @@ public class BlockPropagationManager<C> {
     }
   }
 
-  void handleNewBlockFromNetwork(final EthMessage message) {
+  private void handleNewBlockFromNetwork(final EthMessage message) {
     final Blockchain blockchain = protocolContext.getBlockchain();
     final NewBlockMessage newBlockMessage = NewBlockMessage.readFrom(message.getData());
     try {
