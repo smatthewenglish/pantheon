@@ -599,4 +599,51 @@ public class BlockPropagationManagerTest {
 
     verify(blockPropagationManager, times(1)).broadcastBlock(block);
   }
+
+  @Test
+  public void x() {
+    final BlockPropagationManager<Void> blockPropagationManager =
+            spy(
+                    new BlockPropagationManager<>(
+                            syncConfig,
+                            protocolSchedule,
+                            protocolContext,
+                            ethProtocolManager.ethContext(),
+                            syncState,
+                            pendingBlocks,
+                            ethTasksTimer,
+                            blockBroadcaster));
+
+    blockchainUtil.importFirstBlocks(2);
+    final Block block = blockchainUtil.getBlock(2);
+    blockPropagationManager.start();
+
+
+    // Setup peer and messages
+    final RespondingEthPeer peer0 = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 0);
+    final RespondingEthPeer peer1 = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 0);
+    final RespondingEthPeer peer2 = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 0);
+
+    System.out.println("0 ---> blockchainUtil.getBlockchain().getChainHeadBlockNumber(): " + blockchainUtil.getBlockchain().getChainHeadBlockNumber());
+    System.out.println("0 ---> peer.getEthProtocolManager().getBlockchain().getChainHeadBlockNumber(): " + peer0.getEthProtocolManager().getBlockchain().getChainHeadBlockNumber());
+    System.out.println("0 ---> peer.getEthProtocolManager().getBlockchain().getChainHeadBlockNumber(): " + peer1.getEthProtocolManager().getBlockchain().getChainHeadBlockNumber());
+    System.out.println("0 ---> peer.getEthProtocolManager().getBlockchain().getChainHeadBlockNumber(): " + peer2.getEthProtocolManager().getBlockchain().getChainHeadBlockNumber());
+
+    final UInt256 totalDifficulty = fullBlockchain.getTotalDifficultyByHash(block.getHash()).get();
+    final NewBlockMessage newBlockMessage = NewBlockMessage.create(block, totalDifficulty);
+
+    // Broadcast message
+    EthProtocolManagerTestUtil.broadcastMessage(ethProtocolManager, peer0, newBlockMessage);
+
+    final Responder responder = RespondingEthPeer.blockchainResponder(fullBlockchain);
+    peer0.respondWhile(responder, peer0::hasOutstandingRequests);
+
+    System.out.println("1 ---> blockchainUtil.getBlockchain().getChainHeadBlockNumber(): " + blockchainUtil.getBlockchain().getChainHeadBlockNumber());
+    System.out.println("1 ---> peer.getEthProtocolManager().getBlockchain().getChainHeadBlockNumber(): " + peer0.getEthProtocolManager().getBlockchain().getChainHeadBlockNumber());
+    System.out.println("1 ---> peer.getEthProtocolManager().getBlockchain().getChainHeadBlockNumber(): " + peer1.getEthProtocolManager().getBlockchain().getChainHeadBlockNumber());
+    System.out.println("1 ---> peer.getEthProtocolManager().getBlockchain().getChainHeadBlockNumber(): " + peer2.getEthProtocolManager().getBlockchain().getChainHeadBlockNumber());
+
+
+    //verify(blockPropagationManager, times(1)).broadcastBlock(block);
+  }
 }

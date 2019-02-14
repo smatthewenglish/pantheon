@@ -137,7 +137,7 @@ public class BlockPropagationManager<C> {
   private void onBlockAdded(final BlockAddedEvent blockAddedEvent, final Blockchain blockchain) {
     // Check to see if any of our pending blocks are now ready for import
     final Block newBlock = blockAddedEvent.getBlock();
-    broadcastBlock(newBlock);
+    //broadcastBlock(newBlock);
 
     final List<Block> readyForImport;
     synchronized (pendingBlocks) {

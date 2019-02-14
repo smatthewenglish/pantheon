@@ -62,7 +62,15 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
   private final EthContext ethContext;
   private final boolean fastSyncEnabled;
   private List<Capability> supportedCapabilities;
-  private final Blockchain blockchain;
+  private Blockchain blockchain;
+
+  public Blockchain getBlockchain() {
+    return this.blockchain;
+  }
+
+  public void setBlockchain(final Blockchain blockchain) {
+    this.blockchain = blockchain;
+  }
 
   EthProtocolManager(
       final Blockchain blockchain,

@@ -69,6 +69,10 @@ public class RespondingEthPeer {
     this.outgoingMessages = outgoingMessages;
   }
 
+  public EthProtocolManager getEthProtocolManager() {
+    return ethProtocolManager;
+  }
+
   public static void respondOnce(final Responder responder, final List<RespondingEthPeer> peers) {
     for (final RespondingEthPeer peer : peers) {
       if (peer.respond(responder)) {
