@@ -76,7 +76,6 @@ public class BlockPropagationManagerTest {
     fullBlockchain = BlockchainSetupUtil.forTesting().importAllBlocks();
   }
 
-  @SuppressWarnings("unchecked")
   @Before
   public void setup() {
     blockchainUtil = BlockchainSetupUtil.forTesting();
