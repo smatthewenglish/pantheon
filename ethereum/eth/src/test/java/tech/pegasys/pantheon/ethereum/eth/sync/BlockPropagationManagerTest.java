@@ -597,6 +597,6 @@ public class BlockPropagationManagerTest {
     final Responder responder = RespondingEthPeer.blockchainResponder(fullBlockchain);
     peer.respondWhile(responder, peer::hasOutstandingRequests);
 
-    verify(blockPropagationManager, times(1)).broadcastBlock(block);
+    verify(blockPropagationManager, times(1)).validateAndBroadcastBlock(block);
   }
 }

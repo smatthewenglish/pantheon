@@ -66,7 +66,7 @@ public class BlockPropagationManager<C> {
   private final EthContext ethContext;
   private final SyncState syncState;
   private final LabelledMetric<OperationTimer> ethTasksTimer;
-  private BlockBroadcaster blockBroadcaster;
+  private final BlockBroadcaster blockBroadcaster;
 
   private final AtomicBoolean started = new AtomicBoolean(false);
 
@@ -110,9 +110,7 @@ public class BlockPropagationManager<C> {
         .subscribe(EthPV62.NEW_BLOCK_HASHES, this::handleNewBlockHashesFromNetwork);
   }
 
-  @VisibleForTesting
-  void broadcastBlock(final Block block) {
-    blockBroadcaster = new BlockBroadcaster(ethContext);
+  protected void validateAndBroadcastBlock(final Block block) {
     final ProtocolSpec<C> protocolSpec =
         protocolSchedule.getByBlockNumber(block.getHeader().getNumber());
     final BlockHeaderValidator<C> blockHeaderValidator = protocolSpec.getBlockHeaderValidator();
@@ -137,7 +135,6 @@ public class BlockPropagationManager<C> {
   private void onBlockAdded(final BlockAddedEvent blockAddedEvent, final Blockchain blockchain) {
     // Check to see if any of our pending blocks are now ready for import
     final Block newBlock = blockAddedEvent.getBlock();
-    broadcastBlock(newBlock);
 
     final List<Block> readyForImport;
     synchronized (pendingBlocks) {
@@ -291,6 +288,8 @@ public class BlockPropagationManager<C> {
       importingBlocks.remove(block.getHash());
       return CompletableFuture.completedFuture(block);
     }
+
+    validateAndBroadcastBlock(block);
 
     // Import block
     final PersistBlockTask<C> importTask =
