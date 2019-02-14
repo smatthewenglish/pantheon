@@ -110,7 +110,8 @@ public class BlockPropagationManager<C> {
         .subscribe(EthPV62.NEW_BLOCK_HASHES, this::handleNewBlockHashesFromNetwork);
   }
 
-  private void broadcastBlock(final Block block) {
+  @VisibleForTesting
+  void broadcastBlock(final Block block) {
     blockBroadcaster = new BlockBroadcaster(ethContext);
     final ProtocolSpec<C> protocolSpec =
         protocolSchedule.getByBlockNumber(block.getHeader().getNumber());

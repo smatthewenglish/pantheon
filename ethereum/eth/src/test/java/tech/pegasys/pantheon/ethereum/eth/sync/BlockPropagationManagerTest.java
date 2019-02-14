@@ -566,4 +566,37 @@ public class BlockPropagationManagerTest {
 
     verify(ethScheduler, times(1)).scheduleSyncWorkerTask(any(Supplier.class));
   }
+
+  @Test
+  public void verifyBroadcastBlockInvocation() {
+    final BlockPropagationManager<Void> blockPropagationManager =
+        spy(
+            new BlockPropagationManager<>(
+                syncConfig,
+                protocolSchedule,
+                protocolContext,
+                ethProtocolManager.ethContext(),
+                syncState,
+                pendingBlocks,
+                ethTasksTimer,
+                blockBroadcaster));
+
+    blockchainUtil.importFirstBlocks(2);
+    final Block block = blockchainUtil.getBlock(2);
+    blockPropagationManager.start();
+
+    // Setup peer and messages
+    final RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 0);
+
+    final UInt256 totalDifficulty = fullBlockchain.getTotalDifficultyByHash(block.getHash()).get();
+    final NewBlockMessage newBlockMessage = NewBlockMessage.create(block, totalDifficulty);
+
+    // Broadcast message
+    EthProtocolManagerTestUtil.broadcastMessage(ethProtocolManager, peer, newBlockMessage);
+
+    final Responder responder = RespondingEthPeer.blockchainResponder(fullBlockchain);
+    peer.respondWhile(responder, peer::hasOutstandingRequests);
+
+    verify(blockPropagationManager, times(1)).broadcastBlock(block);
+  }
 }
