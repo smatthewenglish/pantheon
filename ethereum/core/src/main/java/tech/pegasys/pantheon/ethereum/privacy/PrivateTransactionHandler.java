@@ -59,15 +59,14 @@ public class PrivateTransactionHandler {
 
   private SendRequest createSendRequest(final PrivateTransaction privateTransaction) {
     final List<String> privateFor =
-        privateTransaction
-            .getPrivateFor()
-            .stream()
+        privateTransaction.getPrivateFor().stream()
             .map(BytesValues::asString)
             .collect(Collectors.toList());
 
     final BytesValueRLPOutput bvrlp = new BytesValueRLPOutput();
     privateTransaction.writeTo(bvrlp);
 
+    //    String s = new String(bvrlp.encoded().extractArray(), UTF_8);
     return new SendRequest(
         Base64.getEncoder().encodeToString(bvrlp.encoded().extractArray()),
         BytesValues.asString(privateTransaction.getPrivateFrom()),

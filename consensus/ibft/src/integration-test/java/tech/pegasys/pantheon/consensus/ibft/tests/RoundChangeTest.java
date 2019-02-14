@@ -14,7 +14,7 @@ package tech.pegasys.pantheon.consensus.ibft.tests;
 
 import static java.util.Collections.emptyList;
 import static java.util.Optional.empty;
-import static tech.pegasys.pantheon.consensus.ibft.support.TestHelpers.createValidPreparedRoundArtifacts;
+import static tech.pegasys.pantheon.consensus.ibft.support.IntegrationTestHelpers.createValidPreparedRoundArtifacts;
 
 import tech.pegasys.pantheon.consensus.ibft.ConsensusRoundIdentifier;
 import tech.pegasys.pantheon.consensus.ibft.IbftHelpers;
@@ -160,7 +160,8 @@ public class RoundChangeTest {
                     rc4.getSignedPayload())),
             localNodeMessageFactory
                 .createProposal(targetRound, locallyProposedBlock)
-                .getSignedPayload());
+                .getSignedPayload(),
+            locallyProposedBlock);
 
     peers.verifyMessagesReceived(expectedNewRound);
   }
@@ -214,7 +215,8 @@ public class RoundChangeTest {
                     rc4.getSignedPayload())),
             localNodeMessageFactory
                 .createProposal(targetRound, expectedBlockToPropose)
-                .getSignedPayload());
+                .getSignedPayload(),
+            expectedBlockToPropose);
 
     peers.verifyMessagesReceived(expectedNewRound);
   }
@@ -238,7 +240,8 @@ public class RoundChangeTest {
             new RoundChangeCertificate(roundChangeMessages),
             localNodeMessageFactory
                 .createProposal(futureRound, locallyProposedBlock)
-                .getSignedPayload());
+                .getSignedPayload(),
+            locallyProposedBlock);
 
     peers.verifyMessagesReceived(expectedNewRound);
   }
@@ -292,7 +295,8 @@ public class RoundChangeTest {
             new RoundChangeCertificate(Lists.newArrayList(roundChangeMessages)),
             localNodeMessageFactory
                 .createProposal(targetRound, expectedBlockToPropose)
-                .getSignedPayload());
+                .getSignedPayload(),
+            expectedBlockToPropose);
 
     peers.verifyMessagesReceived(expectedNewRound);
   }

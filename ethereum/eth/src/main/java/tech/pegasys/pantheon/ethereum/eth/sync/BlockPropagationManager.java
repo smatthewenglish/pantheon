@@ -160,7 +160,7 @@ public class BlockPropagationManager<C> {
       final UInt256 totalDifficulty = newBlockMessage.totalDifficulty(protocolSchedule);
       broadcastBlock(block, totalDifficulty);
 
-      message.getPeer().chainState().update(block.getHeader(), totalDifficulty);
+      message.getPeer().chainState().updateForAnnouncedBlock(block.getHeader(), totalDifficulty);
 
       // Return early if we don't care about this block
       final long localChainHeight = protocolContext.getBlockchain().getChainHeadBlockNumber();
@@ -199,8 +199,7 @@ public class BlockPropagationManager<C> {
       final long localChainHeight = protocolContext.getBlockchain().getChainHeadBlockNumber();
       final long bestChainHeight = syncState.bestChainHeight(localChainHeight);
       final List<NewBlockHash> relevantAnnouncements =
-          announcedBlocks
-              .stream()
+          announcedBlocks.stream()
               .filter(a -> shouldImportBlockAtHeight(a.number(), localChainHeight, bestChainHeight))
               .collect(Collectors.toList());
 
