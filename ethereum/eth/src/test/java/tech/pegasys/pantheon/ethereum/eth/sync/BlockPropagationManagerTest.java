@@ -62,6 +62,7 @@ public class BlockPropagationManagerTest {
   private ProtocolSchedule<Void> protocolSchedule;
   private ProtocolContext<Void> protocolContext;
   private MutableBlockchain blockchain;
+  private BlockBroadcaster blockBroadcaster;
   private EthProtocolManager ethProtocolManager;
   private BlockPropagationManager<Void> blockPropagationManager;
   private SynchronizerConfiguration syncConfig;
@@ -91,7 +92,7 @@ public class BlockPropagationManagerTest {
         EthProtocolManagerTestUtil.create(blockchain, blockchainUtil.getWorldArchive());
     syncConfig = SynchronizerConfiguration.builder().blockPropagationRange(-3, 5).build();
     syncState = new SyncState(blockchain, ethProtocolManager.ethContext().getEthPeers());
-    final BlockBroadcaster<Void> blockBroadcaster = mock(BlockBroadcaster.class);
+    blockBroadcaster = mock(BlockBroadcaster.class);
     blockPropagationManager =
         new BlockPropagationManager<>(
             syncConfig,
@@ -461,13 +462,11 @@ public class BlockPropagationManagerTest {
     assertThat(blockchain.contains(oldBlock.getHash())).isFalse();
   }
 
-  @SuppressWarnings("unchecked")
   @Test
   public void purgesOldBlocks() {
     final int oldBlocksToImport = 3;
     syncConfig =
         SynchronizerConfiguration.builder().blockPropagationRange(-oldBlocksToImport, 5).build();
-    BlockBroadcaster<Void> blockBroadcaster = mock(BlockBroadcaster.class);
     final BlockPropagationManager<Void> blockPropagationManager =
         new BlockPropagationManager<>(
             syncConfig,
@@ -549,7 +548,6 @@ public class BlockPropagationManagerTest {
         .thenReturn(new CompletableFuture<>());
     final EthContext ethContext =
         new EthContext("eth", new EthPeers("eth"), new EthMessages(), ethScheduler);
-    final BlockBroadcaster<Void> blockBroadcaster = mock(BlockBroadcaster.class);
     final BlockPropagationManager<Void> blockPropagationManager =
         new BlockPropagationManager<>(
             syncConfig,
