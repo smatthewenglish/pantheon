@@ -145,11 +145,10 @@ public class BlockPropagationManager<C> {
   }
 
   void broadcastBlock(final Block block, final UInt256 difficulty) {
-    final List<EthPeer> availablePeers =
-        ethContext.getEthPeers().availablePeers().collect(Collectors.toList());
-    for (EthPeer ethPeer : availablePeers) {
-      ethPeer.propagateBlock(block, difficulty);
-    }
+    ethContext
+        .getEthPeers()
+        .availablePeers()
+        .forEach(ethPeer -> ethPeer.propagateBlock(block, difficulty));
   }
 
   void handleNewBlockFromNetwork(final EthMessage message) {
@@ -160,7 +159,7 @@ public class BlockPropagationManager<C> {
       final UInt256 totalDifficulty = newBlockMessage.totalDifficulty(protocolSchedule);
 
       // TODO: Extract broadcast functionality to independent class.
-      broadcastBlock(block, totalDifficulty);
+      // broadcastBlock(block, totalDifficulty);
 
       message.getPeer().chainState().updateForAnnouncedBlock(block.getHeader(), totalDifficulty);
 
