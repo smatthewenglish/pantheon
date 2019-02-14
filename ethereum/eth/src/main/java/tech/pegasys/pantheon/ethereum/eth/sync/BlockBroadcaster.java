@@ -12,19 +12,9 @@
  */
 package tech.pegasys.pantheon.ethereum.eth.sync;
 
-import tech.pegasys.pantheon.ethereum.ProtocolContext;
 import tech.pegasys.pantheon.ethereum.core.Block;
-import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthContext;
-import tech.pegasys.pantheon.ethereum.mainnet.BlockHeaderValidator;
-import tech.pegasys.pantheon.ethereum.mainnet.HeaderValidationMode;
-import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
-import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSpec;
 import tech.pegasys.pantheon.util.uint.UInt256;
-
-import java.util.Optional;
-
-import com.google.common.annotations.VisibleForTesting;
 
 class BlockBroadcaster {
 
