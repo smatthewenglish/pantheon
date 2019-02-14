@@ -26,46 +26,18 @@ import java.util.Optional;
 
 import com.google.common.annotations.VisibleForTesting;
 
-class BlockBroadcaster<C> {
+class BlockBroadcaster {
 
-  private final ProtocolSchedule<C> protocolSchedule;
-  private final ProtocolContext<C> protocolContext;
   private final EthContext ethContext;
-  private final Block block;
 
-  BlockBroadcaster(
-      final ProtocolSchedule<C> protocolSchedule,
-      final ProtocolContext<C> protocolContext,
-      final EthContext ethContext,
-      final Block block) {
-    this.protocolSchedule = protocolSchedule;
-    this.protocolContext = protocolContext;
+  BlockBroadcaster(final EthContext ethContext) {
     this.ethContext = ethContext;
-    this.block = block;
   }
 
-  @VisibleForTesting
-  void broadcastBlock(final Block block, final UInt256 difficulty) {
+  void propagate(final Block block, final UInt256 difficulty) {
     ethContext
         .getEthPeers()
         .availablePeers()
         .forEach(ethPeer -> ethPeer.propagateBlock(block, difficulty));
-  }
-
-  void effectuateBroadcast() {
-    final ProtocolSpec<C> protocolSpec =
-        protocolSchedule.getByBlockNumber(block.getHeader().getNumber());
-    final BlockHeaderValidator<C> blockHeaderValidator = protocolSpec.getBlockHeaderValidator();
-    final Optional<BlockHeader> maybeParent =
-        protocolContext.getBlockchain().getBlockHeader(block.getHeader().getParentHash());
-    if (maybeParent.isPresent()) {
-      final BlockHeader parent = maybeParent.get();
-      if (blockHeaderValidator.validateHeader(
-          block.getHeader(), parent, protocolContext, HeaderValidationMode.FULL)) {
-        final UInt256 totalDifficulty =
-            parent.getDifficulty().plus(block.getHeader().getDifficulty());
-        broadcastBlock(block, totalDifficulty);
-      }
-    }
   }
 }

@@ -73,7 +73,7 @@ public class DefaultSynchronizer<C> implements Synchronizer {
             syncState,
             new PendingBlocks(),
             ethTasksTimer,
-            null);
+            new BlockBroadcaster(ethContext));
 
     ChainHeadTracker.trackChainHeadForPeers(
         ethContext, protocolSchedule, protocolContext.getBlockchain(), syncConfig, ethTasksTimer);
@@ -108,13 +108,7 @@ public class DefaultSynchronizer<C> implements Synchronizer {
     }
   }
 
-  @Override
-  public void stop() {
-    fastSynchronizer.ifPresent(FastSynchronizer::deleteFastSyncState);
-  }
-
   private void handleFastSyncResult(final FastSyncState result, final Throwable error) {
-
     final Throwable rootCause = ExceptionUtils.rootCause(error);
     if (rootCause instanceof FastSyncException) {
       LOG.error(

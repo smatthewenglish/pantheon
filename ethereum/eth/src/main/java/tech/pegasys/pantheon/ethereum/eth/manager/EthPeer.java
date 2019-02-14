@@ -136,7 +136,8 @@ public class EthPeer {
     final NewBlockMessage newBlockMessage = NewBlockMessage.create(block, totalDifficulty);
     try {
       connection.sendForProtocol(protocolName, newBlockMessage);
-    } catch (Exception ignored) {
+    } catch (PeerNotConnected e) {
+      LOG.trace("Failed to broadcast new block to peer", e);
     }
   }
 
