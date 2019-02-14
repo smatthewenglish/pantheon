@@ -580,10 +580,7 @@ public class BlockPropagationManagerTest {
         EthProtocolManagerTestUtil.create(blockchain, blockchainUtil.getWorldArchive());
 
     SynchronizerConfiguration syncConfig =
-        SynchronizerConfiguration.builder()
-            .blockPropagationRange(-3, 5)
-            .build()
-            .validated(blockchain);
+        SynchronizerConfiguration.builder().blockPropagationRange(-3, 5).build();
     SyncState syncState = new SyncState(blockchain, ethProtocolManager.ethContext().getEthPeers());
     BlockPropagationManager<Void> blockPropagationManager =
         spy(

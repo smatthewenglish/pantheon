@@ -160,7 +160,7 @@ public class BlockPropagationManager<C> {
       final UInt256 totalDifficulty = newBlockMessage.totalDifficulty(protocolSchedule);
 
       // TODO: Extract broadcast functionality to independent class.
-      // broadcastBlock(block, totalDifficulty);
+      broadcastBlock(block, totalDifficulty);
 
       message.getPeer().chainState().updateForAnnouncedBlock(block.getHeader(), totalDifficulty);
 

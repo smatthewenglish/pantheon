@@ -28,7 +28,6 @@ import tech.pegasys.pantheon.ethereum.eth.messages.NewBlockMessage;
 import tech.pegasys.pantheon.ethereum.p2p.api.MessageData;
 import tech.pegasys.pantheon.ethereum.p2p.api.PeerConnection;
 import tech.pegasys.pantheon.ethereum.p2p.api.PeerConnection.PeerNotConnected;
-import tech.pegasys.pantheon.ethereum.p2p.wire.Capability;
 import tech.pegasys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage.DisconnectReason;
 import tech.pegasys.pantheon.util.Subscribers;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
@@ -137,7 +136,8 @@ public class EthPeer {
     final NewBlockMessage newBlockMessage = NewBlockMessage.create(block, totalDifficulty);
     try {
       connection.sendForProtocol(protocolName, newBlockMessage);
-    } catch (Exception ignored) {
+    } catch (PeerNotConnected e) {
+      LOG.trace("Failed to broadcast new block to peer", e);
     }
   }
 
