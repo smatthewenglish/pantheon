@@ -57,26 +57,26 @@ public class SynchronizerConfiguration {
   private final int transactionsParallelism;
   private final int computationParallelism;
 
-  private SynchronizerConfiguration(
-      final int fastSyncPivotDistance,
-      final float fastSyncFullValidationRate,
-      final int fastSyncMinimumPeerCount,
-      final Duration fastSyncMaximumPeerWaitTime,
-      final int worldStateHashCountPerRequest,
-      final int worldStateRequestParallelism,
-      final Range<Long> blockPropagationRange,
-      final SyncMode syncMode,
-      final long downloaderChangeTargetThresholdByHeight,
-      final UInt256 downloaderChangeTargetThresholdByTd,
-      final int downloaderHeaderRequestSize,
-      final int downloaderCheckpointTimeoutsPermitted,
-      final int downloaderChainSegmentTimeoutsPermitted,
-      final int downloaderChainSegmentSize,
-      final long trailingPeerBlocksBehindThreshold,
-      final int maxTrailingPeers,
-      final int downloaderParallelism,
-      final int transactionsParallelism,
-      final int computationParallelism) {
+  SynchronizerConfiguration(
+          final int fastSyncPivotDistance,
+          final float fastSyncFullValidationRate,
+          final int fastSyncMinimumPeerCount,
+          final Duration fastSyncMaximumPeerWaitTime,
+          final int worldStateHashCountPerRequest,
+          final int worldStateRequestParallelism,
+          final Range<Long> blockPropagationRange,
+          final SyncMode syncMode,
+          final long downloaderChangeTargetThresholdByHeight,
+          final UInt256 downloaderChangeTargetThresholdByTd,
+          final int downloaderHeaderRequestSize,
+          final int downloaderCheckpointTimeoutsPermitted,
+          final int downloaderChainSegmentTimeoutsPermitted,
+          final int downloaderChainSegmentSize,
+          final long trailingPeerBlocksBehindThreshold,
+          final int maxTrailingPeers,
+          final int downloaderParallelism,
+          final int transactionsParallelism,
+          final int computationParallelism) {
     this.fastSyncPivotDistance = fastSyncPivotDistance;
     this.fastSyncFullValidationRate = fastSyncFullValidationRate;
     this.fastSyncMinimumPeerCount = fastSyncMinimumPeerCount;

@@ -72,13 +72,13 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
     this.blockchain = blockchain;
   }
 
-  EthProtocolManager(
-      final Blockchain blockchain,
-      final WorldStateArchive worldStateArchive,
-      final int networkId,
-      final boolean fastSyncEnabled,
-      final int requestLimit,
-      final EthScheduler scheduler) {
+  public EthProtocolManager(
+          final Blockchain blockchain,
+          final WorldStateArchive worldStateArchive,
+          final int networkId,
+          final boolean fastSyncEnabled,
+          final int requestLimit,
+          final EthScheduler scheduler) {
     this.networkId = networkId;
 
     this.scheduler = scheduler;

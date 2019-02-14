@@ -12,6 +12,8 @@
  */
 package tech.pegasys.pantheon.ethereum.eth.sync;
 
+import static java.util.Collections.emptyList;
+import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -19,19 +21,37 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static sun.security.krb5.Confounder.bytes;
 
+import com.google.common.collect.Range;
+import tech.pegasys.pantheon.config.GenesisConfigFile;
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
 import tech.pegasys.pantheon.ethereum.chain.Blockchain;
+import tech.pegasys.pantheon.ethereum.chain.BlockchainStorage;
+import tech.pegasys.pantheon.ethereum.chain.DefaultMutableBlockchain;
 import tech.pegasys.pantheon.ethereum.chain.MutableBlockchain;
+import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.Block;
+import tech.pegasys.pantheon.ethereum.core.BlockBody;
 import tech.pegasys.pantheon.ethereum.core.BlockDataGenerator;
 import tech.pegasys.pantheon.ethereum.core.BlockDataGenerator.BlockOptions;
+import tech.pegasys.pantheon.ethereum.core.BlockHeader;
+import tech.pegasys.pantheon.ethereum.core.BlockHeaderBuilder;
+import tech.pegasys.pantheon.ethereum.core.Hash;
+import tech.pegasys.pantheon.ethereum.core.InMemoryStorageProvider;
+import tech.pegasys.pantheon.ethereum.core.LogsBloomFilter;
+import tech.pegasys.pantheon.ethereum.core.PrivacyParameters;
+import tech.pegasys.pantheon.ethereum.core.TransactionReceipt;
+import tech.pegasys.pantheon.ethereum.eth.EthProtocol;
+import tech.pegasys.pantheon.ethereum.eth.manager.DeterministicEthScheduler;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthContext;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthMessages;
+import tech.pegasys.pantheon.ethereum.eth.manager.EthPeer;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthPeers;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthProtocolManager;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthScheduler;
+import tech.pegasys.pantheon.ethereum.eth.manager.MockPeerConnection;
 import tech.pegasys.pantheon.ethereum.eth.manager.RespondingEthPeer;
 import tech.pegasys.pantheon.ethereum.eth.manager.RespondingEthPeer.Responder;
 import tech.pegasys.pantheon.ethereum.eth.manager.ethtaskutils.BlockchainSetupUtil;
@@ -40,14 +60,37 @@ import tech.pegasys.pantheon.ethereum.eth.messages.NewBlockHashesMessage.NewBloc
 import tech.pegasys.pantheon.ethereum.eth.messages.NewBlockMessage;
 import tech.pegasys.pantheon.ethereum.eth.sync.state.PendingBlocks;
 import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncState;
+import tech.pegasys.pantheon.ethereum.mainnet.MainnetBlockHashFunction;
+import tech.pegasys.pantheon.ethereum.mainnet.MainnetProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
+import tech.pegasys.pantheon.ethereum.mainnet.ProtocolScheduleBuilder;
+import tech.pegasys.pantheon.ethereum.p2p.api.MessageData;
+import tech.pegasys.pantheon.ethereum.p2p.api.PeerConnection;
+import tech.pegasys.pantheon.ethereum.p2p.wire.Capability;
+import tech.pegasys.pantheon.ethereum.p2p.wire.PeerInfo;
+import tech.pegasys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage;
+import tech.pegasys.pantheon.ethereum.storage.keyvalue.KeyValueStorageWorldStateStorage;
+import tech.pegasys.pantheon.ethereum.worldstate.WorldStateArchive;
 import tech.pegasys.pantheon.metrics.LabelledMetric;
 import tech.pegasys.pantheon.metrics.OperationTimer;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
+import tech.pegasys.pantheon.services.kvstore.InMemoryKeyValueStorage;
+import tech.pegasys.pantheon.util.bytes.Bytes32;
+import tech.pegasys.pantheon.util.bytes.BytesValue;
 import tech.pegasys.pantheon.util.uint.UInt256;
 
+import java.net.SocketAddress;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 import org.junit.Before;
@@ -120,11 +163,11 @@ public class BlockPropagationManagerTest {
     final RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 0);
     final NewBlockHashesMessage nextAnnouncement =
         NewBlockHashesMessage.create(
-            Collections.singletonList(
+            singletonList(
                 new NewBlockHash(nextBlock.getHash(), nextBlock.getHeader().getNumber())));
     final NewBlockHashesMessage nextNextAnnouncement =
         NewBlockHashesMessage.create(
-            Collections.singletonList(
+            singletonList(
                 new NewBlockHash(nextNextBlock.getHash(), nextNextBlock.getHeader().getNumber())));
     final Responder responder = RespondingEthPeer.blockchainResponder(fullBlockchain);
 
@@ -155,11 +198,11 @@ public class BlockPropagationManagerTest {
     final RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 0);
     final NewBlockHashesMessage nextAnnouncement =
         NewBlockHashesMessage.create(
-            Collections.singletonList(
+            singletonList(
                 new NewBlockHash(nextBlock.getHash(), nextBlock.getHeader().getNumber())));
     final NewBlockHashesMessage nextNextAnnouncement =
         NewBlockHashesMessage.create(
-            Collections.singletonList(
+            singletonList(
                 new NewBlockHash(nextNextBlock.getHash(), nextNextBlock.getHeader().getNumber())));
     final Responder responder = RespondingEthPeer.blockchainResponder(fullBlockchain);
 
@@ -260,14 +303,14 @@ public class BlockPropagationManagerTest {
     final RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 0);
     final NewBlockHashesMessage block1Msg =
         NewBlockHashesMessage.create(
-            Collections.singletonList(
+            singletonList(
                 new NewBlockHash(block1.getHash(), block1.getHeader().getNumber())));
     final NewBlockMessage block2Msg =
         NewBlockMessage.create(
             block2, fullBlockchain.getTotalDifficultyByHash(block2.getHash()).get());
     final NewBlockHashesMessage block3Msg =
         NewBlockHashesMessage.create(
-            Collections.singletonList(
+            singletonList(
                 new NewBlockHash(block3.getHash(), block3.getHeader().getNumber())));
     final NewBlockMessage block4Msg =
         NewBlockMessage.create(
@@ -304,7 +347,7 @@ public class BlockPropagationManagerTest {
     final RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 0);
     final NewBlockHashesMessage newBlockHash =
         NewBlockHashesMessage.create(
-            Collections.singletonList(
+            singletonList(
                 new NewBlockHash(nextBlock.getHash(), nextBlock.getHeader().getNumber())));
     final NewBlockMessage newBlock =
         NewBlockMessage.create(
@@ -339,7 +382,7 @@ public class BlockPropagationManagerTest {
     final RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 0);
     final NewBlockHashesMessage newBlockHash =
         NewBlockHashesMessage.create(
-            Collections.singletonList(
+            singletonList(
                 new NewBlockHash(nextBlock.getHash(), nextBlock.getHeader().getNumber())));
     final NewBlockMessage newBlock =
         NewBlockMessage.create(
@@ -371,7 +414,7 @@ public class BlockPropagationManagerTest {
     final RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 0);
     final NewBlockHashesMessage futureAnnouncement =
         NewBlockHashesMessage.create(
-            Collections.singletonList(
+            singletonList(
                 new NewBlockHash(futureBlock.getHash(), futureBlock.getHeader().getNumber())));
 
     // Broadcast
@@ -423,7 +466,7 @@ public class BlockPropagationManagerTest {
     final RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 0);
     final NewBlockHashesMessage oldAnnouncement =
         NewBlockHashesMessage.create(
-            Collections.singletonList(
+            singletonList(
                 new NewBlockHash(oldBlock.getHash(), oldBlock.getHeader().getNumber())));
 
     // Broadcast
@@ -645,5 +688,173 @@ public class BlockPropagationManagerTest {
 
 
     //verify(blockPropagationManager, times(1)).broadcastBlock(block);
+  }
+
+  @SuppressWarnings("unchecked")
+  @Test
+  public void blockPropagationManager_functionalityAssessment() {
+
+    final EthPeers ethPeers = new EthPeers("eth");
+
+    final BytesValue id0 = createId(0);
+    final PeerConnection peerConnection0 = new StubbedPeerConnection(id0);
+    // Right... but a peer connection is only *part* of a _single_ eth peer-- which would have the info about
+    // it's own blockchain... 
+
+    final BytesValue id1 = createId(1);
+    final PeerConnection peerConnection1 = new StubbedPeerConnection(id1);
+
+    final BytesValue id2 = createId(2);
+    final PeerConnection peerConnection2 = new StubbedPeerConnection(id2);
+
+    ethPeers.registerConnection(peerConnection0);
+    ethPeers.registerConnection(peerConnection1);
+    ethPeers.registerConnection(peerConnection2);
+
+
+
+    System.out.println("ethPeers.peerCount(): " + ethPeers.peerCount());
+
+
+
+
+
+
+
+
+
+
+
+
+//
+//
+//
+//
+//    final BlockHeader genesisHeader =
+//            BlockHeaderBuilder.create()
+//                    .parentHash(Hash.ZERO)
+//                    .ommersHash(Hash.ZERO)
+//                    .coinbase(Address.fromHexString("0x0000000000000000000000000000000000000000"))
+//                    .stateRoot(Hash.ZERO)
+//                    .transactionsRoot(Hash.ZERO)
+//                    .receiptsRoot(Hash.ZERO)
+//                    .logsBloom(new LogsBloomFilter(BytesValue.of(bytes(LogsBloomFilter.BYTE_SIZE))))
+//                    .difficulty(UInt256.ZERO)
+//                    .number(0L)
+//                    .gasLimit(1L)
+//                    .gasUsed(1L)
+//                    .timestamp(Instant.now().truncatedTo(ChronoUnit.SECONDS).getEpochSecond())
+//                    .extraData(Bytes32.wrap(bytes(Bytes32.SIZE)))
+//                    .mixHash(Hash.ZERO)
+//                    .nonce(0L)
+//                    .blockHashFunction(MainnetBlockHashFunction::createHash)
+//                    .buildBlockHeader();
+//    final BlockBody genesisBody = new BlockBody(Collections.emptyList(), Collections.emptyList());
+//    final Block genesisBlock = new Block(genesisHeader, genesisBody);
+//
+//    final BlockchainStorage blockchainStorage00 = new InMemoryStorageProvider().createBlockchainStorage(MainnetProtocolSchedule.create());
+//    final MutableBlockchain blockchain00 = generateBlockchain(blockchainStorage00, genesisBlock, 4);
+//    assertThat(blockchain00.getChainHeadBlockNumber()).isEqualTo(4L);
+//
+//    final BlockchainStorage blockchainStorage01 = new InMemoryStorageProvider().createBlockchainStorage(MainnetProtocolSchedule.create());
+//    final MutableBlockchain blockchain01 = generateBlockchain(blockchainStorage01, genesisBlock, 3);
+//    assertThat(blockchain01.getChainHeadBlockNumber()).isEqualTo(3L);
+//
+//    final SynchronizerConfiguration synchronizerConfiguration = SynchronizerConfiguration.builder().build();
+//
+//    final WorldStateArchive worldStateArchive = new WorldStateArchive(new KeyValueStorageWorldStateStorage(new InMemoryKeyValueStorage()));
+//
+//    final EthProtocolManager ethProtocolManager00 = new EthProtocolManager(
+//            blockchain00,
+//            worldStateArchive,
+//            1,
+//            false,
+//            200,
+//            new DeterministicEthScheduler(DeterministicEthScheduler.TimeoutPolicy.NEVER));
+//
+//    final BlockPropagationManager blockPropagationManager00 = new BlockPropagationManager<>(
+//            synchronizerConfiguration,
+//            new ProtocolScheduleBuilder<>(GenesisConfigFile.mainnet().getConfigOptions(), 1, Function.identity(), PrivacyParameters.noPrivacy()).createProtocolSchedule(),
+//            new ProtocolContext(blockchain00, worldStateArchive, null),
+//            ethProtocolManager00.ethContext(),
+//            new SyncState(blockchain00, ethProtocolManager00.ethContext().getEthPeers()),
+//            new PendingBlocks(),
+//            NoOpMetricsSystem.NO_OP_LABELLED_TIMER,
+//            blockBroadcaster);
+//
+//    blockPropagationManager00.start();
+
+  }
+
+  private MutableBlockchain generateBlockchain(BlockchainStorage blockchainStorage, Block genesisBlock, int head) {
+    DefaultMutableBlockchain blockchain = new DefaultMutableBlockchain(genesisBlock, blockchainStorage, new NoOpMetricsSystem());
+    for (int i = 1; i <= head; i++) {
+      BlockHeader header =
+              BlockHeaderBuilder.create()
+                      .parentHash(blockchain.getBlockHashByNumber(Long.valueOf(i - 1)).get())
+                      .ommersHash(Hash.ZERO)
+                      .coinbase(Address.fromHexString("0x0000000000000000000000000000000000000000"))
+                      .stateRoot(Hash.ZERO)
+                      .transactionsRoot(Hash.ZERO)
+                      .receiptsRoot(Hash.ZERO)
+                      .logsBloom(new LogsBloomFilter(BytesValue.of(bytes(LogsBloomFilter.BYTE_SIZE))))
+                      .difficulty(UInt256.ZERO)
+                      .number(Long.valueOf(i))
+                      .gasLimit(1L)
+                      .gasUsed(1L)
+                      .timestamp(Instant.now().truncatedTo(ChronoUnit.SECONDS).getEpochSecond())
+                      .extraData(Bytes32.wrap(bytes(Bytes32.SIZE)))
+                      .mixHash(Hash.ZERO)
+                      .nonce(0L)
+                      .blockHashFunction(MainnetBlockHashFunction::createHash)
+                      .buildBlockHeader();
+      BlockBody body = new BlockBody(Collections.emptyList(), Collections.emptyList());
+      Block block = new Block(header, body);
+      List<TransactionReceipt> receipts = Collections.emptyList();
+      blockchain.appendBlock(block, receipts);
+    }
+    return blockchain;
+  }
+
+  private static class StubbedPeerConnection implements PeerConnection {
+    private final BytesValue nodeId;
+
+    public StubbedPeerConnection(final BytesValue nodeId) {
+      this.nodeId = nodeId;
+    }
+
+    @Override
+    public void send(final Capability capability, final MessageData message)
+            throws PeerNotConnected {}
+
+    @Override
+    public Set<Capability> getAgreedCapabilities() {
+      return null;
+    }
+
+    @Override
+    public PeerInfo getPeer() {
+      return new PeerInfo(0, "IbftIntTestPeer", emptyList(), 0, nodeId);
+    }
+
+    @Override
+    public void terminateConnection(final DisconnectMessage.DisconnectReason reason, final boolean peerInitiated) {}
+
+    @Override
+    public void disconnect(final DisconnectMessage.DisconnectReason reason) {}
+
+    @Override
+    public SocketAddress getLocalAddress() {
+      return null;
+    }
+
+    @Override
+    public SocketAddress getRemoteAddress() {
+      return null;
+    }
+  }
+
+  private static BytesValue createId(final int id) {
+    return BytesValue.fromHexString(String.format("%0128x", id));
   }
 }
