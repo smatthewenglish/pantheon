@@ -67,7 +67,7 @@ public class EthPeer {
   private final PeerReputation reputation = new PeerReputation();
   private final Subscribers<DisconnectCallback> disconnectCallbacks = new Subscribers<>();
 
-  public EthPeer(
+  EthPeer(
       final PeerConnection connection,
       final String protocolName,
       final Consumer<EthPeer> onStatusesExchanged) {

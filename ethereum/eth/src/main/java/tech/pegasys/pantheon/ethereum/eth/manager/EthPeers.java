@@ -48,7 +48,7 @@ public class EthPeers {
     this.protocolName = protocolName;
   }
 
-  public void registerConnection(final PeerConnection peerConnection) {
+  void registerConnection(final PeerConnection peerConnection) {
     final EthPeer peer = new EthPeer(peerConnection, protocolName, this::invokeConnectionCallbacks);
     connections.putIfAbsent(peerConnection, peer);
   }
@@ -61,7 +61,7 @@ public class EthPeers {
     }
   }
 
-  public EthPeer peer(final PeerConnection peerConnection) {
+  EthPeer peer(final PeerConnection peerConnection) {
     return connections.get(peerConnection);
   }
 
