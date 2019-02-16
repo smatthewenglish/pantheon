@@ -569,18 +569,6 @@ public class BlockPropagationManagerTest {
 
   @Test
   public void verifyBroadcastBlockInvocation() {
-    final BlockPropagationManager<Void> blockPropagationManager =
-        spy(
-            new BlockPropagationManager<>(
-                syncConfig,
-                protocolSchedule,
-                protocolContext,
-                ethProtocolManager.ethContext(),
-                syncState,
-                pendingBlocks,
-                ethTasksTimer,
-                blockBroadcaster));
-
     blockchainUtil.importFirstBlocks(2);
     final Block block = blockchainUtil.getBlock(2);
     blockPropagationManager.start();
@@ -597,6 +585,6 @@ public class BlockPropagationManagerTest {
     final Responder responder = RespondingEthPeer.blockchainResponder(fullBlockchain);
     peer.respondWhile(responder, peer::hasOutstandingRequests);
 
-    verify(blockPropagationManager, times(1)).validateAndBroadcastBlock(block);
+    verify(blockBroadcaster, times(1)).propagate(block, totalDifficulty);
   }
 }

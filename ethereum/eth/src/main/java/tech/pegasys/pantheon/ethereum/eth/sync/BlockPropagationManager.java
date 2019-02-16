@@ -127,7 +127,11 @@ public class BlockPropagationManager<C> {
     if (blockHeaderValidator.validateHeader(
         block.getHeader(), parent, protocolContext, HeaderValidationMode.FULL)) {
       final UInt256 totalDifficulty =
-          parent.getDifficulty().plus(block.getHeader().getDifficulty());
+          protocolContext
+              .getBlockchain()
+              .getTotalDifficultyByHash(parent.getHash())
+              .get()
+              .plus(block.getHeader().getDifficulty());
       blockBroadcaster.propagate(block, totalDifficulty);
     }
   }
