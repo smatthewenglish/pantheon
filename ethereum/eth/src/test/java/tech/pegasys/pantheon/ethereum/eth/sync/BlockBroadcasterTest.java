@@ -15,6 +15,7 @@ package tech.pegasys.pantheon.ethereum.eth.sync;
 import static java.util.Collections.emptyList;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -65,6 +66,24 @@ public class BlockBroadcasterTest {
     blockBroadcaster.propagate(block, UInt256.ZERO);
 
     verify(ethPeer, times(1)).propagateBlock(any(), any());
+  }
+
+  @Test
+  public void blockPropagationRejectOnHasSeenBlock() {
+    final EthPeer ethPeer = mock(EthPeer.class);
+    when(ethPeer.hasSeenBlock(any())).thenReturn(true);
+
+    final EthPeers ethPeers = mock(EthPeers.class);
+    when(ethPeers.availablePeers()).thenReturn(Stream.of(ethPeer));
+
+    final EthContext ethContext = mock(EthContext.class);
+    when(ethContext.getEthPeers()).thenReturn(ethPeers);
+
+    final BlockBroadcaster blockBroadcaster = new BlockBroadcaster(ethContext);
+    final Block block = generateBlock();
+    blockBroadcaster.propagate(block, UInt256.ZERO);
+
+    verify(ethPeer, never()).propagateBlock(any(), any());
   }
 
   private Block generateBlock() {
