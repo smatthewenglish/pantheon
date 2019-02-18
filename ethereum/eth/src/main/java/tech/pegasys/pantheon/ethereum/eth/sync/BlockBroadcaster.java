@@ -28,6 +28,7 @@ class BlockBroadcaster {
     ethContext
         .getEthPeers()
         .availablePeers()
+            .filter(ethPeer -> !ethPeer.hasSeenBlock(block.getHash()))
         .forEach(ethPeer -> ethPeer.propagateBlock(block, difficulty));
   }
 }
