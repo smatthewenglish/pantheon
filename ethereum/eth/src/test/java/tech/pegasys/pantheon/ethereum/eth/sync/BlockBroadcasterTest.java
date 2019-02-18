@@ -12,7 +12,6 @@
  */
 package tech.pegasys.pantheon.ethereum.eth.sync;
 
-import static java.util.Collections.emptyList;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -32,20 +31,13 @@ import tech.pegasys.pantheon.ethereum.eth.manager.EthContext;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthPeer;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthPeers;
 import tech.pegasys.pantheon.ethereum.mainnet.MainnetBlockHashFunction;
-import tech.pegasys.pantheon.ethereum.p2p.api.MessageData;
-import tech.pegasys.pantheon.ethereum.p2p.api.PeerConnection;
-import tech.pegasys.pantheon.ethereum.p2p.wire.Capability;
-import tech.pegasys.pantheon.ethereum.p2p.wire.PeerInfo;
-import tech.pegasys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage;
 import tech.pegasys.pantheon.util.bytes.Bytes32;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 import tech.pegasys.pantheon.util.uint.UInt256;
 
-import java.net.SocketAddress;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Collections;
-import java.util.Set;
 import java.util.stream.Stream;
 
 import org.junit.Test;
