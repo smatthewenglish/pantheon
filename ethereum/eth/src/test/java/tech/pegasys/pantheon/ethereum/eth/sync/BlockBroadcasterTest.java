@@ -13,6 +13,11 @@
 package tech.pegasys.pantheon.ethereum.eth.sync;
 
 import static java.util.Collections.emptyList;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import static sun.security.krb5.Confounder.bytes;
 
 import tech.pegasys.pantheon.ethereum.core.Address;
@@ -40,46 +45,26 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import org.junit.Test;
 
 public class BlockBroadcasterTest {
 
   @Test
-  public void blockPropagationTest() {
-    final String protocolName = "eth";
-    final EthPeers ethPeers = new EthPeers(protocolName);
+  public void blockPropagationUnitTest() {
+    final EthPeer ethPeer = mock(EthPeer.class);
+    final EthPeers ethPeers = mock(EthPeers.class);
+    when(ethPeers.availablePeers()).thenReturn(Stream.of(ethPeer));
 
-    final BytesValue id0 = createId(0);
-    final PeerConnection peerConnection0 = new StubbedPeerConnection(id0);
+    final EthContext ethContext = mock(EthContext.class);
+    when(ethContext.getEthPeers()).thenReturn(ethPeers);
 
-    final BytesValue id1 = createId(1);
-    final PeerConnection peerConnection1 = new StubbedPeerConnection(id1);
-
-    final BytesValue id2 = createId(2);
-    final PeerConnection peerConnection2 = new StubbedPeerConnection(id2);
-
-    ethPeers.registerConnection(peerConnection0);
-    EthPeer ethPeer0 = ethPeers.peer(peerConnection0);
-    ethPeer0.registerStatusSent();
-    ethPeer0.registerStatusReceived(Hash.ZERO, UInt256.ZERO);
-
-    ethPeers.registerConnection(peerConnection1);
-    EthPeer ethPeer1 = ethPeers.peer(peerConnection1);
-    ethPeer1.registerStatusSent();
-    ethPeer1.registerStatusReceived(Hash.ZERO, UInt256.ZERO);
-
-    ethPeers.registerConnection(peerConnection2);
-    EthPeer ethPeer2 = ethPeers.peer(peerConnection2);
-    ethPeer2.registerStatusSent();
-    ethPeer2.registerStatusReceived(Hash.ZERO, UInt256.ZERO);
-
-    EthContext ethContext = new EthContext(protocolName, ethPeers, null, null);
-
-    BlockBroadcaster blockBroadcaster = new BlockBroadcaster(ethContext);
-
-    Block block = generateBlock();
+    final BlockBroadcaster blockBroadcaster = new BlockBroadcaster(ethContext);
+    final Block block = generateBlock();
     blockBroadcaster.propagate(block, UInt256.ZERO);
+
+    verify(ethPeer, times(1)).propagateBlock(any(), any());
   }
 
   private Block generateBlock() {
@@ -106,16 +91,15 @@ public class BlockBroadcasterTest {
     return new Block(header, body);
   }
 
-  private static class StubbedPeerConnection implements PeerConnection {
+  private static class PeerConnectionStub implements PeerConnection {
     private final BytesValue nodeId;
 
-    StubbedPeerConnection(final BytesValue nodeId) {
+    PeerConnectionStub(final BytesValue nodeId) {
       this.nodeId = nodeId;
     }
 
     @Override
-    public void send(final Capability capability, final MessageData message)
-        throws PeerNotConnected {}
+    public void send(final Capability capability, final MessageData message) {}
 
     @Override
     public Set<Capability> getAgreedCapabilities() {
