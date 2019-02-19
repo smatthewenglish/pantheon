@@ -18,25 +18,15 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static sun.security.krb5.Confounder.bytes;
 
-import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.Block;
 import tech.pegasys.pantheon.ethereum.core.BlockBody;
-import tech.pegasys.pantheon.ethereum.core.BlockHeader;
-import tech.pegasys.pantheon.ethereum.core.BlockHeaderBuilder;
-import tech.pegasys.pantheon.ethereum.core.Hash;
-import tech.pegasys.pantheon.ethereum.core.LogsBloomFilter;
+import tech.pegasys.pantheon.ethereum.core.BlockHeaderTestFixture;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthContext;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthPeer;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthPeers;
-import tech.pegasys.pantheon.ethereum.mainnet.MainnetBlockHashFunction;
-import tech.pegasys.pantheon.util.bytes.Bytes32;
-import tech.pegasys.pantheon.util.bytes.BytesValue;
 import tech.pegasys.pantheon.util.uint.UInt256;
 
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.stream.Stream;
 
@@ -55,9 +45,31 @@ public class BlockBroadcasterTest {
 
     final BlockBroadcaster blockBroadcaster = new BlockBroadcaster(ethContext);
     final Block block = generateBlock();
+
     blockBroadcaster.propagate(block, UInt256.ZERO);
 
     verify(ethPeer, times(1)).propagateBlock(any(), any());
+  }
+
+  @Test
+  public void blockPropagationUnitTestSeenUnseen() {
+    final EthPeer ethPeer0 = mock(EthPeer.class);
+    when(ethPeer0.hasSeenBlock(any())).thenReturn(true);
+
+    final EthPeer ethPeer1 = mock(EthPeer.class);
+
+    final EthPeers ethPeers = mock(EthPeers.class);
+    when(ethPeers.availablePeers()).thenReturn(Stream.of(ethPeer0, ethPeer1));
+
+    final EthContext ethContext = mock(EthContext.class);
+    when(ethContext.getEthPeers()).thenReturn(ethPeers);
+
+    final BlockBroadcaster blockBroadcaster = new BlockBroadcaster(ethContext);
+    final Block block = generateBlock();
+    blockBroadcaster.propagate(block, UInt256.ZERO);
+
+    verify(ethPeer0, never()).propagateBlock(any(), any());
+    verify(ethPeer1, times(1)).propagateBlock(any(), any());
   }
 
   @Test
@@ -79,26 +91,7 @@ public class BlockBroadcasterTest {
   }
 
   private Block generateBlock() {
-    final BlockHeader header =
-        BlockHeaderBuilder.create()
-            .parentHash(Hash.ZERO)
-            .ommersHash(Hash.ZERO)
-            .coinbase(Address.fromHexString("0x0000000000000000000000000000000000000000"))
-            .stateRoot(Hash.ZERO)
-            .transactionsRoot(Hash.ZERO)
-            .receiptsRoot(Hash.ZERO)
-            .logsBloom(new LogsBloomFilter(BytesValue.of(bytes(LogsBloomFilter.BYTE_SIZE))))
-            .difficulty(UInt256.ZERO)
-            .number(0L)
-            .gasLimit(1L)
-            .gasUsed(1L)
-            .timestamp(Instant.now().truncatedTo(ChronoUnit.SECONDS).getEpochSecond())
-            .extraData(Bytes32.wrap(bytes(Bytes32.SIZE)))
-            .mixHash(Hash.ZERO)
-            .nonce(0L)
-            .blockHashFunction(MainnetBlockHashFunction::createHash)
-            .buildBlockHeader();
     final BlockBody body = new BlockBody(Collections.emptyList(), Collections.emptyList());
-    return new Block(header, body);
+    return new Block(new BlockHeaderTestFixture().buildHeader(), body);
   }
 }
