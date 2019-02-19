@@ -72,24 +72,6 @@ public class BlockBroadcasterTest {
     verify(ethPeer1, times(1)).propagateBlock(any(), any());
   }
 
-  @Test
-  public void blockPropagationRejectOnHasSeenBlock() {
-    final EthPeer ethPeer = mock(EthPeer.class);
-    when(ethPeer.hasSeenBlock(any())).thenReturn(true);
-
-    final EthPeers ethPeers = mock(EthPeers.class);
-    when(ethPeers.availablePeers()).thenReturn(Stream.of(ethPeer));
-
-    final EthContext ethContext = mock(EthContext.class);
-    when(ethContext.getEthPeers()).thenReturn(ethPeers);
-
-    final BlockBroadcaster blockBroadcaster = new BlockBroadcaster(ethContext);
-    final Block block = generateBlock();
-    blockBroadcaster.propagate(block, UInt256.ZERO);
-
-    verify(ethPeer, never()).propagateBlock(any(), any());
-  }
-
   private Block generateBlock() {
     final BlockBody body = new BlockBody(Collections.emptyList(), Collections.emptyList());
     return new Block(new BlockHeaderTestFixture().buildHeader(), body);
