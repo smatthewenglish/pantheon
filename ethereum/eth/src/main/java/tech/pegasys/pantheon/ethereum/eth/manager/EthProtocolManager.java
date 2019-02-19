@@ -37,7 +37,6 @@ import tech.pegasys.pantheon.util.uint.UInt256;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -273,12 +272,13 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
   @Override
   public void blockMined(final Block block) {
     // This assumes the block has already been included in the chain
-    final Optional<UInt256> maybeTotalDifficulty =
-        blockchain.getTotalDifficultyByHash(block.getHash());
-    if (!maybeTotalDifficulty.isPresent()) {
-      throw new IllegalStateException(
-          "Unable to get total difficulty from blockchain for mined block.");
-    }
-    blockBroadcaster.propagate(block, maybeTotalDifficulty.get());
+    final UInt256 totalDifficulty =
+        blockchain
+            .getTotalDifficultyByHash(block.getHash())
+            .orElseThrow(
+                () ->
+                    new IllegalStateException(
+                        "Unable to get total difficulty from blockchain for mined block."));
+    blockBroadcaster.propagate(block, totalDifficulty);
   }
 }
