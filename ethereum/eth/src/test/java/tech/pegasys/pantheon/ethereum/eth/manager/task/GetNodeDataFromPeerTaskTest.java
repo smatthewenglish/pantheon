@@ -23,42 +23,49 @@ import tech.pegasys.pantheon.ethereum.eth.manager.task.AbstractPeerTask.PeerTask
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
-public class GetNodeDataFromPeerTaskTest extends PeerMessageTaskTest<List<BytesValue>> {
+public class GetNodeDataFromPeerTaskTest extends PeerMessageTaskTest<Map<Hash, BytesValue>> {
 
   @Override
-  protected List<BytesValue> generateDataToBeRequested() {
-    final List<BytesValue> requestedData = new ArrayList<>();
+  protected Map<Hash, BytesValue> generateDataToBeRequested() {
+    final Map<Hash, BytesValue> requestedData = new HashMap<>();
     for (int i = 0; i < 3; i++) {
       final BlockHeader blockHeader = blockchain.getBlockHeader(10 + i).get();
-      requestedData.add(
+      requestedData.put(
+          Hash.fromHexStringLenient(Integer.toHexString(i)),
           protocolContext.getWorldStateArchive().getNodeData(blockHeader.getStateRoot()).get());
     }
     return requestedData;
   }
 
   @Override
-  protected EthTask<PeerTaskResult<List<BytesValue>>> createTask(
-      final List<BytesValue> requestedData) {
-    final List<Hash> hashes = requestedData.stream().map(Hash::hash).collect(toList());
+  protected EthTask<PeerTaskResult<Map<Hash, BytesValue>>> createTask(
+      final Map<Hash, BytesValue> requestedData) {
+    final List<Hash> hashes = requestedData.values().stream().map(Hash::hash).collect(toList());
     return GetNodeDataFromPeerTask.forHashes(ethContext, hashes, ethTasksTimer);
   }
 
   @Override
   protected void assertPartialResultMatchesExpectation(
-      final List<BytesValue> requestedData, final List<BytesValue> partialResponse) {
+      final Map<Hash, BytesValue> requestedData, final Map<Hash, BytesValue> partialResponse) {
     assertThat(partialResponse.size()).isLessThanOrEqualTo(requestedData.size());
     assertThat(partialResponse.size()).isGreaterThan(0);
-    assertThat(requestedData).containsAll(partialResponse);
+    final List<BytesValue> requestData = new ArrayList<>(requestedData.values());
+    final List<BytesValue> resultData = new ArrayList<>(partialResponse.values());
+    assertThat(requestData).containsAll(resultData);
   }
 
   @Override
   protected void assertResultMatchesExpectation(
-      final List<BytesValue> requestedData,
-      final PeerTaskResult<List<BytesValue>> response,
+      final Map<Hash, BytesValue> requestedData,
+      final PeerTaskResult<Map<Hash, BytesValue>> response,
       final EthPeer respondingPeer) {
-    assertThat(response.getResult()).containsExactlyInAnyOrderElementsOf(requestedData);
+    final List<BytesValue> requestData = new ArrayList<>(requestedData.values());
+    final List<BytesValue> resultData = new ArrayList<>(response.getResult().values());
+    assertThat(resultData).containsExactlyInAnyOrderElementsOf(requestData);
     assertThat(response.getPeer()).isEqualTo(respondingPeer);
   }
 }

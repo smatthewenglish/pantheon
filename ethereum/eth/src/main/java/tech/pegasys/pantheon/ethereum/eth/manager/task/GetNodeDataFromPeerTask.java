@@ -12,7 +12,7 @@
  */
 package tech.pegasys.pantheon.ethereum.eth.manager.task;
 
-import static java.util.Collections.emptyList;
+import static java.util.Collections.emptyMap;
 
 import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthContext;
@@ -27,15 +27,17 @@ import tech.pegasys.pantheon.metrics.OperationTimer;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class GetNodeDataFromPeerTask extends AbstractPeerRequestTask<List<BytesValue>> {
+public class GetNodeDataFromPeerTask extends AbstractPeerRequestTask<Map<Hash, BytesValue>> {
 
   private static final Logger LOG = LogManager.getLogger();
 
@@ -63,18 +65,20 @@ public class GetNodeDataFromPeerTask extends AbstractPeerRequestTask<List<BytesV
   }
 
   @Override
-  protected Optional<List<BytesValue>> processResponse(
+  protected Optional<Map<Hash, BytesValue>> processResponse(
       final boolean streamClosed, final MessageData message, final EthPeer peer) {
     if (streamClosed) {
       // We don't record this as a useless response because it's impossible to know if a peer has
       // the data we're requesting.
-      return Optional.of(emptyList());
+      return Optional.of(emptyMap());
     }
     final NodeDataMessage nodeDataMessage = NodeDataMessage.readFrom(message);
     final List<BytesValue> nodeData = nodeDataMessage.nodeData();
-    if (nodeData.isEmpty()) {
+    final Map<Hash, BytesValue> nodeDataByHash = mapNodeDataByHash(nodeData);
+
+    if (nodeDataByHash.isEmpty()) {
       return Optional.empty();
-    } else if (nodeData.size() > hashes.size()) {
+    } else if (nodeDataByHash.entrySet().size() > hashes.size()) {
       // Can't be the response to our request
       return Optional.empty();
     }
@@ -83,6 +87,13 @@ public class GetNodeDataFromPeerTask extends AbstractPeerRequestTask<List<BytesV
       // Message contains unrequested data, must not be the response to our request.
       return Optional.empty();
     }
-    return Optional.of(nodeData);
+    return Optional.of(nodeDataByHash);
+  }
+
+  private Map<Hash, BytesValue> mapNodeDataByHash(final List<BytesValue> data) {
+    // Map data by hash
+    final Map<Hash, BytesValue> dataByHash = new HashMap<>();
+    data.forEach(d -> dataByHash.put(Hash.hash(d), d));
+    return dataByHash;
   }
 }

@@ -31,6 +31,7 @@ import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -73,15 +74,16 @@ public class DeconstructedGetNodeDataFromPeerTaskTest {
     }
 
     // Execute task and wait for response
-    final AtomicReference<AbstractPeerTask.PeerTaskResult<List<BytesValue>>> actualResult =
+    final AtomicReference<AbstractPeerTask.PeerTaskResult<Map<Hash, BytesValue>>> actualResult =
         new AtomicReference<>();
     final AtomicBoolean done = new AtomicBoolean(false);
 
     final List<Hash> hashes = requestedData.stream().map(Hash::hash).collect(toList());
-    final EthTask<AbstractPeerTask.PeerTaskResult<List<BytesValue>>> task =
+    final EthTask<AbstractPeerTask.PeerTaskResult<Map<Hash, BytesValue>>> task =
         GetNodeDataFromPeerTask.forHashes(ethContext, hashes, ethTasksTimer);
 
-    final CompletableFuture<AbstractPeerTask.PeerTaskResult<List<BytesValue>>> future = task.run();
+    final CompletableFuture<AbstractPeerTask.PeerTaskResult<Map<Hash, BytesValue>>> future =
+        task.run();
     respondingPeer.respondWhile(responder, () -> !future.isDone());
     future.whenComplete(
         (result, error) -> {
@@ -90,7 +92,10 @@ public class DeconstructedGetNodeDataFromPeerTaskTest {
         });
 
     assertThat(done).isTrue();
-    assertThat(actualResult.get().getResult()).containsExactlyInAnyOrderElementsOf(requestedData);
+
+    final List<BytesValue> resultData = new ArrayList<>(actualResult.get().getResult().values());
+
+    assertThat(resultData).containsExactlyInAnyOrderElementsOf(requestedData);
     assertThat(actualResult.get().getPeer()).isEqualTo(respondingPeer.getEthPeer());
   }
 }

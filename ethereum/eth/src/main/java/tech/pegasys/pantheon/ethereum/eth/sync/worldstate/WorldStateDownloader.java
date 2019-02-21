@@ -240,7 +240,7 @@ public class WorldStateDownloader {
         .timeout(WaitForPeerTask.create(ethContext, ethTasksTimer), Duration.ofSeconds(5));
   }
 
-  private CompletableFuture<AbstractPeerTask<List<BytesValue>>> sendAndProcessRequests(
+  private CompletableFuture<AbstractPeerTask<Map<Hash, BytesValue>>> sendAndProcessRequests(
       final EthPeer peer,
       final List<Task<NodeDataRequest>> requestTasks,
       final BlockHeader blockHeader) {
@@ -250,13 +250,12 @@ public class WorldStateDownloader {
             .map(NodeDataRequest::getHash)
             .distinct()
             .collect(Collectors.toList());
-    final AbstractPeerTask<List<BytesValue>> ethTask =
+    final AbstractPeerTask<Map<Hash, BytesValue>> ethTask =
         GetNodeDataFromPeerTask.forHashes(ethContext, hashes, ethTasksTimer).assignPeer(peer);
     outstandingRequests.add(ethTask);
     return ethTask
         .run()
         .thenApply(PeerTaskResult::getResult)
-        .thenApply(this::mapNodeDataByHash)
         .exceptionally(
             error -> {
               final Throwable rootCause = ExceptionUtils.rootCause(error);
@@ -276,10 +275,10 @@ public class WorldStateDownloader {
                         () -> storeData(requestTasks, blockHeader, ethTask, data)));
   }
 
-  private CompletableFuture<AbstractPeerTask<List<BytesValue>>> storeData(
+  private CompletableFuture<AbstractPeerTask<Map<Hash, BytesValue>>> storeData(
       final List<Task<NodeDataRequest>> requestTasks,
       final BlockHeader blockHeader,
-      final AbstractPeerTask<List<BytesValue>> ethTask,
+      final AbstractPeerTask<Map<Hash, BytesValue>> ethTask,
       final Map<Hash, BytesValue> data) {
     final Updater storageUpdater = worldStateStorage.updater();
     for (final Task<NodeDataRequest> task : requestTasks) {
