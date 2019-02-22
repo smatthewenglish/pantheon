@@ -37,7 +37,6 @@ import tech.pegasys.pantheon.util.bytes.BytesValue;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -376,12 +375,5 @@ public class WorldStateDownloader {
 
   private boolean isRootState(final BlockHeader blockHeader, final NodeDataRequest request) {
     return request.getHash().equals(blockHeader.getStateRoot());
-  }
-
-  private Map<Hash, BytesValue> mapNodeDataByHash(final List<BytesValue> data) {
-    // Map data by hash
-    final Map<Hash, BytesValue> dataByHash = new HashMap<>();
-    data.forEach(d -> dataByHash.put(Hash.hash(d), d));
-    return dataByHash;
   }
 }

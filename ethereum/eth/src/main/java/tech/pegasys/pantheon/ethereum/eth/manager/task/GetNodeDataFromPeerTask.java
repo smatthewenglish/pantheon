@@ -74,26 +74,18 @@ public class GetNodeDataFromPeerTask extends AbstractPeerRequestTask<Map<Hash, B
     }
     final NodeDataMessage nodeDataMessage = NodeDataMessage.readFrom(message);
     final List<BytesValue> nodeData = nodeDataMessage.nodeData();
-    final Map<Hash, BytesValue> nodeDataByHash = mapNodeDataByHash(nodeData);
-
-    if (nodeDataByHash.isEmpty()) {
-      return Optional.empty();
-    } else if (nodeDataByHash.entrySet().size() > hashes.size()) {
-      // Can't be the response to our request
-      return Optional.empty();
-    }
-
-    if (nodeData.stream().anyMatch(data -> !hashes.contains(Hash.hash(data)))) {
-      // Message contains unrequested data, must not be the response to our request.
-      return Optional.empty();
-    }
-    return Optional.of(nodeDataByHash);
+    return mapNodeDataByHash(nodeData);
   }
 
-  private Map<Hash, BytesValue> mapNodeDataByHash(final List<BytesValue> data) {
-    // Map data by hash
-    final Map<Hash, BytesValue> dataByHash = new HashMap<>();
-    data.forEach(d -> dataByHash.put(Hash.hash(d), d));
-    return dataByHash;
+  private Optional<Map<Hash, BytesValue>> mapNodeDataByHash(final List<BytesValue> nodeData) {
+    final Map<Hash, BytesValue> nodeDataByHash = new HashMap<>();
+    for (BytesValue data : nodeData) {
+      final Hash hash = Hash.hash(data);
+      if (!hashes.contains(hash)) {
+        return Optional.empty();
+      }
+      nodeDataByHash.put(hash, data);
+    }
+    return Optional.of(nodeDataByHash);
   }
 }
