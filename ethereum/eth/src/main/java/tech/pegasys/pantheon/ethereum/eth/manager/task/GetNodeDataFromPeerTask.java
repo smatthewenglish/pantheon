@@ -74,6 +74,10 @@ public class GetNodeDataFromPeerTask extends AbstractPeerRequestTask<Map<Hash, B
     }
     final NodeDataMessage nodeDataMessage = NodeDataMessage.readFrom(message);
     final List<BytesValue> nodeData = nodeDataMessage.nodeData();
+    if (nodeData.size() > hashes.size()) {
+      // Can't be the response to our request
+      return Optional.empty();
+    }
     return mapNodeDataByHash(nodeData);
   }
 
