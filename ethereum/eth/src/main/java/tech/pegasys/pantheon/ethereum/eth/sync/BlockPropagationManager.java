@@ -237,10 +237,17 @@ public class BlockPropagationManager<C> {
     return getBlockTask.run().thenCompose((r) -> importOrSavePendingBlock(r.getResult()));
   }
 
-  private CompletableFuture<Boolean> validateHeader(final Block block, final BlockHeader parent) {
-    final ProtocolSpec<C> protocolSpec = protocolSchedule.getByBlockNumber(block.getHeader().getNumber());
+  Boolean validateHeader(final Block block, final BlockHeader parent) throws Exception {
+    final ProtocolSpec<C> protocolSpec =
+        protocolSchedule.getByBlockNumber(block.getHeader().getNumber());
     final BlockHeaderValidator<C> blockHeaderValidator = protocolSpec.getBlockHeaderValidator();
-    return ethContext.getScheduler().scheduleComputationTask(() -> blockHeaderValidator.validateHeader(block.getHeader(), parent, protocolContext, HeaderValidationMode.FULL));
+    return ethContext
+        .getScheduler()
+        .scheduleComputationTask(
+            () ->
+                blockHeaderValidator.validateHeader(
+                    block.getHeader(), parent, protocolContext, HeaderValidationMode.FULL))
+        .get();
   }
 
   private void broadcastBlock(final Block block, final BlockHeader parent) {
@@ -294,15 +301,21 @@ public class BlockPropagationManager<C> {
                             + block.getHeader().getNumber()
                             + "."));
 
-
-    if (!isValid.get()) {
+    boolean validation = false;
+    try {
+      validation = validateHeader(block, parent);
+    } catch (Exception ignored) {
+    }
+    if (!validation) {
       throw new IllegalArgumentException("Invalid block: " + block.getHeader().getNumber());
     }
 
     ethContext.getScheduler().scheduleSyncWorkerTask(() -> broadcastBlock(block, parent));
 
     // Import block
-    final PersistBlockTask<C> importTask = PersistBlockTask.create(protocolSchedule, protocolContext, block, HeaderValidationMode.NONE, metricsSystem);
+    final PersistBlockTask<C> importTask =
+        PersistBlockTask.create(
+            protocolSchedule, protocolContext, block, HeaderValidationMode.NONE, metricsSystem);
 
     return ethContext
         .getScheduler()

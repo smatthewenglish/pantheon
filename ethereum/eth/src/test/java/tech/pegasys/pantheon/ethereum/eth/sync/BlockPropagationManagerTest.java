@@ -75,7 +75,7 @@ public class BlockPropagationManagerTest {
   }
 
   @Before
-  public void setup() {
+  public void setup() throws Exception {
     blockchainUtil = BlockchainSetupUtil.forTesting();
     blockchain = spy(blockchainUtil.getBlockchain());
     protocolSchedule = blockchainUtil.getProtocolSchedule();
