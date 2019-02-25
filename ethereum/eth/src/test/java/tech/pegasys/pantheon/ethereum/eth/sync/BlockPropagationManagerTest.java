@@ -543,6 +543,7 @@ public class BlockPropagationManagerTest {
     final EthScheduler ethScheduler = mock(EthScheduler.class);
     when(ethScheduler.scheduleSyncWorkerTask(any(Supplier.class)))
         .thenReturn(new CompletableFuture<>());
+
     final EthContext ethContext =
         new EthContext("eth", new EthPeers("eth"), new EthMessages(), ethScheduler);
     final BlockPropagationManager<Void> blockPropagationManager =

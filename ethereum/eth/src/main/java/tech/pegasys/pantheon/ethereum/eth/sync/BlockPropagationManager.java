@@ -237,7 +237,7 @@ public class BlockPropagationManager<C> {
     return getBlockTask.run().thenCompose((r) -> importOrSavePendingBlock(r.getResult()));
   }
 
-  private boolean validateHeaded(final Block block, final BlockHeader parent) {
+  private boolean validateHeader(final Block block, final BlockHeader parent) {
     final ProtocolSpec<C> protocolSpec =
         protocolSchedule.getByBlockNumber(block.getHeader().getNumber());
     final BlockHeaderValidator<C> blockHeaderValidator = protocolSpec.getBlockHeaderValidator();
@@ -295,16 +295,18 @@ public class BlockPropagationManager<C> {
                             + block.getHeader().getNumber()
                             + "."));
 
-    if (!validateHeaded(block, parent)) {
+    AtomicBoolean isValid = new AtomicBoolean(false);
+    ethContext.getScheduler().scheduleSyncWorkerTask(() -> {
+      isValid.getAndSet(validateHeader(block, parent));
+    });
+    if (!isValid.get()) {
       throw new IllegalArgumentException("Invalid block: " + block.getHeader().getNumber());
     }
 
     ethContext.getScheduler().scheduleSyncWorkerTask(() -> broadcastBlock(block, parent));
 
     // Import block
-    final PersistBlockTask<C> importTask =
-        PersistBlockTask.create(
-            protocolSchedule, protocolContext, block, HeaderValidationMode.NONE, metricsSystem);
+    final PersistBlockTask<C> importTask = PersistBlockTask.create(protocolSchedule, protocolContext, block, HeaderValidationMode.NONE, metricsSystem);
 
     return ethContext
         .getScheduler()
