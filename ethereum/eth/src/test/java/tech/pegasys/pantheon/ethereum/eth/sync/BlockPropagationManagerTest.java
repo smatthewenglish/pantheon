@@ -75,7 +75,7 @@ public class BlockPropagationManagerTest {
   }
 
   @Before
-  public void setup() throws Exception {
+  public void setup() {
     blockchainUtil = BlockchainSetupUtil.forTesting();
     blockchain = spy(blockchainUtil.getBlockchain());
     protocolSchedule = blockchainUtil.getProtocolSchedule();
@@ -543,7 +543,6 @@ public class BlockPropagationManagerTest {
     final EthScheduler ethScheduler = mock(EthScheduler.class);
     when(ethScheduler.scheduleSyncWorkerTask(any(Supplier.class)))
         .thenReturn(new CompletableFuture<>());
-
     final EthContext ethContext =
         new EthContext("eth", new EthPeers("eth"), new EthMessages(), ethScheduler);
     final BlockPropagationManager<Void> blockPropagationManager =

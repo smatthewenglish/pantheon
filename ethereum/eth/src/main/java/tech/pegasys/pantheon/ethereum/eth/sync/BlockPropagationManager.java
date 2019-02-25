@@ -287,41 +287,52 @@ public class BlockPropagationManager<C> {
                             + block.getHeader().getNumber()
                             + "."));
 
-      final ProtocolSpec<C> protocolSpec =
-              protocolSchedule.getByBlockNumber(block.getHeader().getNumber());
-      final BlockHeaderValidator<C> blockHeaderValidator = protocolSpec.getBlockHeaderValidator();
+    final ProtocolSpec<C> protocolSpec =
+        protocolSchedule.getByBlockNumber(block.getHeader().getNumber());
+    final BlockHeaderValidator<C> blockHeaderValidator = protocolSpec.getBlockHeaderValidator();
 
     // Import block
-    final PersistBlockTask<C> importTask = PersistBlockTask.create(protocolSchedule, protocolContext, block, HeaderValidationMode.NONE, metricsSystem);
+    final PersistBlockTask<C> importTask =
+        PersistBlockTask.create(
+            protocolSchedule, protocolContext, block, HeaderValidationMode.NONE, metricsSystem);
 
-    ethContext.getScheduler()
-            .scheduleSyncWorkerTask(
-                    () -> {
-                            if(blockHeaderValidator.validateHeader(block.getHeader(), parent, protocolContext, HeaderValidationMode.FULL)) {
-                              ethContext.getScheduler().scheduleSyncWorkerTask(() -> broadcastBlock(block, parent));
-                              ethContext.getScheduler().scheduleSyncWorkerTask(importTask::run).whenComplete(
-                                      (result, throwable) -> {
-                                        importingBlocks.remove(block.getHash());
-                                        if (throwable != null) {
-                                          LOG.warn(
-                                                  "Failed to import announced block {} ({}).",
-                                                  block.getHeader().getNumber(),
-                                                  block.getHash());
-                                        } else {
-                                          final double timeInMs = importTask.getTaskTimeInSec() * 1000;
-                                          LOG.info(
-                                                  String.format(
-                                                          "Successfully imported announced block %d (%s) in %01.3fms.",
-                                                          block.getHeader().getNumber(), block.getHash(), timeInMs));
-                                        }
-                                      });
-                            } else {
-                              importingBlocks.remove(block.getHash());
-                              LOG.warn("Failed to import announced block {} ({}).", block.getHeader().getNumber(), block.getHash());
-                            }
-                    });
-
-    return null;
+    return ethContext
+        .getScheduler()
+        .scheduleSyncWorkerTask(
+            () -> {
+              if (blockHeaderValidator.validateHeader(
+                  block.getHeader(), parent, protocolContext, HeaderValidationMode.FULL)) {
+                ethContext
+                    .getScheduler()
+                    .scheduleSyncWorkerTask(() -> broadcastBlock(block, parent));
+                return ethContext
+                    .getScheduler()
+                    .scheduleSyncWorkerTask(importTask::run)
+                    .whenComplete(
+                        (result, throwable) -> {
+                          importingBlocks.remove(block.getHash());
+                          if (throwable != null) {
+                            LOG.warn(
+                                "Failed to import announced block {} ({}).",
+                                block.getHeader().getNumber(),
+                                block.getHash());
+                          } else {
+                            final double timeInMs = importTask.getTaskTimeInSec() * 1000;
+                            LOG.info(
+                                String.format(
+                                    "Successfully imported announced block %d (%s) in %01.3fms.",
+                                    block.getHeader().getNumber(), block.getHash(), timeInMs));
+                          }
+                        });
+              } else {
+                importingBlocks.remove(block.getHash());
+                LOG.warn(
+                    "Failed to import announced block {} ({}).",
+                    block.getHeader().getNumber(),
+                    block.getHash());
+                return CompletableFuture.completedFuture(block);
+              }
+            });
   }
 
   // Only import blocks within a certain range of our head and sync target
