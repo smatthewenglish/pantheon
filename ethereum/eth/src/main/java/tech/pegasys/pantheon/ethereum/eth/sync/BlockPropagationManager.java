@@ -290,47 +290,50 @@ public class BlockPropagationManager<C> {
     final ProtocolSpec<C> protocolSpec =
         protocolSchedule.getByBlockNumber(block.getHeader().getNumber());
     final BlockHeaderValidator<C> blockHeaderValidator = protocolSpec.getBlockHeaderValidator();
-
-    // Import block
-    final PersistBlockTask<C> importTask =
-        PersistBlockTask.create(
-            protocolSchedule, protocolContext, block, HeaderValidationMode.NONE, metricsSystem);
-
     return ethContext
         .getScheduler()
         .scheduleSyncWorkerTask(
-            () -> {
-              if (blockHeaderValidator.validateHeader(
-                  block.getHeader(), parent, protocolContext, HeaderValidationMode.FULL)) {
-                ethContext
-                    .getScheduler()
-                    .scheduleSyncWorkerTask(() -> broadcastBlock(block, parent));
-                return ethContext
-                    .getScheduler()
-                    .scheduleSyncWorkerTask(importTask::run)
-                    .whenComplete(
-                        (result, throwable) -> {
-                          importingBlocks.remove(block.getHash());
-                          if (throwable != null) {
-                            LOG.warn(
-                                "Failed to import announced block {} ({}).",
-                                block.getHeader().getNumber(),
-                                block.getHash());
-                          } else {
-                            final double timeInMs = importTask.getTaskTimeInSec() * 1000;
-                            LOG.info(
-                                String.format(
-                                    "Successfully imported announced block %d (%s) in %01.3fms.",
-                                    block.getHeader().getNumber(), block.getHash(), timeInMs));
-                          }
-                        });
-              } else {
-                importingBlocks.remove(block.getHash());
+            () -> validateAndProcessPendingBlock(blockHeaderValidator, block, parent));
+  }
+
+  private CompletableFuture<Block> validateAndProcessPendingBlock(
+      final BlockHeaderValidator<C> blockHeaderValidator,
+      final Block block,
+      final BlockHeader parent) {
+    if (blockHeaderValidator.validateHeader(
+        block.getHeader(), parent, protocolContext, HeaderValidationMode.FULL)) {
+      ethContext.getScheduler().scheduleSyncWorkerTask(() -> broadcastBlock(block, parent));
+      return ethContext.getScheduler().scheduleSyncWorkerTask(() -> runImportTask(block));
+    } else {
+      importingBlocks.remove(block.getHash());
+      LOG.warn(
+          "Failed to import announced block {} ({}).",
+          block.getHeader().getNumber(),
+          block.getHash());
+      return CompletableFuture.completedFuture(block);
+    }
+  }
+
+  private CompletableFuture<Block> runImportTask(final Block block) {
+    final PersistBlockTask<C> importTask =
+        PersistBlockTask.create(
+            protocolSchedule, protocolContext, block, HeaderValidationMode.NONE, metricsSystem);
+    return importTask
+        .run()
+        .whenComplete(
+            (result, throwable) -> {
+              importingBlocks.remove(block.getHash());
+              if (throwable != null) {
                 LOG.warn(
                     "Failed to import announced block {} ({}).",
                     block.getHeader().getNumber(),
                     block.getHash());
-                return CompletableFuture.completedFuture(block);
+              } else {
+                final double timeInMs = importTask.getTaskTimeInSec() * 1000;
+                LOG.info(
+                    String.format(
+                        "Successfully imported announced block %d (%s) in %01.3fms.",
+                        block.getHeader().getNumber(), block.getHash(), timeInMs));
               }
             });
   }
