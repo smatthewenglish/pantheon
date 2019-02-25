@@ -237,12 +237,10 @@ public class BlockPropagationManager<C> {
     return getBlockTask.run().thenCompose((r) -> importOrSavePendingBlock(r.getResult()));
   }
 
-  private boolean validateHeader(final Block block, final BlockHeader parent) {
-    final ProtocolSpec<C> protocolSpec =
-        protocolSchedule.getByBlockNumber(block.getHeader().getNumber());
+  private CompletableFuture<Boolean> validateHeader(final Block block, final BlockHeader parent) {
+    final ProtocolSpec<C> protocolSpec = protocolSchedule.getByBlockNumber(block.getHeader().getNumber());
     final BlockHeaderValidator<C> blockHeaderValidator = protocolSpec.getBlockHeaderValidator();
-    return blockHeaderValidator.validateHeader(
-        block.getHeader(), parent, protocolContext, HeaderValidationMode.FULL);
+    return ethContext.getScheduler().scheduleComputationTask(() -> blockHeaderValidator.validateHeader(block.getHeader(), parent, protocolContext, HeaderValidationMode.FULL));
   }
 
   private void broadcastBlock(final Block block, final BlockHeader parent) {
@@ -255,6 +253,7 @@ public class BlockPropagationManager<C> {
     blockBroadcaster.propagate(block, totalDifficulty);
   }
 
+  @SuppressWarnings("LocalCanBeFinal")
   @VisibleForTesting
   CompletableFuture<Block> importOrSavePendingBlock(final Block block) {
     // Synchronize to avoid race condition where block import event fires after the
@@ -295,10 +294,7 @@ public class BlockPropagationManager<C> {
                             + block.getHeader().getNumber()
                             + "."));
 
-    AtomicBoolean isValid = new AtomicBoolean(false);
-    ethContext.getScheduler().scheduleSyncWorkerTask(() -> {
-      isValid.getAndSet(validateHeader(block, parent));
-    });
+
     if (!isValid.get()) {
       throw new IllegalArgumentException("Invalid block: " + block.getHeader().getNumber());
     }
