@@ -303,7 +303,7 @@ public class BlockPropagationManager<C> {
     if (blockHeaderValidator.validateHeader(
         block.getHeader(), parent, protocolContext, HeaderValidationMode.FULL)) {
       ethContext.getScheduler().scheduleSyncWorkerTask(() -> broadcastBlock(block, parent));
-      return ethContext.getScheduler().scheduleSyncWorkerTask(() -> runImportTask(block));
+      return runImportTask(block);
     } else {
       importingBlocks.remove(block.getHash());
       LOG.warn(
