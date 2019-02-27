@@ -60,7 +60,7 @@ public class PrometheusMetricsSystem implements MetricsSystem {
 
   private final EnumSet<MetricCategory> enabledCategories = EnumSet.allOf(MetricCategory.class);
 
-  public PrometheusMetricsSystem() {}
+  PrometheusMetricsSystem() {}
 
   public static MetricsSystem init(final MetricsConfiguration metricsConfiguration) {
     if (!metricsConfiguration.isEnabled()) {

@@ -64,7 +64,6 @@ public abstract class AbstractPipelinedTask<I, O> extends AbstractEthTask<List<O
 
   @Override
   protected void executeTask() {
-
     Optional<I> previousInput = Optional.empty();
     try {
       while (!isDone() && processingException.get() == null) {

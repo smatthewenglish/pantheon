@@ -15,7 +15,6 @@ package tech.pegasys.pantheon.ethereum.eth.sync.fullsync;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.spy;
 
-import org.assertj.core.util.Lists;
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
 import tech.pegasys.pantheon.ethereum.chain.Blockchain;
 import tech.pegasys.pantheon.ethereum.chain.MutableBlockchain;
@@ -38,34 +37,31 @@ import tech.pegasys.pantheon.metrics.prometheus.PrometheusMetricsSystem;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.assertj.core.util.Lists;
 import org.junit.Test;
 
 public class IncrementerTest {
+  private final MetricsConfiguration metricsConfiguration = MetricsConfiguration.createDefault();
   private ProtocolSchedule<Void> protocolSchedule;
-  private EthProtocolManager ethProtocolManager;
   private EthContext ethContext;
   private ProtocolContext<Void> protocolContext;
   private SyncState syncState;
-
-  private BlockchainSetupUtil<Void> localBlockchainSetup;
   private MutableBlockchain localBlockchain;
-  private BlockchainSetupUtil<Void> otherBlockchainSetup;
-  private Blockchain otherBlockchain;
-  private MetricsConfiguration metricsConfiguration = MetricsConfiguration.createDefault();
-  //private MetricsSystem metricsSystem = PrometheusMetricsSystem.init(metricsConfiguration);
-
-  private MetricsSystem metricsSystem = new PrometheusMetricsSystem();
+  private MetricsSystem metricsSystem;
 
   @Test
   public void parallelDownloadPipelineCounterShouldIncrement() {
-    localBlockchainSetup = BlockchainSetupUtil.forTesting();
+    metricsConfiguration.setEnabled(true);
+    metricsSystem = PrometheusMetricsSystem.init(metricsConfiguration);
+
+    final BlockchainSetupUtil<Void> localBlockchainSetup = BlockchainSetupUtil.forTesting();
     localBlockchain = spy(localBlockchainSetup.getBlockchain());
-    otherBlockchainSetup = BlockchainSetupUtil.forTesting();
-    otherBlockchain = otherBlockchainSetup.getBlockchain();
+    final BlockchainSetupUtil<Void> otherBlockchainSetup = BlockchainSetupUtil.forTesting();
+    final Blockchain otherBlockchain = otherBlockchainSetup.getBlockchain();
 
     protocolSchedule = localBlockchainSetup.getProtocolSchedule();
     protocolContext = localBlockchainSetup.getProtocolContext();
-    ethProtocolManager =
+    final EthProtocolManager ethProtocolManager =
         EthProtocolManagerTestUtil.create(
             localBlockchain,
             localBlockchainSetup.getWorldArchive(),
@@ -97,9 +93,13 @@ public class IncrementerTest {
 
     assertThat(localBlockchain.getChainHeadBlockNumber()).isEqualTo(targetBlock);
 
-    final List<Observation> metrics = metricsSystem.getMetrics(MetricCategory.SYNCHRONIZER).collect(Collectors.toList());
-    final Observation inboundObservation = new Observation(MetricCategory.SYNCHRONIZER, "inboundQueueCounter", 6.0, Lists.emptyList());
-    final Observation outboundObservation = new Observation(MetricCategory.SYNCHRONIZER, "outboundQueueCounter", 5.0, Lists.emptyList());
+    final List<Observation> metrics =
+        metricsSystem.getMetrics(MetricCategory.SYNCHRONIZER).collect(Collectors.toList());
+    final Observation inboundObservation =
+        new Observation(MetricCategory.SYNCHRONIZER, "inboundQueueCounter", 6.0, Lists.emptyList());
+    final Observation outboundObservation =
+        new Observation(
+            MetricCategory.SYNCHRONIZER, "outboundQueueCounter", 5.0, Lists.emptyList());
     assertThat(metrics).contains(inboundObservation, outboundObservation);
   }
 
