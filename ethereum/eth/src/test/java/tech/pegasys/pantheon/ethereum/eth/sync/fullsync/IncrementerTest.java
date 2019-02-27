@@ -15,6 +15,7 @@ package tech.pegasys.pantheon.ethereum.eth.sync.fullsync;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.spy;
 
+import org.assertj.core.util.Lists;
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
 import tech.pegasys.pantheon.ethereum.chain.Blockchain;
 import tech.pegasys.pantheon.ethereum.chain.MutableBlockchain;
@@ -31,6 +32,7 @@ import tech.pegasys.pantheon.metrics.MetricCategory;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.metrics.Observation;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
+import tech.pegasys.pantheon.metrics.prometheus.MetricsConfiguration;
 import tech.pegasys.pantheon.metrics.prometheus.PrometheusMetricsSystem;
 
 import java.util.List;
@@ -49,6 +51,9 @@ public class IncrementerTest {
   private MutableBlockchain localBlockchain;
   private BlockchainSetupUtil<Void> otherBlockchainSetup;
   private Blockchain otherBlockchain;
+  private MetricsConfiguration metricsConfiguration = MetricsConfiguration.createDefault();
+  //private MetricsSystem metricsSystem = PrometheusMetricsSystem.init(metricsConfiguration);
+
   private MetricsSystem metricsSystem = new PrometheusMetricsSystem();
 
   @Test
@@ -92,16 +97,10 @@ public class IncrementerTest {
 
     assertThat(localBlockchain.getChainHeadBlockNumber()).isEqualTo(targetBlock);
 
-    final List<Observation> metrics =
-        metricsSystem.getMetrics(MetricCategory.SYNCHRONIZER).collect(Collectors.toList());
-    for (Observation observation : metrics) {
-      if (observation.getMetricName().equals("outboundQueueCounter")) {
-        assertThat(observation.getValue()).isEqualTo(5.0);
-      }
-      if (observation.getMetricName().equals("inboundQueueCounter")) {
-        assertThat(observation.getValue()).isEqualTo(6.0);
-      }
-    }
+    final List<Observation> metrics = metricsSystem.getMetrics(MetricCategory.SYNCHRONIZER).collect(Collectors.toList());
+    final Observation inboundObservation = new Observation(MetricCategory.SYNCHRONIZER, "inboundQueueCounter", 6.0, Lists.emptyList());
+    final Observation outboundObservation = new Observation(MetricCategory.SYNCHRONIZER, "outboundQueueCounter", 5.0, Lists.emptyList());
+    assertThat(metrics).contains(inboundObservation, outboundObservation);
   }
 
   private FullSyncDownloader<?> downloader(final SynchronizerConfiguration syncConfig) {

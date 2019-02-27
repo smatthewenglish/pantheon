@@ -54,12 +54,12 @@ public abstract class AbstractPipelinedTask<I, O> extends AbstractEthTask<List<O
         metricsSystem.createCounter(
             MetricCategory.SYNCHRONIZER,
             "inboundQueueCounter",
-            "parallel download pipeline metric");
+            "count of queue items that started processing");
     this.outboundQueueCounter =
         metricsSystem.createCounter(
             MetricCategory.SYNCHRONIZER,
             "outboundQueueCounter",
-            "parallel download pipeline metric");
+            "count of queue items that finished processing");
   }
 
   @Override
