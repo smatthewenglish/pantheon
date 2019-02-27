@@ -103,7 +103,7 @@ public class PrometheusMetricsSystem implements MetricsSystem {
           if (enabledCategories.contains(category)) {
             final Counter counter = Counter.build(metricName, help).labelNames(labelNames).create();
             addCollector(category, counter);
-            return new PrometheusCounter(counter, name);
+            return new PrometheusCounter(counter);
           } else {
             return NoOpMetricsSystem.NO_OP_LABELLED_COUNTER;
           }

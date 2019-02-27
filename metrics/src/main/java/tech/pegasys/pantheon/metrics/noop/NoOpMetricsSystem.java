@@ -78,7 +78,4 @@ public class NoOpMetricsSystem implements MetricsSystem {
   public Stream<Observation> getMetrics() {
     return Stream.empty();
   }
-
-  @Override
-  public void getMetricByName() {}
 }
