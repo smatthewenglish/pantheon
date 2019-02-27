@@ -50,11 +50,10 @@ public abstract class AbstractPipelinedTask<I, O> extends AbstractEthTask<List<O
     this.inboundQueue = inboundQueue;
     outboundQueue = new LinkedBlockingQueue<>(outboundBacklogSize);
     results = new ArrayList<>();
-
     this.inboundQueueCounter =
-        metricsSystem.createCounter(MetricCategory.SYNCHRONIZER, "inboundQueueCounter", "~");
+        metricsSystem.createCounter(MetricCategory.SYNCHRONIZER, "inboundQueueCounter", "parallel download pipeline metric");
     this.outboundQueueCounter =
-        metricsSystem.createCounter(MetricCategory.SYNCHRONIZER, "outboundQueueCounter", "*");
+        metricsSystem.createCounter(MetricCategory.SYNCHRONIZER, "outboundQueueCounter", "parallel download pipeline metric");
   }
 
   @Override
@@ -73,11 +72,7 @@ public abstract class AbstractPipelinedTask<I, O> extends AbstractEthTask<List<O
             // timed out waiting for a result
             continue;
           }
-
-          /* * */
           inboundQueueCounter.inc();
-          /* * */
-
         } catch (final InterruptedException e) {
           // this is expected
           continue;
@@ -88,11 +83,7 @@ public abstract class AbstractPipelinedTask<I, O> extends AbstractEthTask<List<O
               while (!isDone()) {
                 try {
                   if (outboundQueue.offer(o, 1, TimeUnit.SECONDS)) {
-
-                    /* * */
                     outboundQueueCounter.inc();
-                    /* * */
-
                     results.add(o);
                     break;
                   }

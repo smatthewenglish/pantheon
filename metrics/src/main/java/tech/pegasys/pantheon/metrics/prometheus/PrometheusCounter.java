@@ -19,7 +19,7 @@ class PrometheusCounter implements LabelledMetric<Counter> {
 
   private final io.prometheus.client.Counter counter;
 
-  PrometheusCounter(final io.prometheus.client.Counter counter) {
+  public PrometheusCounter(final io.prometheus.client.Counter counter) {
     this.counter = counter;
   }
 

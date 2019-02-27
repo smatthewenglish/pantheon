@@ -28,84 +28,84 @@ import tech.pegasys.pantheon.ethereum.eth.manager.ethtaskutils.BlockchainSetupUt
 import tech.pegasys.pantheon.ethereum.eth.sync.SynchronizerConfiguration;
 import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncState;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
+import tech.pegasys.pantheon.metrics.MetricCategory;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
+import tech.pegasys.pantheon.metrics.Observation;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 import tech.pegasys.pantheon.metrics.prometheus.PrometheusMetricsSystem;
 
 import org.junit.Test;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 public class IncrementerTest {
-  private ProtocolSchedule<Void> protocolSchedule;
-  private EthProtocolManager ethProtocolManager;
-  private EthContext ethContext;
-  private ProtocolContext<Void> protocolContext;
-  private SyncState syncState;
+    private ProtocolSchedule<Void> protocolSchedule;
+    private EthProtocolManager ethProtocolManager;
+    private EthContext ethContext;
+    private ProtocolContext<Void> protocolContext;
+    private SyncState syncState;
 
-  private BlockDataGenerator gen;
-  private BlockchainSetupUtil<Void> localBlockchainSetup;
-  private MutableBlockchain localBlockchain;
-  private BlockchainSetupUtil<Void> otherBlockchainSetup;
-  private Blockchain otherBlockchain;
-  private MetricsSystem metricsSystem = new PrometheusMetricsSystem();
+    private BlockchainSetupUtil<Void> localBlockchainSetup;
+    private MutableBlockchain localBlockchain;
+    private BlockchainSetupUtil<Void> otherBlockchainSetup;
+    private Blockchain otherBlockchain;
+    private MetricsSystem metricsSystem = new PrometheusMetricsSystem();
 
-  @Test
-  public void test() {
-    gen = new BlockDataGenerator();
-    localBlockchainSetup = BlockchainSetupUtil.forTesting();
-    localBlockchain = spy(localBlockchainSetup.getBlockchain());
-    otherBlockchainSetup = BlockchainSetupUtil.forTesting();
-    otherBlockchain = otherBlockchainSetup.getBlockchain();
+    @Test
+    public void parallelDownloadPipelineCounterShouldIncrement() {
+        localBlockchainSetup = BlockchainSetupUtil.forTesting();
+        localBlockchain = spy(localBlockchainSetup.getBlockchain());
+        otherBlockchainSetup = BlockchainSetupUtil.forTesting();
+        otherBlockchain = otherBlockchainSetup.getBlockchain();
 
-    protocolSchedule = localBlockchainSetup.getProtocolSchedule();
-    protocolContext = localBlockchainSetup.getProtocolContext();
-    ethProtocolManager =
-        EthProtocolManagerTestUtil.create(
-            localBlockchain,
-            localBlockchainSetup.getWorldArchive(),
-            new EthScheduler(1, 1, 1, new NoOpMetricsSystem()));
-    ethContext = ethProtocolManager.ethContext();
-    syncState = new SyncState(protocolContext.getBlockchain(), ethContext.getEthPeers());
+        protocolSchedule = localBlockchainSetup.getProtocolSchedule();
+        protocolContext = localBlockchainSetup.getProtocolContext();
+        ethProtocolManager =
+                EthProtocolManagerTestUtil.create(
+                        localBlockchain,
+                        localBlockchainSetup.getWorldArchive(),
+                        new EthScheduler(1, 1, 1, new NoOpMetricsSystem()));
+        ethContext = ethProtocolManager.ethContext();
+        syncState = new SyncState(protocolContext.getBlockchain(), ethContext.getEthPeers());
 
-    otherBlockchainSetup.importFirstBlocks(15);
-    final long targetBlock = otherBlockchain.getChainHeadBlockNumber();
-    // Sanity check
-    assertThat(targetBlock).isGreaterThan(localBlockchain.getChainHeadBlockNumber());
+        otherBlockchainSetup.importFirstBlocks(15);
+        final long targetBlock = otherBlockchain.getChainHeadBlockNumber();
+        // Sanity check
+        assertThat(targetBlock).isGreaterThan(localBlockchain.getChainHeadBlockNumber());
 
-    final RespondingEthPeer peer =
-        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, otherBlockchain);
-    final RespondingEthPeer.Responder responder =
-        RespondingEthPeer.blockchainResponder(otherBlockchain);
+        final RespondingEthPeer peer =
+                EthProtocolManagerTestUtil.createPeer(ethProtocolManager, otherBlockchain);
+        final RespondingEthPeer.Responder responder =
+                RespondingEthPeer.blockchainResponder(otherBlockchain);
 
-    final SynchronizerConfiguration syncConfig =
-        SynchronizerConfiguration.builder().downloaderChainSegmentSize(10).build();
-    final FullSyncDownloader<?> downloader = downloader(syncConfig);
-    downloader.start();
+        final SynchronizerConfiguration syncConfig =
+                SynchronizerConfiguration.builder().downloaderChainSegmentSize(10).build();
+        final FullSyncDownloader<?> downloader = downloader(syncConfig);
+        downloader.start();
 
-    peer.respondWhileOtherThreadsWork(responder, () -> !syncState.syncTarget().isPresent());
-    assertThat(syncState.syncTarget()).isPresent();
-    assertThat(syncState.syncTarget().get().peer()).isEqualTo(peer.getEthPeer());
+        peer.respondWhileOtherThreadsWork(responder, () -> !syncState.syncTarget().isPresent());
+        assertThat(syncState.syncTarget()).isPresent();
+        assertThat(syncState.syncTarget().get().peer()).isEqualTo(peer.getEthPeer());
 
-    peer.respondWhileOtherThreadsWork(
-        responder, () -> localBlockchain.getChainHeadBlockNumber() < targetBlock);
+        peer.respondWhileOtherThreadsWork(
+                responder, () -> localBlockchain.getChainHeadBlockNumber() < targetBlock);
 
-    assertThat(localBlockchain.getChainHeadBlockNumber()).isEqualTo(targetBlock);
+        assertThat(localBlockchain.getChainHeadBlockNumber()).isEqualTo(targetBlock);
 
-    System.out.println("----> " + metricsSystem.getMetrics());
+        final List<Observation> metrics = metricsSystem.getMetrics(MetricCategory.SYNCHRONIZER).collect(Collectors.toList());
+        for (Observation observation : metrics) {
+            if(observation.getMetricName().equals("outboundQueueCounter")){
+                assertThat(observation.getValue()).isEqualTo(5.0);
+            }
+            if(observation.getMetricName().equals("inboundQueueCounter")){
+                assertThat(observation.getValue()).isEqualTo(6.0);
+            }
+        }
+    }
 
-    //        List<Observation> metrix  =
-    // metricsSystem.getMetrics(MetricCategory.SYNCHRONIZER).collect(Collectors.toList());
-    //
-    //
-    //        for(Observation o : metrix) {
-    //            System.out.println("o: " + o.getMetricName() + ", " + o.getValue());
-    //
-    //        }
-
-    metricsSystem.getMetricByName();
-  }
-
-  private FullSyncDownloader<?> downloader(final SynchronizerConfiguration syncConfig) {
-    return new FullSyncDownloader<>(
-        syncConfig, protocolSchedule, protocolContext, ethContext, syncState, metricsSystem);
-  }
+    private FullSyncDownloader<?> downloader(final SynchronizerConfiguration syncConfig) {
+        return new FullSyncDownloader<>(
+                syncConfig, protocolSchedule, protocolContext, ethContext, syncState, metricsSystem);
+    }
 }
