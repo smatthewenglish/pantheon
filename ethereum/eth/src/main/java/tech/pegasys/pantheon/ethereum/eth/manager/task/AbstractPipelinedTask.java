@@ -51,8 +51,10 @@ public abstract class AbstractPipelinedTask<I, O> extends AbstractEthTask<List<O
     outboundQueue = new LinkedBlockingQueue<>(outboundBacklogSize);
     results = new ArrayList<>();
 
-    this.inboundQueueCounter = metricsSystem.createCounter(MetricCategory.SYNCHRONIZER, "inboundQueueCounter", "~");
-    this.outboundQueueCounter = metricsSystem.createCounter(MetricCategory.SYNCHRONIZER, "outboundQueueCounter", "*");
+    this.inboundQueueCounter =
+        metricsSystem.createCounter(MetricCategory.SYNCHRONIZER, "inboundQueueCounter", "~");
+    this.outboundQueueCounter =
+        metricsSystem.createCounter(MetricCategory.SYNCHRONIZER, "outboundQueueCounter", "*");
   }
 
   @Override
