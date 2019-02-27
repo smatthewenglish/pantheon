@@ -14,9 +14,14 @@ import tech.pegasys.pantheon.ethereum.eth.manager.ethtaskutils.BlockchainSetupUt
 import tech.pegasys.pantheon.ethereum.eth.sync.SynchronizerConfiguration;
 import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncState;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
+import tech.pegasys.pantheon.metrics.MetricCategory;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
+import tech.pegasys.pantheon.metrics.Observation;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 import tech.pegasys.pantheon.metrics.prometheus.PrometheusMetricsSystem;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.spy;
@@ -33,7 +38,7 @@ public class IncrementerTest {
     private MutableBlockchain localBlockchain;
     private BlockchainSetupUtil<Void> otherBlockchainSetup;
     private Blockchain otherBlockchain;
-    //private MetricsSystem metricsSystem = new PrometheusMetricsSystem();
+    private MetricsSystem metricsSystem = new PrometheusMetricsSystem();
 
     @Test
     public void test() {
@@ -76,9 +81,20 @@ public class IncrementerTest {
 
         assertThat(localBlockchain.getChainHeadBlockNumber()).isEqualTo(targetBlock);
 
-        //System.out.println("----> " + metricsSystem.getParallelDownloadPipelineCounter().getCount());
+        System.out.println("----> " + metricsSystem.getMetrics());
+
+//        List<Observation> metrix  = metricsSystem.getMetrics(MetricCategory.SYNCHRONIZER).collect(Collectors.toList());
+//
+//
+//        for(Observation o : metrix) {
+//            System.out.println("o: " + o.getMetricName() + ", " + o.getValue());
+//
+//        }
+
+        metricsSystem.getMetricByName();
+
     }
-//    private FullSyncDownloader<?> downloader(final SynchronizerConfiguration syncConfig) {
-//        return new FullSyncDownloader<>(syncConfig, protocolSchedule, protocolContext, ethContext, syncState, metricsSystem);
-//    }
+    private FullSyncDownloader<?> downloader(final SynchronizerConfiguration syncConfig) {
+        return new FullSyncDownloader<>(syncConfig, protocolSchedule, protocolContext, ethContext, syncState, metricsSystem);
+    }
 }

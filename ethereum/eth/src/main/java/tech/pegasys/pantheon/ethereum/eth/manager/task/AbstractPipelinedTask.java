@@ -12,6 +12,8 @@
  */
 package tech.pegasys.pantheon.ethereum.eth.manager.task;
 
+import tech.pegasys.pantheon.metrics.Counter;
+import tech.pegasys.pantheon.metrics.MetricCategory;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
 
 import java.util.ArrayList;
@@ -37,6 +39,9 @@ public abstract class AbstractPipelinedTask<I, O> extends AbstractEthTask<List<O
   private boolean shuttingDown = false;
   private final AtomicReference<Throwable> processingException = new AtomicReference<>(null);
 
+  private final Counter inboundQueueCounter;
+  private final Counter outboundQueueCounter;
+
   protected AbstractPipelinedTask(
       final BlockingQueue<I> inboundQueue,
       final int outboundBacklogSize,
@@ -45,10 +50,14 @@ public abstract class AbstractPipelinedTask<I, O> extends AbstractEthTask<List<O
     this.inboundQueue = inboundQueue;
     outboundQueue = new LinkedBlockingQueue<>(outboundBacklogSize);
     results = new ArrayList<>();
+
+    this.inboundQueueCounter = metricsSystem.createCounter(MetricCategory.SYNCHRONIZER, "inboundQueueCounter", "~");
+    this.outboundQueueCounter = metricsSystem.createCounter(MetricCategory.SYNCHRONIZER, "outboundQueueCounter", "*");
   }
 
   @Override
   protected void executeTask() {
+
     Optional<I> previousInput = Optional.empty();
     try {
       while (!isDone() && processingException.get() == null) {
@@ -62,6 +71,11 @@ public abstract class AbstractPipelinedTask<I, O> extends AbstractEthTask<List<O
             // timed out waiting for a result
             continue;
           }
+
+          /* * */
+          inboundQueueCounter.inc();
+          /* * */
+
         } catch (final InterruptedException e) {
           // this is expected
           continue;
@@ -72,6 +86,11 @@ public abstract class AbstractPipelinedTask<I, O> extends AbstractEthTask<List<O
               while (!isDone()) {
                 try {
                   if (outboundQueue.offer(o, 1, TimeUnit.SECONDS)) {
+
+                    /* * */
+                    outboundQueueCounter.inc();
+                    /* * */
+
                     results.add(o);
                     break;
                   }

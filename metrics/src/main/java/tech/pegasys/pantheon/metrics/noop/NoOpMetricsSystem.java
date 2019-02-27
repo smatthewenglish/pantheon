@@ -21,7 +21,9 @@ import tech.pegasys.pantheon.metrics.OperationTimer;
 import tech.pegasys.pantheon.metrics.OperationTimer.TimingContext;
 
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
@@ -76,4 +78,7 @@ public class NoOpMetricsSystem implements MetricsSystem {
   public Stream<Observation> getMetrics() {
     return Stream.empty();
   }
+
+  @Override
+  public void getMetricByName() {}
 }

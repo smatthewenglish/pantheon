@@ -18,9 +18,15 @@ import tech.pegasys.pantheon.metrics.LabelledMetric;
 class PrometheusCounter implements LabelledMetric<Counter> {
 
   private final io.prometheus.client.Counter counter;
+  private final String name;
 
-  public PrometheusCounter(final io.prometheus.client.Counter counter) {
+  PrometheusCounter(final io.prometheus.client.Counter counter, final String name) {
     this.counter = counter;
+    this.name = name;
+  }
+
+  public String getName() {
+    return name;
   }
 
   @Override

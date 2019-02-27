@@ -27,10 +27,14 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import io.prometheus.client.Collector;
@@ -60,7 +64,7 @@ public class PrometheusMetricsSystem implements MetricsSystem {
 
   private final EnumSet<MetricCategory> enabledCategories = EnumSet.allOf(MetricCategory.class);
 
-  PrometheusMetricsSystem() {}
+  public PrometheusMetricsSystem() {}
 
   public static MetricsSystem init(final MetricsConfiguration metricsConfiguration) {
     if (!metricsConfiguration.isEnabled()) {
@@ -99,7 +103,7 @@ public class PrometheusMetricsSystem implements MetricsSystem {
           if (enabledCategories.contains(category)) {
             final Counter counter = Counter.build(metricName, help).labelNames(labelNames).create();
             addCollector(category, counter);
-            return new PrometheusCounter(counter);
+            return new PrometheusCounter(counter, name);
           } else {
             return NoOpMetricsSystem.NO_OP_LABELLED_COUNTER;
           }
