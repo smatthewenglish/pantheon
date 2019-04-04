@@ -51,16 +51,30 @@ public class TransactionPool implements BlockAddedObserver {
   private final ProtocolContext<?> protocolContext;
   private final TransactionBatchAddedListener transactionBatchAddedListener;
   private Optional<AccountWhitelistController> accountWhitelistController = Optional.empty();
+  Synchronizer synchronizer;
+
+  public TransactionPool(
+          final PendingTransactions pendingTransactions,
+          final ProtocolSchedule<?> protocolSchedule,
+          final ProtocolContext<?> protocolContext,
+          final TransactionBatchAddedListener transactionBatchAddedListener) {
+    this.pendingTransactions = pendingTransactions;
+    this.protocolSchedule = protocolSchedule;
+    this.protocolContext = protocolContext;
+    this.transactionBatchAddedListener = transactionBatchAddedListener;
+  }
 
   public TransactionPool(
       final PendingTransactions pendingTransactions,
       final ProtocolSchedule<?> protocolSchedule,
       final ProtocolContext<?> protocolContext,
-      final TransactionBatchAddedListener transactionBatchAddedListener) {
+      final TransactionBatchAddedListener transactionBatchAddedListener,
+      Synchronizer synchronizer) {
     this.pendingTransactions = pendingTransactions;
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
     this.transactionBatchAddedListener = transactionBatchAddedListener;
+    this.synchronizer = synchronizer;
   }
 
   public ValidationResult<TransactionInvalidReason> addLocalTransaction(
@@ -79,6 +93,14 @@ public class TransactionPool implements BlockAddedObserver {
   }
 
   public void addRemoteTransactions(final Collection<Transaction> transactions) {
+
+
+    if(synchronizer.getSyncStatus().isPresent()){
+      return;
+    }
+
+
+
     final Set<Transaction> addedTransactions = new HashSet<>();
     for (final Transaction transaction : sortByNonce(transactions)) {
       final ValidationResult<TransactionInvalidReason> validationResult =
