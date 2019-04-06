@@ -182,7 +182,8 @@ public class IbftLegacyPantheonController implements PantheonController<IbftCont
             istanbul64ProtocolManager.ethContext(),
             clock,
             maxPendingTransactions,
-            metricsSystem);
+            metricsSystem,
+            synchronizer);
 
     return new IbftLegacyPantheonController(
         protocolSchedule,

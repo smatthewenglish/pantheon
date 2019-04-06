@@ -207,7 +207,8 @@ public class IbftPantheonController implements PantheonController<IbftContext> {
             ethContext,
             clock,
             maxPendingTransactions,
-            metricsSystem);
+            metricsSystem,
+            synchronizer);
 
     final IbftEventQueue ibftEventQueue = new IbftEventQueue(ibftConfig.getMessageQueueLimit());
 

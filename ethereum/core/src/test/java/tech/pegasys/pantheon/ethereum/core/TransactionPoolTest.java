@@ -12,6 +12,7 @@
  */
 package tech.pegasys.pantheon.ethereum.core;
 
+import static java.time.Clock.systemUTC;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singleton;
@@ -38,6 +39,10 @@ import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
 import tech.pegasys.pantheon.ethereum.chain.MutableBlockchain;
 import tech.pegasys.pantheon.ethereum.core.TransactionPool.TransactionBatchAddedListener;
+import tech.pegasys.pantheon.ethereum.eth.manager.EthProtocolManager;
+import tech.pegasys.pantheon.ethereum.eth.sync.DefaultSynchronizer;
+import tech.pegasys.pantheon.ethereum.eth.sync.SynchronizerConfiguration;
+import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncState;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSpec;
 import tech.pegasys.pantheon.ethereum.mainnet.TransactionValidator;
@@ -47,6 +52,9 @@ import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 import tech.pegasys.pantheon.testutil.TestClock;
 import tech.pegasys.pantheon.util.uint.UInt256;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.time.Clock;
 import java.util.List;
 
 import org.junit.Before;
@@ -87,8 +95,43 @@ public class TransactionPoolTest {
     when(protocolSpec.getTransactionValidator()).thenReturn(transactionValidator);
     genesisBlockGasLimit = executionContext.getGenesis().getHeader().getGasLimit();
 
+    SynchronizerConfiguration syncConfig =
+        SynchronizerConfiguration.builder().worldStateMaxRequestsWithoutProgress(10).build();
+
+    boolean fastSyncEnabled = false;
+
+    EthProtocolManager ethProtocolManager =
+        new EthProtocolManager(
+            blockchain,
+            protocolContext.getWorldStateArchive(),
+            1,
+            fastSyncEnabled,
+            syncConfig.downloaderParallelism(),
+            syncConfig.transactionsParallelism(),
+            syncConfig.computationParallelism(),
+            metricsSystem);
+
+    SyncState syncState = new SyncState(blockchain, ethProtocolManager.ethContext().getEthPeers());
+
+    Path dataDirectory = Paths.get(".").toAbsolutePath();
+
+    Clock clock = systemUTC();
+
+    Synchronizer synchronizer =
+        new DefaultSynchronizer<>(
+            syncConfig,
+            protocolSchedule,
+            protocolContext,
+            protocolContext.getWorldStateArchive().getStorage(),
+            ethProtocolManager.ethContext(),
+            syncState,
+            dataDirectory,
+            clock,
+            metricsSystem);
+
     transactionPool =
-        new TransactionPool(transactions, protocolSchedule, protocolContext, batchAddedListener);
+        new TransactionPool(
+            transactions, protocolSchedule, protocolContext, batchAddedListener, synchronizer);
     blockchain.observeBlockAdded(transactionPool);
   }
 

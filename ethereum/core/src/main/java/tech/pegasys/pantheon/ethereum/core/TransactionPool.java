@@ -49,19 +49,8 @@ public class TransactionPool implements BlockAddedObserver {
   private final ProtocolSchedule<?> protocolSchedule;
   private final ProtocolContext<?> protocolContext;
   private final TransactionBatchAddedListener transactionBatchAddedListener;
+  private final Synchronizer synchronizer;
   private Optional<AccountFilter> accountFilter = Optional.empty();
-  private Synchronizer synchronizer;
-
-  public TransactionPool(
-          final PendingTransactions pendingTransactions,
-          final ProtocolSchedule<?> protocolSchedule,
-          final ProtocolContext<?> protocolContext,
-          final TransactionBatchAddedListener transactionBatchAddedListener) {
-    this.pendingTransactions = pendingTransactions;
-    this.protocolSchedule = protocolSchedule;
-    this.protocolContext = protocolContext;
-    this.transactionBatchAddedListener = transactionBatchAddedListener;
-  }
 
   public TransactionPool(
       final PendingTransactions pendingTransactions,
@@ -93,7 +82,7 @@ public class TransactionPool implements BlockAddedObserver {
 
   public void addRemoteTransactions(final Collection<Transaction> transactions) {
 
-    if(synchronizer.getSyncStatus().isPresent()){
+    if (synchronizer.getSyncStatus().isPresent()) {
       return;
     }
 
