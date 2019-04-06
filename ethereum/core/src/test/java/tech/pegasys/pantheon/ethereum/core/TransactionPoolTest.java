@@ -451,4 +451,18 @@ public class TransactionPoolTest {
             eq(transaction), nullable(Account.class), anyBoolean()))
         .thenReturn(valid());
   }
+
+  @Test
+  public void shouldSendLocalTransactionsToNewPeers() {
+    transactionPool.setAccountFilter(accountFilter);
+    givenTransactionIsValid(transaction1);
+
+    when(accountFilter.permitted(transaction1.getSender().toString())).thenReturn(false);
+
+    assertThat(transactionPool.addLocalTransaction(transaction1))
+            .isEqualTo(ValidationResult.invalid(TX_SENDER_NOT_AUTHORIZED));
+
+    assertTransactionNotPending(transaction1);
+    verifyZeroInteractions(batchAddedListener);
+  }
 }
