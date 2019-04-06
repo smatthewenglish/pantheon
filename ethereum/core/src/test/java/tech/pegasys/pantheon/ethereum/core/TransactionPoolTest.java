@@ -39,10 +39,7 @@ import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
 import tech.pegasys.pantheon.ethereum.chain.MutableBlockchain;
 import tech.pegasys.pantheon.ethereum.core.TransactionPool.TransactionBatchAddedListener;
-import tech.pegasys.pantheon.ethereum.eth.manager.EthProtocolManager;
-import tech.pegasys.pantheon.ethereum.eth.sync.DefaultSynchronizer;
-import tech.pegasys.pantheon.ethereum.eth.sync.SynchronizerConfiguration;
-import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncState;
+
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSpec;
 import tech.pegasys.pantheon.ethereum.mainnet.TransactionValidator;
@@ -59,6 +56,18 @@ import java.util.List;
 
 import org.junit.Before;
 import org.junit.Test;
+
+
+
+//import tech.pegasys.pantheon.ethereum.eth.manager.EthProtocolManager;
+//import tech.pegasys.pantheon.ethereum.eth.sync.DefaultSynchronizer;
+//import tech.pegasys.pantheon.ethereum.eth.sync.SynchronizerConfiguration;
+//import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncState;
+
+//import tech.pegasys.pantheon.ethereum.eth.sync.SynchronizerConfiguration;
+
+
+
 
 public class TransactionPoolTest {
 
@@ -95,8 +104,7 @@ public class TransactionPoolTest {
     when(protocolSpec.getTransactionValidator()).thenReturn(transactionValidator);
     genesisBlockGasLimit = executionContext.getGenesis().getHeader().getGasLimit();
 
-    SynchronizerConfiguration syncConfig =
-        SynchronizerConfiguration.builder().worldStateMaxRequestsWithoutProgress(10).build();
+    SynchronizerConfiguration syncConfig = SynchronizerConfiguration.builder().worldStateMaxRequestsWithoutProgress(10).build();
 
     boolean fastSyncEnabled = false;
 
