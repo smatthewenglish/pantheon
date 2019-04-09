@@ -96,7 +96,7 @@ public class PendingTransactions {
     return addTransaction;
   }
 
-  boolean addLocalTransaction(final Transaction transaction) {
+  public boolean addLocalTransaction(final Transaction transaction) {
     final boolean addTransaction =
         addTransaction(new TransactionInfo(transaction, true, clock.instant()));
     localTransactionAddedCounter.inc();
@@ -108,7 +108,7 @@ public class PendingTransactions {
     notifyTransactionDropped(transaction);
   }
 
-  void transactionAddedToBlock(final Transaction transaction) {
+  public void transactionAddedToBlock(final Transaction transaction) {
     doRemoveTransaction(transaction, true);
   }
 
@@ -251,11 +251,11 @@ public class PendingTransactions {
     }
   }
 
-  void addTransactionListener(final PendingTransactionListener listener) {
+  public void addTransactionListener(final PendingTransactionListener listener) {
     listeners.subscribe(listener);
   }
 
-  void addTransactionDroppedListener(final PendingTransactionDroppedListener listener) {
+  public void addTransactionDroppedListener(final PendingTransactionDroppedListener listener) {
     transactionDroppedListeners.subscribe(listener);
   }
 
