@@ -181,11 +181,6 @@ public class TransactionPool implements BlockAddedObserver {
     return blockchain.getBlockHeader(blockchain.getChainHeadHash()).get();
   }
 
-  public interface TransactionBatchAddedListener {
-
-    void onTransactionsAdded(Iterable<Transaction> transactions);
-  }
-
   public void setAccountFilter(final AccountFilter accountFilter) {
     this.accountFilter = Optional.of(accountFilter);
   }
