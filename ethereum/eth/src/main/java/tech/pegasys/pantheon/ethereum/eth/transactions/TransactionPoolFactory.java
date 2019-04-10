@@ -13,9 +13,11 @@
 package tech.pegasys.pantheon.ethereum.eth.transactions;
 
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
+import tech.pegasys.pantheon.ethereum.chain.MutableBlockchain;
 import tech.pegasys.pantheon.ethereum.core.PendingTransactions;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthContext;
 import tech.pegasys.pantheon.ethereum.eth.messages.EthPV62;
+import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncState;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
 
@@ -36,13 +38,16 @@ public class TransactionPoolFactory {
     final PeerTransactionTracker transactionTracker = new PeerTransactionTracker();
     final TransactionsMessageSender transactionsMessageSender =
         new TransactionsMessageSender(transactionTracker);
+    final MutableBlockchain blockchain = protocolContext.getBlockchain();
+    final SyncState syncState = new SyncState(blockchain, ethContext.getEthPeers());
 
     final TransactionPool transactionPool =
         new TransactionPool(
             pendingTransactions,
             protocolSchedule,
             protocolContext,
-            new TransactionSender(transactionTracker, transactionsMessageSender, ethContext));
+            new TransactionSender(transactionTracker, transactionsMessageSender, ethContext),
+            syncState);
 
     final TransactionsMessageHandler transactionsMessageHandler =
         new TransactionsMessageHandler(

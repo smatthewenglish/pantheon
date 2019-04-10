@@ -50,6 +50,7 @@ import tech.pegasys.pantheon.ethereum.core.Transaction;
 import tech.pegasys.pantheon.ethereum.core.TransactionReceipt;
 import tech.pegasys.pantheon.ethereum.core.TransactionTestFixture;
 import tech.pegasys.pantheon.ethereum.core.Wei;
+import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncState;
 import tech.pegasys.pantheon.ethereum.eth.transactions.TransactionPool.TransactionBatchAddedListener;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSpec;
@@ -88,6 +89,7 @@ public class TransactionPoolTest {
   private final Transaction transaction1 = createTransaction(1);
   private final Transaction transaction2 = createTransaction(2);
   private TransactionPool transactionPool;
+  private SyncState syncState;
   private long genesisBlockGasLimit;
   private final AccountFilter accountFilter = mock(AccountFilter.class);
 
@@ -99,9 +101,12 @@ public class TransactionPoolTest {
     when(protocolSchedule.getByBlockNumber(anyLong())).thenReturn(protocolSpec);
     when(protocolSpec.getTransactionValidator()).thenReturn(transactionValidator);
     genesisBlockGasLimit = executionContext.getGenesis().getHeader().getGasLimit();
+    syncState = mock(SyncState.class);
+    when(syncState.isInSync()).thenReturn(true);
 
     transactionPool =
-        new TransactionPool(transactions, protocolSchedule, protocolContext, batchAddedListener);
+        new TransactionPool(
+            transactions, protocolSchedule, protocolContext, batchAddedListener, syncState);
     blockchain.observeBlockAdded(transactionPool);
   }
 

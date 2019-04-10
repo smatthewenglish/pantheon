@@ -28,6 +28,7 @@ import tech.pegasys.pantheon.ethereum.core.PendingTransactionDroppedListener;
 import tech.pegasys.pantheon.ethereum.core.PendingTransactionListener;
 import tech.pegasys.pantheon.ethereum.core.PendingTransactions;
 import tech.pegasys.pantheon.ethereum.core.Transaction;
+import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncState;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.TransactionValidator;
 import tech.pegasys.pantheon.ethereum.mainnet.TransactionValidator.TransactionInvalidReason;
@@ -56,17 +57,20 @@ public class TransactionPool implements BlockAddedObserver {
   private final ProtocolSchedule<?> protocolSchedule;
   private final ProtocolContext<?> protocolContext;
   private final TransactionBatchAddedListener transactionBatchAddedListener;
+  private final SyncState syncState;
   private Optional<AccountFilter> accountFilter = Optional.empty();
 
   public TransactionPool(
       final PendingTransactions pendingTransactions,
       final ProtocolSchedule<?> protocolSchedule,
       final ProtocolContext<?> protocolContext,
-      final TransactionBatchAddedListener transactionBatchAddedListener) {
+      final TransactionBatchAddedListener transactionBatchAddedListener,
+      final SyncState syncState) {
     this.pendingTransactions = pendingTransactions;
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
     this.transactionBatchAddedListener = transactionBatchAddedListener;
+    this.syncState = syncState;
   }
 
   public ValidationResult<TransactionInvalidReason> addLocalTransaction(
@@ -87,6 +91,11 @@ public class TransactionPool implements BlockAddedObserver {
   public void addRemoteTransactions(final Collection<Transaction> transactions) {
     final Set<Transaction> addedTransactions = new HashSet<>();
     for (final Transaction transaction : sortByNonce(transactions)) {
+
+      if (!syncState.isInSync()) {
+        return;
+      }
+
       final ValidationResult<TransactionInvalidReason> validationResult =
           validateTransaction(transaction);
       if (validationResult.isValid()) {
