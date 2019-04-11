@@ -89,7 +89,6 @@ public class TransactionPoolTest {
   private final ExecutionContextTestFixture executionContext = ExecutionContextTestFixture.create();
   private final ProtocolContext<Void> protocolContext = executionContext.getProtocolContext();
   private TransactionPool transactionPool;
-  private SyncState syncState;
   private long genesisBlockGasLimit;
   private final AccountFilter accountFilter = mock(AccountFilter.class);
 
@@ -99,8 +98,8 @@ public class TransactionPoolTest {
     when(protocolSchedule.getByBlockNumber(anyLong())).thenReturn(protocolSpec);
     when(protocolSpec.getTransactionValidator()).thenReturn(transactionValidator);
     genesisBlockGasLimit = executionContext.getGenesis().getHeader().getGasLimit();
-    syncState = mock(SyncState.class);
-    when(syncState.isInSync(any())).thenReturn(true);
+    SyncState syncState = mock(SyncState.class);
+    when(syncState.isInSync(anyLong())).thenReturn(true);
 
     transactionPool =
         new TransactionPool(
@@ -432,7 +431,7 @@ public class TransactionPoolTest {
   @Test
   public void shouldRejectRemoteTransactionsWhenNotInSync() {
     SyncState syncState = mock(SyncState.class);
-    when(syncState.isInSync(any())).thenReturn(false);
+    when(syncState.isInSync(anyLong())).thenReturn(false);
     TransactionPool transactionPool =
         new TransactionPool(
             transactions, protocolSchedule, protocolContext, batchAddedListener, syncState);
@@ -464,7 +463,7 @@ public class TransactionPoolTest {
   @Test
   public void shouldAllowRemoteTransactionsWhenInSync() {
     SyncState syncState = mock(SyncState.class);
-    when(syncState.isInSync(any())).thenReturn(true);
+    when(syncState.isInSync(anyLong())).thenReturn(true);
     TransactionPool transactionPool =
         new TransactionPool(
             transactions, protocolSchedule, protocolContext, batchAddedListener, syncState);
