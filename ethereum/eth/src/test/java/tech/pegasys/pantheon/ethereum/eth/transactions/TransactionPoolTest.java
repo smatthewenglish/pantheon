@@ -112,7 +112,7 @@ public class TransactionPoolTest {
     when(protocolSpec.getTransactionValidator()).thenReturn(transactionValidator);
     genesisBlockGasLimit = executionContext.getGenesis().getHeader().getGasLimit();
     syncState = mock(SyncState.class);
-    when(syncState.isInSync()).thenReturn(true);
+    when(syncState.isInSync(any())).thenReturn(true);
 
     transactionPool =
         new TransactionPool(
@@ -444,7 +444,7 @@ public class TransactionPoolTest {
   @Test
   public void shouldRejectRemoteTransactionsWhenNotInSync() {
     SyncState syncState = mock(SyncState.class);
-    when(syncState.isInSync()).thenReturn(false);
+    when(syncState.isInSync(any())).thenReturn(false);
     TransactionPool transactionPool =
         new TransactionPool(
             transactions, protocolSchedule, protocolContext, batchAddedListener, syncState);
@@ -476,7 +476,7 @@ public class TransactionPoolTest {
   @Test
   public void shouldAllowRemoteTransactionsWhenInSync() {
     SyncState syncState = mock(SyncState.class);
-    when(syncState.isInSync()).thenReturn(true);
+    when(syncState.isInSync(any())).thenReturn(true);
     TransactionPool transactionPool =
         new TransactionPool(
             transactions, protocolSchedule, protocolContext, batchAddedListener, syncState);
