@@ -154,13 +154,10 @@ public class MainnetPantheonController implements PantheonController<Void> {
             protocolContext.getWorldStateArchive(),
             networkId,
             fastSyncEnabled,
-            syncConfig.downloaderParallelism(),
-            syncConfig.transactionsParallelism(),
-            syncConfig.computationParallelism(),
-            metricsSystem,
             ethereumWireProtocolConfiguration,
             transactionPool,
-            peerTransactionTracker);
+            peerTransactionTracker,
+            ethScheduler);
 
     final Synchronizer synchronizer =
         new DefaultSynchronizer<>(

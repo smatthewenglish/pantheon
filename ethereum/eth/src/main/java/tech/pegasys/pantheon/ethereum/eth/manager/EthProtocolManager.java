@@ -18,7 +18,6 @@ import tech.pegasys.pantheon.ethereum.chain.Blockchain;
 import tech.pegasys.pantheon.ethereum.chain.MinedBlockObserver;
 import tech.pegasys.pantheon.ethereum.core.Block;
 import tech.pegasys.pantheon.ethereum.core.Hash;
-import tech.pegasys.pantheon.ethereum.core.Transaction;
 import tech.pegasys.pantheon.ethereum.eth.EthProtocol;
 import tech.pegasys.pantheon.ethereum.eth.EthereumWireProtocolConfiguration;
 import tech.pegasys.pantheon.ethereum.eth.messages.EthPV62;
@@ -119,19 +118,16 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
       final WorldStateArchive worldStateArchive,
       final int networkId,
       final boolean fastSyncEnabled,
-      final int syncWorkers,
-      final int txWorkers,
-      final int computationWorkers,
-      final MetricsSystem metricsSystem,
       final EthereumWireProtocolConfiguration ethereumWireProtocolConfiguration,
       final TransactionPool transactionPool,
-      final PeerTransactionTracker peerTransactionTracker) {
+      final PeerTransactionTracker peerTransactionTracker,
+      final EthScheduler ethScheduler) {
     this(
         blockchain,
         worldStateArchive,
         networkId,
         fastSyncEnabled,
-        new EthScheduler(syncWorkers, txWorkers, computationWorkers, metricsSystem),
+        ethScheduler,
         ethereumWireProtocolConfiguration);
     this.transactionPool = transactionPool;
     this.peerTransactionTracker = peerTransactionTracker;
@@ -246,23 +242,23 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
       peer.send(status);
       peer.registerStatusSent();
 
-      dispatchLocalTransaction(peer);
+      // dispatchLocalTransaction(peer);
     } catch (final PeerNotConnected ignored) {
     }
   }
 
-  private void dispatchLocalTransaction(final EthPeer peer) {
-    if (transactionPool == null) {
-      return;
-    }
-    LOG.debug("Dispatching local transactions to {}.", peer);
-    // Iterable<Transaction> localTransactions = transactionPool.getLocalTransactions();
-    // peer.send(TransactionsMessage.create(localTransactions));
-    peerTransactionTracker.markTransactionsAsSeen(peer, transactionPool.getLocalTransactions());
-    for (Transaction tx : transactionPool.getLocalTransactions()) {
-      peerTransactionTracker.addToPeerSendQueue(peer, tx);
-    }
-  }
+  //  private void dispatchLocalTransaction(final EthPeer peer) {
+  //    if (transactionPool == null) {
+  //      return;
+  //    }
+  //    LOG.debug("Dispatching local transactions to {}.", peer);
+  //    // Iterable<Transaction> localTransactions = transactionPool.getLocalTransactions();
+  //    // peer.send(TransactionsMessage.create(localTransactions));
+  //    peerTransactionTracker.markTransactionsAsSeen(peer, transactionPool.getLocalTransactions());
+  //    for (Transaction tx : transactionPool.getLocalTransactions()) {
+  //      peerTransactionTracker.addToPeerSendQueue(peer, tx);
+  //    }
+  //  }
 
   @Override
   public void handleDisconnect(
