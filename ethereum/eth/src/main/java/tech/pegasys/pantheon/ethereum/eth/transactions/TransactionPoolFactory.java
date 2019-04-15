@@ -28,27 +28,27 @@ public class TransactionPoolFactory {
       final EthContext ethContext,
       final Clock clock,
       final int maxPendingTransactions,
-      final MetricsSystem metricsSystem) {
+      final MetricsSystem metricsSystem,
+      final PeerTransactionTracker peerTransactionTracker,
+      final TransactionsMessageSender transactionsMessageSender) {
     final PendingTransactions pendingTransactions =
         new PendingTransactions(maxPendingTransactions, clock, metricsSystem);
-
-
 
     final TransactionPool transactionPool =
         new TransactionPool(
             pendingTransactions,
             protocolSchedule,
             protocolContext,
-            new TransactionSender(transactionTracker, transactionsMessageSender, ethContext));
+            new TransactionSender(peerTransactionTracker, transactionsMessageSender, ethContext));
 
     final TransactionsMessageHandler transactionsMessageHandler =
         new TransactionsMessageHandler(
             ethContext.getScheduler(),
-            new TransactionsMessageProcessor(transactionTracker, transactionPool));
+            new TransactionsMessageProcessor(peerTransactionTracker, transactionPool));
 
     ethContext.getEthMessages().subscribe(EthPV62.TRANSACTIONS, transactionsMessageHandler);
     protocolContext.getBlockchain().observeBlockAdded(transactionPool);
-    ethContext.getEthPeers().subscribeDisconnect(transactionTracker);
+    ethContext.getEthPeers().subscribeDisconnect(peerTransactionTracker);
     return transactionPool;
   }
 }

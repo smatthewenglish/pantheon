@@ -122,24 +122,24 @@ public class MainnetPantheonController implements PantheonController<Void> {
 
     final boolean fastSyncEnabled = syncConfig.syncMode().equals(SyncMode.FAST);
 
-    PeerTransactionTracker transactionTracker = new PeerTransactionTracker();
-    TransactionsMessageSender transactionsMessageSender = new TransactionsMessageSender(transactionTracker);
     String protocolName = "eth";
     EthPeers ethPeers = new EthPeers(protocolName);
     EthMessages ethMessages = new EthMessages();
     EthScheduler ethScheduler = new EthScheduler(syncConfig.downloaderParallelism(), syncConfig.transactionsParallelism(), syncConfig.computationParallelism(), metricsSystem);
     EthContext ethContext = new EthContext(protocolName, ethPeers, ethMessages, ethScheduler);
 
-    final TransactionPool transactionPool =
+    PeerTransactionTracker peerTransactionTracker = new PeerTransactionTracker();
+    TransactionsMessageSender transactionsMessageSender = new TransactionsMessageSender(peerTransactionTracker);
+    TransactionPool transactionPool =
             TransactionPoolFactory.createTransactionPool(
                     protocolSchedule,
                     protocolContext,
-                    ethProtocolManager.ethContext(),
+                    ethContext,
                     clock,
                     maxPendingTransactions,
-                    metricsSystem);
-
-
+                    metricsSystem,
+                    peerTransactionTracker,
+                    transactionsMessageSender);
 
     final EthProtocolManager ethProtocolManager =
         new EthProtocolManager(
@@ -151,7 +151,9 @@ public class MainnetPantheonController implements PantheonController<Void> {
             syncConfig.transactionsParallelism(),
             syncConfig.computationParallelism(),
             metricsSystem,
-            ethereumWireProtocolConfiguration);
+            ethereumWireProtocolConfiguration,
+                transactionPool,
+                peerTransactionTracker);
     final SyncState syncState =
         new SyncState(blockchain, ethProtocolManager.ethContext().getEthPeers());
     final Synchronizer synchronizer =
@@ -169,7 +171,7 @@ public class MainnetPantheonController implements PantheonController<Void> {
     final OptionalLong daoBlock = genesisConfig.getConfigOptions().getDaoForkBlock();
     if (daoBlock.isPresent()) {
       // Setup dao validator
-      final EthContext ethContext = ethProtocolManager.ethContext();
+      ethContext = ethProtocolManager.ethContext();
       final DaoForkPeerValidator daoForkPeerValidator =
           new DaoForkPeerValidator(
               ethContext, protocolSchedule, metricsSystem, daoBlock.getAsLong());
