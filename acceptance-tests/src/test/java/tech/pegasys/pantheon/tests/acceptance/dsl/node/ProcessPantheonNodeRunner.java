@@ -187,26 +187,12 @@ public class ProcessPantheonNodeRunner implements PantheonNodeRunner {
 
     try {
       final Process process = processBuilder.start();
-      outputProcessorExecutor.submit(() -> printOutput(node, process));
       pantheonProcesses.put(node.getName(), process);
     } catch (final IOException e) {
       LOG.error("Error starting PantheonNode process", e);
     }
 
     waitForPortsFile(dataDir);
-  }
-
-  private void printOutput(final PantheonNode node, final Process process) {
-    try (final BufferedReader in =
-        new BufferedReader(new InputStreamReader(process.getInputStream(), UTF_8))) {
-      String line = in.readLine();
-      while (line != null) {
-        PROCESS_LOG.info("{}: {}", node.getName(), line);
-        line = in.readLine();
-      }
-    } catch (final IOException e) {
-      LOG.error("Failed to read output from process", e);
-    }
   }
 
   private Path createGenesisFile(final PantheonNode node, final String genesisConfig) {
