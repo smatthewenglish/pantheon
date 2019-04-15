@@ -125,21 +125,27 @@ public class MainnetPantheonController implements PantheonController<Void> {
     String protocolName = "eth";
     EthPeers ethPeers = new EthPeers(protocolName);
     EthMessages ethMessages = new EthMessages();
-    EthScheduler ethScheduler = new EthScheduler(syncConfig.downloaderParallelism(), syncConfig.transactionsParallelism(), syncConfig.computationParallelism(), metricsSystem);
+    EthScheduler ethScheduler =
+        new EthScheduler(
+            syncConfig.downloaderParallelism(),
+            syncConfig.transactionsParallelism(),
+            syncConfig.computationParallelism(),
+            metricsSystem);
     EthContext ethContext = new EthContext(protocolName, ethPeers, ethMessages, ethScheduler);
 
     PeerTransactionTracker peerTransactionTracker = new PeerTransactionTracker();
-    TransactionsMessageSender transactionsMessageSender = new TransactionsMessageSender(peerTransactionTracker);
+    TransactionsMessageSender transactionsMessageSender =
+        new TransactionsMessageSender(peerTransactionTracker);
     TransactionPool transactionPool =
-            TransactionPoolFactory.createTransactionPool(
-                    protocolSchedule,
-                    protocolContext,
-                    ethContext,
-                    clock,
-                    maxPendingTransactions,
-                    metricsSystem,
-                    peerTransactionTracker,
-                    transactionsMessageSender);
+        TransactionPoolFactory.createTransactionPool(
+            protocolSchedule,
+            protocolContext,
+            ethContext,
+            clock,
+            maxPendingTransactions,
+            metricsSystem,
+            peerTransactionTracker,
+            transactionsMessageSender);
 
     final EthProtocolManager ethProtocolManager =
         new EthProtocolManager(
@@ -152,8 +158,8 @@ public class MainnetPantheonController implements PantheonController<Void> {
             syncConfig.computationParallelism(),
             metricsSystem,
             ethereumWireProtocolConfiguration,
-                transactionPool,
-                peerTransactionTracker);
+            transactionPool,
+            peerTransactionTracker);
     final SyncState syncState =
         new SyncState(blockchain, ethProtocolManager.ethContext().getEthPeers());
     final Synchronizer synchronizer =

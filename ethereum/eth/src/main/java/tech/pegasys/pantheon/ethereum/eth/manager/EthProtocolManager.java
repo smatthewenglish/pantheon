@@ -116,17 +116,17 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
   }
 
   public EthProtocolManager(
-          final Blockchain blockchain,
-          final WorldStateArchive worldStateArchive,
-          final int networkId,
-          final boolean fastSyncEnabled,
-          final int syncWorkers,
-          final int txWorkers,
-          final int computationWorkers,
-          final MetricsSystem metricsSystem,
-          final EthereumWireProtocolConfiguration ethereumWireProtocolConfiguration,
-          final TransactionPool transactionPool,
-          final PeerTransactionTracker peerTransactionTracker) {
+      final Blockchain blockchain,
+      final WorldStateArchive worldStateArchive,
+      final int networkId,
+      final boolean fastSyncEnabled,
+      final int syncWorkers,
+      final int txWorkers,
+      final int computationWorkers,
+      final MetricsSystem metricsSystem,
+      final EthereumWireProtocolConfiguration ethereumWireProtocolConfiguration,
+      final TransactionPool transactionPool,
+      final PeerTransactionTracker peerTransactionTracker) {
     this(
         blockchain,
         worldStateArchive,
@@ -136,6 +136,25 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
         ethereumWireProtocolConfiguration);
     this.transactionPool = transactionPool;
     this.peerTransactionTracker = peerTransactionTracker;
+  }
+
+  public EthProtocolManager(
+      final Blockchain blockchain,
+      final WorldStateArchive worldStateArchive,
+      final int networkId,
+      final boolean fastSyncEnabled,
+      final int syncWorkers,
+      final int txWorkers,
+      final int computationWorkers,
+      final MetricsSystem metricsSystem,
+      final EthereumWireProtocolConfiguration ethereumWireProtocolConfiguration) {
+    this(
+        blockchain,
+        worldStateArchive,
+        networkId,
+        fastSyncEnabled,
+        new EthScheduler(syncWorkers, txWorkers, computationWorkers, metricsSystem),
+        ethereumWireProtocolConfiguration);
   }
 
   public EthContext ethContext() {
@@ -230,11 +249,12 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
 
       dispatchLocalTransaction(peer);
 
-    } catch (final PeerNotConnected ignored) {}
+    } catch (final PeerNotConnected ignored) {
+    }
   }
 
   void dispatchLocalTransaction(final EthPeer peer) {
-    if (transactionPool.getLocalTransactions().size() == 0) {
+    if (transactionPool == null) {
       return;
     }
     try {

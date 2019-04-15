@@ -55,4 +55,36 @@ public class TransactionPoolFactory {
     ethContext.getEthPeers().subscribeDisconnect(peerTransactionTracker);
     return transactionPool;
   }
+
+  public static TransactionPool createTransactionPool(
+      final ProtocolSchedule<?> protocolSchedule,
+      final ProtocolContext<?> protocolContext,
+      final EthContext ethContext,
+      final Clock clock,
+      final int maxPendingTransactions,
+      final MetricsSystem metricsSystem) {
+    final PendingTransactions pendingTransactions =
+        new PendingTransactions(maxPendingTransactions, clock, metricsSystem);
+
+    final PeerTransactionTracker transactionTracker = new PeerTransactionTracker();
+    final TransactionsMessageSender transactionsMessageSender =
+        new TransactionsMessageSender(transactionTracker);
+
+    final TransactionPool transactionPool =
+        new TransactionPool(
+            pendingTransactions,
+            protocolSchedule,
+            protocolContext,
+            new TransactionSender(transactionTracker, transactionsMessageSender, ethContext));
+
+    final TransactionsMessageHandler transactionsMessageHandler =
+        new TransactionsMessageHandler(
+            ethContext.getScheduler(),
+            new TransactionsMessageProcessor(transactionTracker, transactionPool));
+
+    ethContext.getEthMessages().subscribe(EthPV62.TRANSACTIONS, transactionsMessageHandler);
+    protocolContext.getBlockchain().observeBlockAdded(transactionPool);
+    ethContext.getEthPeers().subscribeDisconnect(transactionTracker);
+    return transactionPool;
+  }
 }
