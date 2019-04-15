@@ -23,7 +23,6 @@ import tech.pegasys.pantheon.ethereum.eth.EthProtocol;
 import tech.pegasys.pantheon.ethereum.eth.EthereumWireProtocolConfiguration;
 import tech.pegasys.pantheon.ethereum.eth.messages.EthPV62;
 import tech.pegasys.pantheon.ethereum.eth.messages.StatusMessage;
-import tech.pegasys.pantheon.ethereum.eth.messages.TransactionsMessage;
 import tech.pegasys.pantheon.ethereum.eth.sync.BlockBroadcaster;
 import tech.pegasys.pantheon.ethereum.eth.transactions.PeerTransactionTracker;
 import tech.pegasys.pantheon.ethereum.eth.transactions.TransactionPool;
@@ -256,13 +255,12 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
     if (transactionPool == null) {
       return;
     }
-    try {
-      LOG.debug("Dispatching local transactions to {}.", peer);
-      Iterable<Transaction> localTransactions = transactionPool.getLocalTransactions();
-      peer.send(TransactionsMessage.create(localTransactions));
-      peerTransactionTracker.markTransactionsAsSeen(peer, transactionPool.getLocalTransactions());
-
-    } catch (final PeerNotConnected ignored) {
+    LOG.debug("Dispatching local transactions to {}.", peer);
+    // Iterable<Transaction> localTransactions = transactionPool.getLocalTransactions();
+    // peer.send(TransactionsMessage.create(localTransactions));
+    peerTransactionTracker.markTransactionsAsSeen(peer, transactionPool.getLocalTransactions());
+    for (Transaction tx : transactionPool.getLocalTransactions()) {
+      peerTransactionTracker.addToPeerSendQueue(peer, tx);
     }
   }
 
