@@ -26,10 +26,9 @@ public class TransactionPoolFactory {
       final ProtocolSchedule<?> protocolSchedule,
       final ProtocolContext<?> protocolContext,
       final EthContext ethContext,
-      final Clock clock,
-      final int maxPendingTransactions,
-      final MetricsSystem metricsSystem,
       final PeerTransactionTracker peerTransactionTracker,
+      final TransactionsMessageSender transactionsMessageSender,
+      final PendingTransactions pendingTransactions) {
       final TransactionsMessageSender transactionsMessageSender,
       final SyncState syncState) {
     final PendingTransactions pendingTransactions =

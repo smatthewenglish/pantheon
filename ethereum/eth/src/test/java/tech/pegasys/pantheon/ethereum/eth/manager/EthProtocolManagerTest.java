@@ -14,23 +14,32 @@ package tech.pegasys.pantheon.ethereum.eth.manager;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.when;
 import static tech.pegasys.pantheon.ethereum.core.InMemoryStorageProvider.createInMemoryBlockchain;
+import static tech.pegasys.pantheon.ethereum.mainnet.ValidationResult.valid;
 
+import tech.pegasys.pantheon.crypto.SECP256K1;
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
 import tech.pegasys.pantheon.ethereum.chain.Blockchain;
 import tech.pegasys.pantheon.ethereum.chain.MutableBlockchain;
+import tech.pegasys.pantheon.ethereum.core.Account;
 import tech.pegasys.pantheon.ethereum.core.Block;
 import tech.pegasys.pantheon.ethereum.core.BlockBody;
 import tech.pegasys.pantheon.ethereum.core.BlockDataGenerator;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
+import tech.pegasys.pantheon.ethereum.core.ExecutionContextTestFixture;
 import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.ethereum.core.Transaction;
 import tech.pegasys.pantheon.ethereum.core.TransactionReceipt;
+import tech.pegasys.pantheon.ethereum.core.TransactionTestFixture;
 import tech.pegasys.pantheon.ethereum.eth.EthProtocol;
 import tech.pegasys.pantheon.ethereum.eth.EthProtocol.EthVersion;
 import tech.pegasys.pantheon.ethereum.eth.EthereumWireProtocolConfiguration;
@@ -49,11 +58,16 @@ import tech.pegasys.pantheon.ethereum.eth.messages.NodeDataMessage;
 import tech.pegasys.pantheon.ethereum.eth.messages.ReceiptsMessage;
 import tech.pegasys.pantheon.ethereum.eth.messages.StatusMessage;
 import tech.pegasys.pantheon.ethereum.eth.messages.TransactionsMessage;
+import tech.pegasys.pantheon.ethereum.eth.transactions.PeerTransactionTracker;
 import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncState;
 import tech.pegasys.pantheon.ethereum.eth.transactions.PendingTransactions;
+import tech.pegasys.pantheon.ethereum.eth.transactions.TransactionPool;
 import tech.pegasys.pantheon.ethereum.eth.transactions.TransactionPoolFactory;
+import tech.pegasys.pantheon.ethereum.eth.transactions.TransactionsMessageSender;
 import tech.pegasys.pantheon.ethereum.mainnet.MainnetProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
+import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSpec;
+import tech.pegasys.pantheon.ethereum.mainnet.TransactionValidator;
 import tech.pegasys.pantheon.ethereum.p2p.api.MessageData;
 import tech.pegasys.pantheon.ethereum.p2p.api.PeerConnection;
 import tech.pegasys.pantheon.ethereum.p2p.wire.Capability;
@@ -1067,5 +1081,111 @@ public final class EthProtocolManagerTest {
       // Verify our transactions executor got something to execute.
       verify(transactions).submit((Runnable) any());
     }
+  }
+
+  @Test
+  public void shouldSendLocalTransactionsToNewlyConnectedPeers() {
+    final SECP256K1.KeyPair KEY_PAIR1 = SECP256K1.KeyPair.generate();
+
+    final MetricsSystem metricsSystem = new NoOpMetricsSystem();
+
+    @SuppressWarnings("unchecked")
+    final ProtocolSchedule<Void> protocolSchedule = mock(ProtocolSchedule.class);
+
+    @SuppressWarnings("unchecked")
+    final ProtocolSpec<Void> protocolSpec = mock(ProtocolSpec.class);
+
+    final TransactionValidator transactionValidator = mock(TransactionValidator.class);
+    MutableBlockchain blockchain;
+    final Transaction transaction1 = createTransaction(1, KEY_PAIR1);
+    final Transaction transaction2 = createTransaction(2, KEY_PAIR1);
+
+    final ExecutionContextTestFixture executionContext = ExecutionContextTestFixture.create();
+    blockchain = executionContext.getBlockchain();
+    final ProtocolContext<Void> protocolContext = executionContext.getProtocolContext();
+    when(protocolSchedule.getByBlockNumber(anyLong())).thenReturn(protocolSpec);
+    when(protocolSpec.getTransactionValidator()).thenReturn(transactionValidator);
+
+    /* * */
+
+    String protocolName = "eth";
+    EthPeers ethPeers = new EthPeers(protocolName);
+    EthMessages ethMessages = new EthMessages();
+    EthScheduler ethScheduler = new EthScheduler(200, 200, 200, metricsSystem);
+    EthContext ethContext = new EthContext(protocolName, ethPeers, ethMessages, ethScheduler);
+
+    PeerTransactionTracker peerTransactionTracker = new PeerTransactionTracker();
+    TransactionsMessageSender transactionsMessageSender =
+        new TransactionsMessageSender(peerTransactionTracker);
+
+    final PendingTransactions pendingTransactions =
+        new PendingTransactions(200, TestClock.fixed(), metricsSystem);
+
+    TransactionPool transactionPool =
+        TransactionPoolFactory.createTransactionPool(
+            protocolSchedule,
+            protocolContext,
+            ethContext,
+            peerTransactionTracker,
+            transactionsMessageSender,
+            pendingTransactions);
+
+    blockchain.observeBlockAdded(transactionPool);
+
+    when(transactionValidator.validate(any(Transaction.class))).thenReturn(valid());
+    when(transactionValidator.validateForSender(
+            eq(transaction1), nullable(Account.class), eq(true)))
+        .thenReturn(valid());
+    when(transactionValidator.validateForSender(
+            eq(transaction2), nullable(Account.class), eq(true)))
+        .thenReturn(valid());
+
+    assertThat(transactionPool.addLocalTransaction(transaction1)).isEqualTo(valid());
+    // assertThat(transactionPool.addLocalTransaction(transaction2)).isEqualTo(valid());
+
+    assertTransactionPending(transaction1, transactionPool.getPendingTransactions());
+    // assertTransactionPending(transaction2, transactionPool.getPendingTransactions());
+
+    /* * */
+
+    Set<Capability> caps = new HashSet<>(Collections.singletonList(EthProtocol.ETH63));
+    PeerSendHandler onSend =
+        (cap, message, conn) -> {
+          if (message.getCode() == EthPV62.STATUS) {
+            return;
+          }
+          BytesValue localTransactionData =
+              TransactionsMessage.create(Collections.singletonList(transaction1)).getData();
+          assertThat(message.getData()).isEqualTo(localTransactionData);
+        };
+
+    MockPeerConnection peer = new MockPeerConnection(caps, onSend);
+
+    final EthProtocolManager ethProtocolManager =
+        new EthProtocolManager(
+            blockchain,
+            protocolContext.getWorldStateArchive(),
+            1,
+            true,
+            1,
+            1,
+            1,
+            new NoOpMetricsSystem(),
+            EthereumWireProtocolConfiguration.defaultConfig());
+
+    ethProtocolManager.handleNewConnection(peer);
+  }
+
+  private void assertTransactionPending(
+      final Transaction t, final PendingTransactions transactions) {
+    assertThat(transactions.getTransactionByHash(t.hash())).contains(t);
+  }
+
+  private Transaction createTransaction(
+      final int transactionNumber, final SECP256K1.KeyPair keyPair) {
+    return new TransactionTestFixture()
+        .nonce(transactionNumber)
+        .gasLimit(0)
+        .createTransaction(keyPair);
   }
 }

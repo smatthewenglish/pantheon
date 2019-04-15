@@ -113,9 +113,15 @@ public class PendingTransactions {
   }
 
   public boolean addLocalTransaction(final Transaction transaction) {
+
+    System.out.println("~~~");
+
     final boolean addTransaction =
         addTransaction(new TransactionInfo(transaction, true, clock.instant()));
     localTransactionAddedCounter.inc();
+
+    System.out.println("addTransaction: " + addTransaction);
+
     return addTransaction;
   }
 

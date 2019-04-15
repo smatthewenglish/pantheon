@@ -80,6 +80,8 @@ public class TransactionPool implements BlockAddedObserver {
     final ValidationResult<TransactionInvalidReason> validationResult =
         validateTransaction(transaction);
 
+    System.out.println("validationResult: " + validationResult);
+
     validationResult.ifValid(
         () -> {
           final boolean added = pendingTransactions.addLocalTransaction(transaction);
@@ -87,6 +89,7 @@ public class TransactionPool implements BlockAddedObserver {
             transactionBatchAddedListener.onTransactionsAdded(singletonList(transaction));
           }
         });
+
     return validationResult;
   }
 
