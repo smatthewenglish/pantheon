@@ -13,8 +13,10 @@
 package tech.pegasys.pantheon.ethereum.eth.transactions;
 
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
+import tech.pegasys.pantheon.ethereum.chain.MutableBlockchain;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthContext;
 import tech.pegasys.pantheon.ethereum.eth.messages.EthPV62;
+import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncState;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
 
@@ -28,26 +30,51 @@ public class TransactionPoolFactory {
       final EthContext ethContext,
       final PeerTransactionTracker peerTransactionTracker,
       final TransactionsMessageSender transactionsMessageSender,
-      final PendingTransactions pendingTransactions) {
-      final TransactionsMessageSender transactionsMessageSender,
+      final PendingTransactions pendingTransactions,
       final SyncState syncState) {
-    final PendingTransactions pendingTransactions =
-        new PendingTransactions(maxPendingTransactions, clock, metricsSystem);
-
-
 
     final TransactionPool transactionPool =
         new TransactionPool(
             pendingTransactions,
             protocolSchedule,
             protocolContext,
-            new TransactionSender(transactionTracker, transactionsMessageSender, ethContext),
+            new TransactionSender(peerTransactionTracker, transactionsMessageSender, ethContext),
             syncState);
 
     final TransactionsMessageHandler transactionsMessageHandler =
         new TransactionsMessageHandler(
             ethContext.getScheduler(),
-            new TransactionsMessageProcessor(transactionTracker, transactionPool));
+            new TransactionsMessageProcessor(peerTransactionTracker, transactionPool));
+
+    ethContext.getEthMessages().subscribe(EthPV62.TRANSACTIONS, transactionsMessageHandler);
+    protocolContext.getBlockchain().observeBlockAdded(transactionPool);
+    ethContext.getEthPeers().subscribeDisconnect(peerTransactionTracker);
+    return transactionPool;
+  }
+
+  public static TransactionPool createTransactionPool(
+      final ProtocolSchedule<?> protocolSchedule,
+      final ProtocolContext<?> protocolContext,
+      final EthContext ethContext,
+      final PeerTransactionTracker peerTransactionTracker,
+      final TransactionsMessageSender transactionsMessageSender,
+      final PendingTransactions pendingTransactions) {
+
+    final MutableBlockchain blockchain = protocolContext.getBlockchain();
+    final SyncState syncState = new SyncState(blockchain, ethContext.getEthPeers());
+
+    final TransactionPool transactionPool =
+        new TransactionPool(
+            pendingTransactions,
+            protocolSchedule,
+            protocolContext,
+            new TransactionSender(peerTransactionTracker, transactionsMessageSender, ethContext),
+            syncState);
+
+    final TransactionsMessageHandler transactionsMessageHandler =
+        new TransactionsMessageHandler(
+            ethContext.getScheduler(),
+            new TransactionsMessageProcessor(peerTransactionTracker, transactionPool));
 
     ethContext.getEthMessages().subscribe(EthPV62.TRANSACTIONS, transactionsMessageHandler);
     protocolContext.getBlockchain().observeBlockAdded(transactionPool);
@@ -61,7 +88,8 @@ public class TransactionPoolFactory {
       final EthContext ethContext,
       final Clock clock,
       final int maxPendingTransactions,
-      final MetricsSystem metricsSystem) {
+      final MetricsSystem metricsSystem,
+      final SyncState syncState) {
     final PendingTransactions pendingTransactions =
         new PendingTransactions(maxPendingTransactions, clock, metricsSystem);
 
@@ -74,7 +102,8 @@ public class TransactionPoolFactory {
             pendingTransactions,
             protocolSchedule,
             protocolContext,
-            new TransactionSender(transactionTracker, transactionsMessageSender, ethContext));
+            new TransactionSender(transactionTracker, transactionsMessageSender, ethContext),
+            syncState);
 
     final TransactionsMessageHandler transactionsMessageHandler =
         new TransactionsMessageHandler(

@@ -58,8 +58,8 @@ import tech.pegasys.pantheon.ethereum.eth.messages.NodeDataMessage;
 import tech.pegasys.pantheon.ethereum.eth.messages.ReceiptsMessage;
 import tech.pegasys.pantheon.ethereum.eth.messages.StatusMessage;
 import tech.pegasys.pantheon.ethereum.eth.messages.TransactionsMessage;
-import tech.pegasys.pantheon.ethereum.eth.transactions.PeerTransactionTracker;
 import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncState;
+import tech.pegasys.pantheon.ethereum.eth.transactions.PeerTransactionTracker;
 import tech.pegasys.pantheon.ethereum.eth.transactions.PendingTransactions;
 import tech.pegasys.pantheon.ethereum.eth.transactions.TransactionPool;
 import tech.pegasys.pantheon.ethereum.eth.transactions.TransactionPoolFactory;
@@ -1121,6 +1121,9 @@ public final class EthProtocolManagerTest {
     final PendingTransactions pendingTransactions =
         new PendingTransactions(200, TestClock.fixed(), metricsSystem);
 
+    SyncState syncState = mock(SyncState.class);
+    when(syncState.isInSync(anyLong())).thenReturn(true);
+
     TransactionPool transactionPool =
         TransactionPoolFactory.createTransactionPool(
             protocolSchedule,
@@ -1128,7 +1131,8 @@ public final class EthProtocolManagerTest {
             ethContext,
             peerTransactionTracker,
             transactionsMessageSender,
-            pendingTransactions);
+            pendingTransactions,
+            syncState);
 
     blockchain.observeBlockAdded(transactionPool);
 

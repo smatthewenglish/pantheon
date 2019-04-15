@@ -71,6 +71,10 @@ public class TransactionPool implements BlockAddedObserver {
     this.syncState = syncState;
   }
 
+  public SyncState getSyncState() {
+    return syncState;
+  }
+
   public List<Transaction> getLocalTransactions() {
     return pendingTransactions.getLocalTransactions();
   }

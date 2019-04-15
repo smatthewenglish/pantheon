@@ -37,7 +37,6 @@ import tech.pegasys.pantheon.ethereum.eth.peervalidation.PeerValidatorRunner;
 import tech.pegasys.pantheon.ethereum.eth.sync.DefaultSynchronizer;
 import tech.pegasys.pantheon.ethereum.eth.sync.SyncMode;
 import tech.pegasys.pantheon.ethereum.eth.sync.SynchronizerConfiguration;
-import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncState;
 import tech.pegasys.pantheon.ethereum.eth.transactions.PeerTransactionTracker;
 import tech.pegasys.pantheon.ethereum.eth.transactions.PendingTransactions;
 import tech.pegasys.pantheon.ethereum.eth.transactions.TransactionPool;
@@ -162,8 +161,7 @@ public class MainnetPantheonController implements PantheonController<Void> {
             ethereumWireProtocolConfiguration,
             transactionPool,
             peerTransactionTracker);
-    final SyncState syncState =
-        new SyncState(blockchain, ethProtocolManager.ethContext().getEthPeers());
+
     final Synchronizer synchronizer =
         new DefaultSynchronizer<>(
             syncConfig,
@@ -171,7 +169,7 @@ public class MainnetPantheonController implements PantheonController<Void> {
             protocolContext,
             protocolContext.getWorldStateArchive().getStorage(),
             ethProtocolManager.ethContext(),
-            syncState,
+            transactionPool.getSyncState(),
             dataDirectory,
             clock,
             metricsSystem);
@@ -185,19 +183,6 @@ public class MainnetPantheonController implements PantheonController<Void> {
               ethContext, protocolSchedule, metricsSystem, daoBlock.getAsLong());
       PeerValidatorRunner.runValidator(ethContext, daoForkPeerValidator);
     }
-
-    final TransactionPool transactionPool =
-        TransactionPoolFactory.createTransactionPool(
-            protocolSchedule,
-            protocolContext,
-            ethProtocolManager.ethContext(),
-            clock,
-            maxPendingTransactions,
-            metricsSystem,
-            syncState);
-
-
-
 
     final ExecutorService minerThreadPool = Executors.newCachedThreadPool();
     final EthHashMinerExecutor executor =
@@ -213,7 +198,7 @@ public class MainnetPantheonController implements PantheonController<Void> {
                 clock));
 
     final EthHashMiningCoordinator miningCoordinator =
-        new EthHashMiningCoordinator(blockchain, executor, syncState);
+        new EthHashMiningCoordinator(blockchain, executor, transactionPool.getSyncState());
     miningCoordinator.addMinedBlockObserver(ethProtocolManager);
     if (miningParams.isMiningEnabled()) {
       miningCoordinator.enable();
