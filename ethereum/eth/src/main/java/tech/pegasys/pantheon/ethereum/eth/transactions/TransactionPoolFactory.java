@@ -34,9 +34,7 @@ public class TransactionPoolFactory {
     final PendingTransactions pendingTransactions =
         new PendingTransactions(maxPendingTransactions, clock, metricsSystem);
 
-    final PeerTransactionTracker transactionTracker = new PeerTransactionTracker();
-    final TransactionsMessageSender transactionsMessageSender =
-        new TransactionsMessageSender(transactionTracker);
+
 
     final TransactionPool transactionPool =
         new TransactionPool(

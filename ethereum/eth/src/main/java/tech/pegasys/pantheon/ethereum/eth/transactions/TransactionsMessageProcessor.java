@@ -43,8 +43,7 @@ class TransactionsMessageProcessor {
     try {
       LOG.trace("Received transactions message from {}", peer);
 
-      final Iterator<Transaction> readTransactions =
-          transactionsMessage.transactions(Transaction::readFrom);
+      final Iterator<Transaction> readTransactions = transactionsMessage.transactions(Transaction::readFrom);
       final Set<Transaction> transactions = Sets.newHashSet(readTransactions);
       transactionTracker.markTransactionsAsSeen(peer, transactions);
       transactionPool.addRemoteTransactions(transactions);

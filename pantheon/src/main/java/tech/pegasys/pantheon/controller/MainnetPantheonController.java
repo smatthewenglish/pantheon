@@ -28,15 +28,20 @@ import tech.pegasys.pantheon.ethereum.core.Synchronizer;
 import tech.pegasys.pantheon.ethereum.eth.EthProtocol;
 import tech.pegasys.pantheon.ethereum.eth.EthereumWireProtocolConfiguration;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthContext;
+import tech.pegasys.pantheon.ethereum.eth.manager.EthMessages;
+import tech.pegasys.pantheon.ethereum.eth.manager.EthPeers;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthProtocolManager;
+import tech.pegasys.pantheon.ethereum.eth.manager.EthScheduler;
 import tech.pegasys.pantheon.ethereum.eth.peervalidation.DaoForkPeerValidator;
 import tech.pegasys.pantheon.ethereum.eth.peervalidation.PeerValidatorRunner;
 import tech.pegasys.pantheon.ethereum.eth.sync.DefaultSynchronizer;
 import tech.pegasys.pantheon.ethereum.eth.sync.SyncMode;
 import tech.pegasys.pantheon.ethereum.eth.sync.SynchronizerConfiguration;
 import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncState;
+import tech.pegasys.pantheon.ethereum.eth.transactions.PeerTransactionTracker;
 import tech.pegasys.pantheon.ethereum.eth.transactions.TransactionPool;
 import tech.pegasys.pantheon.ethereum.eth.transactions.TransactionPoolFactory;
+import tech.pegasys.pantheon.ethereum.eth.transactions.TransactionsMessageSender;
 import tech.pegasys.pantheon.ethereum.mainnet.MainnetBlockHeaderValidator;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.p2p.api.ProtocolManager;
@@ -116,6 +121,26 @@ public class MainnetPantheonController implements PantheonController<Void> {
     final MutableBlockchain blockchain = protocolContext.getBlockchain();
 
     final boolean fastSyncEnabled = syncConfig.syncMode().equals(SyncMode.FAST);
+
+    PeerTransactionTracker transactionTracker = new PeerTransactionTracker();
+    TransactionsMessageSender transactionsMessageSender = new TransactionsMessageSender(transactionTracker);
+    String protocolName = "eth";
+    EthPeers ethPeers = new EthPeers(protocolName);
+    EthMessages ethMessages = new EthMessages();
+    EthScheduler ethScheduler = new EthScheduler(syncConfig.downloaderParallelism(), syncConfig.transactionsParallelism(), syncConfig.computationParallelism(), metricsSystem);
+    EthContext ethContext = new EthContext(protocolName, ethPeers, ethMessages, ethScheduler);
+
+    final TransactionPool transactionPool =
+            TransactionPoolFactory.createTransactionPool(
+                    protocolSchedule,
+                    protocolContext,
+                    ethProtocolManager.ethContext(),
+                    clock,
+                    maxPendingTransactions,
+                    metricsSystem);
+
+
+
     final EthProtocolManager ethProtocolManager =
         new EthProtocolManager(
             blockchain,
@@ -160,6 +185,9 @@ public class MainnetPantheonController implements PantheonController<Void> {
             maxPendingTransactions,
             metricsSystem,
             syncState);
+
+
+
 
     final ExecutorService minerThreadPool = Executors.newCachedThreadPool();
     final EthHashMinerExecutor executor =
