@@ -23,6 +23,7 @@ import tech.pegasys.pantheon.ethereum.eth.EthereumWireProtocolConfiguration;
 import tech.pegasys.pantheon.ethereum.eth.messages.EthPV62;
 import tech.pegasys.pantheon.ethereum.eth.messages.StatusMessage;
 import tech.pegasys.pantheon.ethereum.eth.sync.BlockBroadcaster;
+
 import tech.pegasys.pantheon.ethereum.p2p.api.Message;
 import tech.pegasys.pantheon.ethereum.p2p.api.MessageData;
 import tech.pegasys.pantheon.ethereum.p2p.api.PeerConnection;
@@ -34,6 +35,9 @@ import tech.pegasys.pantheon.ethereum.rlp.RLPException;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateArchive;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.util.uint.UInt256;
+
+import tech.pegasys.pantheon.ethereum.eth.transactions.TransactionPool;
+import tech.pegasys.pantheon.ethereum.eth.transactions.PeerTransactionTracker;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -64,6 +68,29 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
   private List<Capability> supportedCapabilities;
   private final Blockchain blockchain;
   private final BlockBroadcaster blockBroadcaster;
+
+  private TransactionPool transactionPool;
+  private PeerTransactionTracker peerTransactionTracker;
+
+  public EthProtocolManager(
+          final Blockchain blockchain,
+          final WorldStateArchive worldStateArchive,
+          final int networkId,
+          final boolean fastSyncEnabled,
+          final EthereumWireProtocolConfiguration ethereumWireProtocolConfiguration,
+          final TransactionPool transactionPool,
+          final PeerTransactionTracker peerTransactionTracker,
+          final EthScheduler ethScheduler) {
+    this(
+            blockchain,
+            worldStateArchive,
+            networkId,
+            fastSyncEnabled,
+            ethScheduler,
+            ethereumWireProtocolConfiguration);
+    this.transactionPool = transactionPool;
+    this.peerTransactionTracker = peerTransactionTracker;
+  }
 
   public EthProtocolManager(
       final Blockchain blockchain,

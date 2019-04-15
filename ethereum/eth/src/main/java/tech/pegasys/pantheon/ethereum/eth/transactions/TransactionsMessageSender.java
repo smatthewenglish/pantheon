@@ -21,7 +21,7 @@ import tech.pegasys.pantheon.ethereum.p2p.api.PeerConnection.PeerNotConnected;
 
 import java.util.Set;
 
-class TransactionsMessageSender {
+public class TransactionsMessageSender {
 
   private static final int MAX_BATCH_SIZE = 10;
   private final PeerTransactionTracker transactionTracker;
