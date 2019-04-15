@@ -25,26 +25,26 @@ import java.time.Clock;
 public class TransactionPoolFactory {
 
   public static TransactionPool createTransactionPool(
-          final ProtocolSchedule<?> protocolSchedule,
-          final ProtocolContext<?> protocolContext,
-          final EthContext ethContext,
-          final PeerTransactionTracker peerTransactionTracker,
-          final TransactionsMessageSender transactionsMessageSender,
-          final PendingTransactions pendingTransactions,
-          final SyncState syncState) {
+      final ProtocolSchedule<?> protocolSchedule,
+      final ProtocolContext<?> protocolContext,
+      final EthContext ethContext,
+      final PeerTransactionTracker peerTransactionTracker,
+      final TransactionsMessageSender transactionsMessageSender,
+      final PendingTransactions pendingTransactions,
+      final SyncState syncState) {
 
     final TransactionPool transactionPool =
-            new TransactionPool(
-                    pendingTransactions,
-                    protocolSchedule,
-                    protocolContext,
-                    new TransactionSender(peerTransactionTracker, transactionsMessageSender, ethContext),
-                    syncState);
+        new TransactionPool(
+            pendingTransactions,
+            protocolSchedule,
+            protocolContext,
+            new TransactionSender(peerTransactionTracker, transactionsMessageSender, ethContext),
+            syncState);
 
     final TransactionsMessageHandler transactionsMessageHandler =
-            new TransactionsMessageHandler(
-                    ethContext.getScheduler(),
-                    new TransactionsMessageProcessor(peerTransactionTracker, transactionPool));
+        new TransactionsMessageHandler(
+            ethContext.getScheduler(),
+            new TransactionsMessageProcessor(peerTransactionTracker, transactionPool));
 
     ethContext.getEthMessages().subscribe(EthPV62.TRANSACTIONS, transactionsMessageHandler);
     protocolContext.getBlockchain().observeBlockAdded(transactionPool);
@@ -53,28 +53,28 @@ public class TransactionPoolFactory {
   }
 
   public static TransactionPool createTransactionPool(
-          final ProtocolSchedule<?> protocolSchedule,
-          final ProtocolContext<?> protocolContext,
-          final EthContext ethContext,
-          final PeerTransactionTracker peerTransactionTracker,
-          final TransactionsMessageSender transactionsMessageSender,
-          final PendingTransactions pendingTransactions) {
+      final ProtocolSchedule<?> protocolSchedule,
+      final ProtocolContext<?> protocolContext,
+      final EthContext ethContext,
+      final PeerTransactionTracker peerTransactionTracker,
+      final TransactionsMessageSender transactionsMessageSender,
+      final PendingTransactions pendingTransactions) {
 
     final MutableBlockchain blockchain = protocolContext.getBlockchain();
     final SyncState syncState = new SyncState(blockchain, ethContext.getEthPeers());
 
     final TransactionPool transactionPool =
-            new TransactionPool(
-                    pendingTransactions,
-                    protocolSchedule,
-                    protocolContext,
-                    new TransactionSender(peerTransactionTracker, transactionsMessageSender, ethContext),
-                    syncState);
+        new TransactionPool(
+            pendingTransactions,
+            protocolSchedule,
+            protocolContext,
+            new TransactionSender(peerTransactionTracker, transactionsMessageSender, ethContext),
+            syncState);
 
     final TransactionsMessageHandler transactionsMessageHandler =
-            new TransactionsMessageHandler(
-                    ethContext.getScheduler(),
-                    new TransactionsMessageProcessor(peerTransactionTracker, transactionPool));
+        new TransactionsMessageHandler(
+            ethContext.getScheduler(),
+            new TransactionsMessageProcessor(peerTransactionTracker, transactionPool));
 
     ethContext.getEthMessages().subscribe(EthPV62.TRANSACTIONS, transactionsMessageHandler);
     protocolContext.getBlockchain().observeBlockAdded(transactionPool);

@@ -18,12 +18,14 @@ import tech.pegasys.pantheon.ethereum.chain.Blockchain;
 import tech.pegasys.pantheon.ethereum.chain.MinedBlockObserver;
 import tech.pegasys.pantheon.ethereum.core.Block;
 import tech.pegasys.pantheon.ethereum.core.Hash;
+import tech.pegasys.pantheon.ethereum.core.Transaction;
 import tech.pegasys.pantheon.ethereum.eth.EthProtocol;
 import tech.pegasys.pantheon.ethereum.eth.EthereumWireProtocolConfiguration;
 import tech.pegasys.pantheon.ethereum.eth.messages.EthPV62;
 import tech.pegasys.pantheon.ethereum.eth.messages.StatusMessage;
 import tech.pegasys.pantheon.ethereum.eth.sync.BlockBroadcaster;
-
+import tech.pegasys.pantheon.ethereum.eth.transactions.PeerTransactionTracker;
+import tech.pegasys.pantheon.ethereum.eth.transactions.TransactionPool;
 import tech.pegasys.pantheon.ethereum.p2p.api.Message;
 import tech.pegasys.pantheon.ethereum.p2p.api.MessageData;
 import tech.pegasys.pantheon.ethereum.p2p.api.PeerConnection;
@@ -35,9 +37,6 @@ import tech.pegasys.pantheon.ethereum.rlp.RLPException;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateArchive;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.util.uint.UInt256;
-
-import tech.pegasys.pantheon.ethereum.eth.transactions.TransactionPool;
-import tech.pegasys.pantheon.ethereum.eth.transactions.PeerTransactionTracker;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -73,21 +72,21 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
   private PeerTransactionTracker peerTransactionTracker;
 
   public EthProtocolManager(
-          final Blockchain blockchain,
-          final WorldStateArchive worldStateArchive,
-          final int networkId,
-          final boolean fastSyncEnabled,
-          final EthereumWireProtocolConfiguration ethereumWireProtocolConfiguration,
-          final TransactionPool transactionPool,
-          final PeerTransactionTracker peerTransactionTracker,
-          final EthScheduler ethScheduler) {
+      final Blockchain blockchain,
+      final WorldStateArchive worldStateArchive,
+      final int networkId,
+      final boolean fastSyncEnabled,
+      final EthereumWireProtocolConfiguration ethereumWireProtocolConfiguration,
+      final TransactionPool transactionPool,
+      final PeerTransactionTracker peerTransactionTracker,
+      final EthScheduler ethScheduler) {
     this(
-            blockchain,
-            worldStateArchive,
-            networkId,
-            fastSyncEnabled,
-            ethScheduler,
-            ethereumWireProtocolConfiguration);
+        blockchain,
+        worldStateArchive,
+        networkId,
+        fastSyncEnabled,
+        ethScheduler,
+        ethereumWireProtocolConfiguration);
     this.transactionPool = transactionPool;
     this.peerTransactionTracker = peerTransactionTracker;
   }
@@ -243,8 +242,29 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
       LOG.debug("Sending status message to {}.", peer);
       peer.send(status);
       peer.registerStatusSent();
+
+      dispatchLocalTransaction(peer);
     } catch (final PeerNotConnected peerNotConnected) {
       // Nothing to do.
+    }
+  }
+
+  private void dispatchLocalTransaction(final EthPeer peer) {
+    if (transactionPool == null) {
+
+      System.out.println("999");
+
+      return;
+    }
+
+    System.out.println("888");
+
+    LOG.debug("Dispatching local transactions to {}.", peer);
+    // Iterable<Transaction> localTransactions = transactionPool.getLocalTransactions();
+    // peer.send(TransactionsMessage.create(localTransactions));
+    peerTransactionTracker.markTransactionsAsSeen(peer, transactionPool.getLocalTransactions());
+    for (Transaction tx : transactionPool.getLocalTransactions()) {
+      peerTransactionTracker.addToPeerSendQueue(peer, tx);
     }
   }
 
