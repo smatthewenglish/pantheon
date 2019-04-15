@@ -39,6 +39,7 @@ import tech.pegasys.pantheon.ethereum.eth.sync.SyncMode;
 import tech.pegasys.pantheon.ethereum.eth.sync.SynchronizerConfiguration;
 import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncState;
 import tech.pegasys.pantheon.ethereum.eth.transactions.PeerTransactionTracker;
+import tech.pegasys.pantheon.ethereum.eth.transactions.PendingTransactions;
 import tech.pegasys.pantheon.ethereum.eth.transactions.TransactionPool;
 import tech.pegasys.pantheon.ethereum.eth.transactions.TransactionPoolFactory;
 import tech.pegasys.pantheon.ethereum.eth.transactions.TransactionsMessageSender;
@@ -136,16 +137,17 @@ public class MainnetPantheonController implements PantheonController<Void> {
     PeerTransactionTracker peerTransactionTracker = new PeerTransactionTracker();
     TransactionsMessageSender transactionsMessageSender =
         new TransactionsMessageSender(peerTransactionTracker);
+    PendingTransactions pendingTransactions =
+        new PendingTransactions(maxPendingTransactions, clock, metricsSystem);
+
     TransactionPool transactionPool =
         TransactionPoolFactory.createTransactionPool(
             protocolSchedule,
             protocolContext,
             ethContext,
-            clock,
-            maxPendingTransactions,
-            metricsSystem,
             peerTransactionTracker,
-            transactionsMessageSender);
+            transactionsMessageSender,
+            pendingTransactions);
 
     final EthProtocolManager ethProtocolManager =
         new EthProtocolManager(

@@ -248,12 +248,11 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
       peer.registerStatusSent();
 
       dispatchLocalTransaction(peer);
-
     } catch (final PeerNotConnected ignored) {
     }
   }
 
-  void dispatchLocalTransaction(final EthPeer peer) {
+  private void dispatchLocalTransaction(final EthPeer peer) {
     if (transactionPool == null) {
       return;
     }
