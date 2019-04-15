@@ -18,6 +18,7 @@ import tech.pegasys.pantheon.ethereum.chain.Blockchain;
 import tech.pegasys.pantheon.ethereum.chain.MinedBlockObserver;
 import tech.pegasys.pantheon.ethereum.core.Block;
 import tech.pegasys.pantheon.ethereum.core.Hash;
+import tech.pegasys.pantheon.ethereum.core.Transaction;
 import tech.pegasys.pantheon.ethereum.eth.EthProtocol;
 import tech.pegasys.pantheon.ethereum.eth.EthereumWireProtocolConfiguration;
 import tech.pegasys.pantheon.ethereum.eth.messages.EthPV62;
@@ -242,23 +243,23 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
       peer.send(status);
       peer.registerStatusSent();
 
-      // dispatchLocalTransaction(peer);
+      dispatchLocalTransaction(peer);
     } catch (final PeerNotConnected ignored) {
     }
   }
 
-  //  private void dispatchLocalTransaction(final EthPeer peer) {
-  //    if (transactionPool == null) {
-  //      return;
-  //    }
-  //    LOG.debug("Dispatching local transactions to {}.", peer);
-  //    // Iterable<Transaction> localTransactions = transactionPool.getLocalTransactions();
-  //    // peer.send(TransactionsMessage.create(localTransactions));
-  //    peerTransactionTracker.markTransactionsAsSeen(peer, transactionPool.getLocalTransactions());
-  //    for (Transaction tx : transactionPool.getLocalTransactions()) {
-  //      peerTransactionTracker.addToPeerSendQueue(peer, tx);
-  //    }
-  //  }
+  private void dispatchLocalTransaction(final EthPeer peer) {
+    if (transactionPool == null) {
+      return;
+    }
+    LOG.debug("Dispatching local transactions to {}.", peer);
+    // Iterable<Transaction> localTransactions = transactionPool.getLocalTransactions();
+    // peer.send(TransactionsMessage.create(localTransactions));
+    peerTransactionTracker.markTransactionsAsSeen(peer, transactionPool.getLocalTransactions());
+    for (Transaction tx : transactionPool.getLocalTransactions()) {
+      peerTransactionTracker.addToPeerSendQueue(peer, tx);
+    }
+  }
 
   @Override
   public void handleDisconnect(
