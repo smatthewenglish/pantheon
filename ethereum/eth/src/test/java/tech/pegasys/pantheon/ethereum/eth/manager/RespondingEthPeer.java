@@ -103,6 +103,15 @@ public class RespondingEthPeer {
   }
 
   public static RespondingEthPeer create(
+          final EthProtocolManager ethProtocolManager,
+          final UInt256 totalDifficulty,
+          final MockPeerConnection peerConnection) {
+    final Hash chainHeadHash = gen.hash();
+    return create(ethProtocolManager, chainHeadHash, totalDifficulty, DEFAULT_ESTIMATED_HEIGHT, peerConnection);
+  }
+
+
+  public static RespondingEthPeer create(
       final EthProtocolManager ethProtocolManager,
       final UInt256 totalDifficulty,
       final long estimatedHeight) {
@@ -115,6 +124,23 @@ public class RespondingEthPeer {
       final Hash chainHeadHash,
       final UInt256 totalDifficulty) {
     return create(ethProtocolManager, chainHeadHash, totalDifficulty, DEFAULT_ESTIMATED_HEIGHT);
+  }
+
+  public static RespondingEthPeer create(
+          final EthProtocolManager ethProtocolManager,
+          final Hash chainHeadHash,
+          final UInt256 totalDifficulty,
+          final long estimatedHeight,
+          final MockPeerConnection peerConnection) {
+    final EthPeers ethPeers = ethProtocolManager.ethContext().getEthPeers();
+    final BlockingQueue<OutgoingMessage> outgoingMessages = new ArrayBlockingQueue<>(1000);
+    ethPeers.registerConnection(peerConnection);
+    final EthPeer peer = ethPeers.peer(peerConnection);
+    peer.registerStatusReceived(chainHeadHash, totalDifficulty);
+    peer.chainState().update(chainHeadHash, estimatedHeight);
+    peer.registerStatusSent();
+
+    return new RespondingEthPeer(ethProtocolManager, peerConnection, peer, outgoingMessages);
   }
 
   public static RespondingEthPeer create(

@@ -48,20 +48,34 @@ import tech.pegasys.pantheon.ethereum.core.Transaction;
 import tech.pegasys.pantheon.ethereum.core.TransactionReceipt;
 import tech.pegasys.pantheon.ethereum.core.TransactionTestFixture;
 import tech.pegasys.pantheon.ethereum.core.Wei;
+import tech.pegasys.pantheon.ethereum.eth.EthProtocol;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthContext;
+import tech.pegasys.pantheon.ethereum.eth.manager.EthPeer;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthPeers;
+import tech.pegasys.pantheon.ethereum.eth.manager.EthProtocolManager;
+import tech.pegasys.pantheon.ethereum.eth.manager.EthProtocolManagerTestUtil;
+import tech.pegasys.pantheon.ethereum.eth.manager.MockPeerConnection;
+import tech.pegasys.pantheon.ethereum.eth.manager.RespondingEthPeer;
+import tech.pegasys.pantheon.ethereum.eth.messages.EthPV62;
+import tech.pegasys.pantheon.ethereum.eth.messages.TransactionsMessage;
 import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncState;
 import tech.pegasys.pantheon.ethereum.eth.transactions.TransactionPool.TransactionBatchAddedListener;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSpec;
 import tech.pegasys.pantheon.ethereum.mainnet.TransactionValidator;
 import tech.pegasys.pantheon.ethereum.mainnet.ValidationResult;
+import tech.pegasys.pantheon.ethereum.p2p.api.PeerConnection;
+import tech.pegasys.pantheon.ethereum.p2p.wire.Capability;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 import tech.pegasys.pantheon.testutil.TestClock;
+import tech.pegasys.pantheon.util.bytes.BytesValue;
 import tech.pegasys.pantheon.util.uint.UInt256;
 
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -578,4 +592,58 @@ public class TransactionPoolTest {
             eq(transaction), nullable(Account.class), anyBoolean()))
         .thenReturn(valid());
   }
+
+  @Test
+  public void shouldX() {
+    SyncState syncState = mock(SyncState.class);
+    when(syncState.isInSync(anyLong())).thenReturn(true);
+    EthProtocolManager ethProtocolManager = EthProtocolManagerTestUtil.create();
+    EthContext ethContext = ethProtocolManager.ethContext();
+    PeerTransactionTracker peerTransactionTracker = mock(PeerTransactionTracker.class);
+    TransactionPool transactionPool =
+            new TransactionPool(
+                    transactions,
+                    protocolSchedule,
+                    protocolContext,
+                    batchAddedListener,
+                    syncState,
+                    ethContext,
+                    peerTransactionTracker);
+
+    final TransactionTestFixture builder = new TransactionTestFixture();
+    final Transaction transaction1 = builder.nonce(1).createTransaction(KEY_PAIR1);
+    final Transaction transaction2 = builder.nonce(2).createTransaction(KEY_PAIR1);
+    when(transactionValidator.validate(any(Transaction.class))).thenReturn(valid());
+    when(transactionValidator.validateForSender(
+            eq(transaction1), nullable(Account.class), eq(true)))
+            .thenReturn(valid());
+    when(transactionValidator.validateForSender(
+            eq(transaction2), nullable(Account.class), eq(true)))
+            .thenReturn(valid());
+    transactionPool.addLocalTransaction(transaction1);
+    transactionPool.addRemoteTransactions(Collections.singletonList(transaction2));
+
+    Set<Capability> caps = new HashSet<>(Collections.singletonList(EthProtocol.ETH63));
+    MockPeerConnection.PeerSendHandler onSend =
+            (cap, message, conn) -> {
+              if (message.getCode() == EthPV62.STATUS) {
+                return;
+              }
+
+              System.out.println("000");
+              System.out.println(TransactionsMessage.create(Collections.singletonList(transaction1)).getData());
+              System.out.println(message.getData());
+
+              BytesValue localTransactionData = TransactionsMessage.create(Collections.singletonList(transaction1)).getData();
+              assertThat(message.getData()).isEqualTo(localTransactionData);
+            };
+
+    MockPeerConnection mockPeerConnection = new MockPeerConnection(caps, onSend);
+
+    RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, mockPeerConnection);
+    EthPeers ethPeers = ethContext.getEthPeers();
+
+    ethPeers.registerConnection(peer.getPeerConnection());
+  }
+
 }

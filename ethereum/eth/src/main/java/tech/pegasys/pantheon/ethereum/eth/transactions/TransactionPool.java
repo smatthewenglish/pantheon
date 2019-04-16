@@ -27,6 +27,7 @@ import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.core.Transaction;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthContext;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthPeer;
+import tech.pegasys.pantheon.ethereum.eth.messages.TransactionsMessage;
 import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncState;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.TransactionValidator;
@@ -80,11 +81,18 @@ public class TransactionPool implements BlockAddedObserver {
   }
 
   private void handleConnect(final EthPeer peer) {
+
+    System.out.println("- x - x - x -");
+
     List<Transaction> localTransactions = getLocalTransactions();
     for (Transaction transaction : localTransactions) {
       peerTransactionTracker.addToPeerSendQueue(peer, transaction);
     }
     peerTransactionTracker.markTransactionsAsSeen(peer, localTransactions);
+    Iterable<Transaction> localTransactionsX = getLocalTransactions();
+    try {
+      peer.send(TransactionsMessage.create(localTransactionsX));
+    }catch (Exception ignored){}
   }
 
   public List<Transaction> getLocalTransactions() {
