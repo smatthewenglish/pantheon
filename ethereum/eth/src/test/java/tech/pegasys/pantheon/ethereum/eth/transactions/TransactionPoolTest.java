@@ -48,32 +48,23 @@ import tech.pegasys.pantheon.ethereum.core.Transaction;
 import tech.pegasys.pantheon.ethereum.core.TransactionReceipt;
 import tech.pegasys.pantheon.ethereum.core.TransactionTestFixture;
 import tech.pegasys.pantheon.ethereum.core.Wei;
-import tech.pegasys.pantheon.ethereum.eth.EthProtocol;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthContext;
-import tech.pegasys.pantheon.ethereum.eth.manager.EthPeer;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthPeers;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthProtocolManager;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthProtocolManagerTestUtil;
-import tech.pegasys.pantheon.ethereum.eth.manager.MockPeerConnection;
 import tech.pegasys.pantheon.ethereum.eth.manager.RespondingEthPeer;
-import tech.pegasys.pantheon.ethereum.eth.messages.EthPV62;
-import tech.pegasys.pantheon.ethereum.eth.messages.TransactionsMessage;
 import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncState;
 import tech.pegasys.pantheon.ethereum.eth.transactions.TransactionPool.TransactionBatchAddedListener;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSpec;
 import tech.pegasys.pantheon.ethereum.mainnet.TransactionValidator;
 import tech.pegasys.pantheon.ethereum.mainnet.ValidationResult;
-import tech.pegasys.pantheon.ethereum.p2p.api.PeerConnection;
-import tech.pegasys.pantheon.ethereum.p2p.wire.Capability;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 import tech.pegasys.pantheon.testutil.TestClock;
-import tech.pegasys.pantheon.util.bytes.BytesValue;
 import tech.pegasys.pantheon.util.uint.UInt256;
 
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -601,14 +592,14 @@ public class TransactionPoolTest {
     EthContext ethContext = ethProtocolManager.ethContext();
     PeerTransactionTracker peerTransactionTracker = new PeerTransactionTracker();
     TransactionPool transactionPool =
-            new TransactionPool(
-                    transactions,
-                    protocolSchedule,
-                    protocolContext,
-                    batchAddedListener,
-                    syncState,
-                    ethContext,
-                    peerTransactionTracker);
+        new TransactionPool(
+            transactions,
+            protocolSchedule,
+            protocolContext,
+            batchAddedListener,
+            syncState,
+            ethContext,
+            peerTransactionTracker);
 
     final TransactionTestFixture builder = new TransactionTestFixture();
     final Transaction transactionLocal = builder.nonce(1).createTransaction(KEY_PAIR1);
@@ -616,10 +607,10 @@ public class TransactionPoolTest {
     when(transactionValidator.validate(any(Transaction.class))).thenReturn(valid());
     when(transactionValidator.validateForSender(
             eq(transactionLocal), nullable(Account.class), eq(true)))
-            .thenReturn(valid());
+        .thenReturn(valid());
     when(transactionValidator.validateForSender(
             eq(transactionRemote), nullable(Account.class), eq(true)))
-            .thenReturn(valid());
+        .thenReturn(valid());
     transactionPool.addLocalTransaction(transactionLocal);
     transactionPool.addRemoteTransactions(Collections.singletonList(transactionRemote));
 
@@ -628,10 +619,11 @@ public class TransactionPoolTest {
 
     ethPeers.registerConnection(peer.getPeerConnection());
 
-    Set<Transaction> transactionsToSendToPeer = peerTransactionTracker.claimTransactionsToSendToPeer(peer.getEthPeer());
+    Set<Transaction> transactionsToSendToPeer =
+        peerTransactionTracker.claimTransactionsToSendToPeer(peer.getEthPeer());
 
     assertThat(transactionsToSendToPeer.size()).isEqualTo(1);
-    assertThat(transactionsToSendToPeer.iterator().next().hash()).isEqualTo(transactionLocal.hash());
+    assertThat(transactionsToSendToPeer.iterator().next().hash())
+        .isEqualTo(transactionLocal.hash());
   }
-
 }

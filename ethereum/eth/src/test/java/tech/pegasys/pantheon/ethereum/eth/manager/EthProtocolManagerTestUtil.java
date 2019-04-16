@@ -137,10 +137,6 @@ public class EthProtocolManagerTestUtil {
     return RespondingEthPeer.create(ethProtocolManager, UInt256.of(1000L));
   }
 
-  public static RespondingEthPeer createPeer(final EthProtocolManager ethProtocolManager, final MockPeerConnection peerConnection) {
-    return RespondingEthPeer.create(ethProtocolManager, UInt256.of(1000L), peerConnection);
-  }
-
   public static RespondingEthPeer createPeer(
       final EthProtocolManager ethProtocolManager, final long estimatedHeight) {
     return RespondingEthPeer.create(ethProtocolManager, UInt256.of(1000L), estimatedHeight);
