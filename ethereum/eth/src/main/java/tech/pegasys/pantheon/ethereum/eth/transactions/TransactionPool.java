@@ -80,18 +80,10 @@ public class TransactionPool implements BlockAddedObserver {
   }
 
   private void handleConnect(final EthPeer peer) {
-
-    System.out.println("- x - x - x -");
-
     List<Transaction> localTransactions = getLocalTransactions();
     for (Transaction transaction : localTransactions) {
       peerTransactionTracker.addToPeerSendQueue(peer, transaction);
     }
-    //    peerTransactionTracker.markTransactionsAsSeen(peer, localTransactions);
-    //    Iterable<Transaction> localTransactionsX = getLocalTransactions();
-    //    try {
-    //      peer.send(TransactionsMessage.create(localTransactionsX));
-    //    }catch (Exception ignored){}
   }
 
   public List<Transaction> getLocalTransactions() {

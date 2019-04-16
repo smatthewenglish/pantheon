@@ -585,7 +585,7 @@ public class TransactionPoolTest {
   }
 
   @Test
-  public void shouldX() {
+  public void shouldSendOnlyLocalTransactionToNewlyConnectedPeer() {
     SyncState syncState = mock(SyncState.class);
     when(syncState.isInSync(anyLong())).thenReturn(true);
     EthProtocolManager ethProtocolManager = EthProtocolManagerTestUtil.create();
