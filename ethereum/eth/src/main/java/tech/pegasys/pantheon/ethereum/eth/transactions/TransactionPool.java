@@ -79,7 +79,7 @@ public class TransactionPool implements BlockAddedObserver {
     ethContext.getEthPeers().subscribeConnect(this::handleConnect);
   }
 
-  private void handleConnect(EthPeer peer) {
+  private void handleConnect(final EthPeer peer) {
     List<Transaction> localTransactions = getLocalTransactions();
     for (Transaction transaction : localTransactions) {
       peerTransactionTracker.addToPeerSendQueue(peer, transaction);
