@@ -243,29 +243,22 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
       LOG.debug("Sending status message to {}.", peer);
       peer.send(status);
       peer.registerStatusSent();
-
       dispatchLocalTransaction(peer);
-    } catch (final PeerNotConnected peerNotConnected) {
-      // Nothing to do.
+    } catch (final PeerNotConnected ignored) {
     }
   }
 
   private void dispatchLocalTransaction(final EthPeer peer) {
     if (transactionPool == null) {
-
-      System.out.println("999");
-
       return;
     }
-
-    System.out.println("888");
-
-    LOG.debug("Dispatching local transactions to {}.", peer);
-    try{
+    try {
+      LOG.debug("Dispatching local transactions to {}.", peer);
       Iterable<Transaction> localTransactions = transactionPool.getLocalTransactions();
       peer.send(TransactionsMessage.create(localTransactions));
       peerTransactionTracker.markTransactionsAsSeen(peer, transactionPool.getLocalTransactions());
-    } catch (PeerNotConnected ignored){}
+    } catch (final PeerNotConnected ignored) {
+    }
   }
 
   @Override

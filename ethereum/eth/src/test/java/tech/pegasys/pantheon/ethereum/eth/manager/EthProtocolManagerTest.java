@@ -1083,29 +1083,22 @@ public final class EthProtocolManagerTest {
     }
   }
 
+  @SuppressWarnings("unchecked")
   @Test
   public void shouldSendLocalTransactionsToNewlyConnectedPeers() {
     SECP256K1.KeyPair KEY_PAIR1 = SECP256K1.KeyPair.generate();
-
     MetricsSystem metricsSystem = new NoOpMetricsSystem();
-
-    @SuppressWarnings("unchecked")
     ProtocolSchedule<Void> protocolSchedule = mock(ProtocolSchedule.class);
-
-    @SuppressWarnings("unchecked")
     ProtocolSpec<Void> protocolSpec = mock(ProtocolSpec.class);
-
     TransactionValidator transactionValidator = mock(TransactionValidator.class);
-    MutableBlockchain blockchain;
-    Transaction transaction1 = createTransaction(1, KEY_PAIR1);
-
     ExecutionContextTestFixture executionContext = ExecutionContextTestFixture.create();
-    blockchain = executionContext.getBlockchain();
+    MutableBlockchain blockchain = executionContext.getBlockchain();
     ProtocolContext<Void> protocolContext = executionContext.getProtocolContext();
     when(protocolSchedule.getByBlockNumber(anyLong())).thenReturn(protocolSpec);
     when(protocolSpec.getTransactionValidator()).thenReturn(transactionValidator);
 
-    /* * */
+    Transaction transaction1 = createTransaction(1, KEY_PAIR1);
+    Transaction transaction2 = createTransaction(2, KEY_PAIR1);
 
     String protocolName = "eth";
     EthPeers ethPeers = new EthPeers(protocolName);
@@ -1114,10 +1107,10 @@ public final class EthProtocolManagerTest {
     EthContext ethContext = new EthContext(protocolName, ethPeers, ethMessages, ethScheduler);
 
     PeerTransactionTracker peerTransactionTracker = new PeerTransactionTracker();
-    TransactionsMessageSender transactionsMessageSender = new TransactionsMessageSender(peerTransactionTracker);
-
-    PendingTransactions pendingTransactions = new PendingTransactions(200, TestClock.fixed(), metricsSystem);
-
+    TransactionsMessageSender transactionsMessageSender =
+        new TransactionsMessageSender(peerTransactionTracker);
+    PendingTransactions pendingTransactions =
+        new PendingTransactions(200, TestClock.fixed(), metricsSystem);
     SyncState syncState = mock(SyncState.class);
     when(syncState.isInSync(anyLong())).thenReturn(true);
 
@@ -1131,18 +1124,21 @@ public final class EthProtocolManagerTest {
             pendingTransactions,
             syncState);
 
-    blockchain.observeBlockAdded(transactionPool);
-
     when(transactionValidator.validate(any(Transaction.class))).thenReturn(valid());
     when(transactionValidator.validateForSender(
             eq(transaction1), nullable(Account.class), eq(true)))
         .thenReturn(valid());
+    when(transactionValidator.validateForSender(
+            eq(transaction2), nullable(Account.class), eq(true)))
+        .thenReturn(valid());
 
     assertThat(transactionPool.addLocalTransaction(transaction1)).isEqualTo(valid());
+    transactionPool.addRemoteTransactions(Collections.singletonList(transaction2));
 
-    assertTransactionPending(transaction1, transactionPool.getPendingTransactions());
-
-    /* * */
+    assertThat(transactionPool.getPendingTransactions().getTransactionByHash(transaction1.hash()))
+        .contains(transaction1);
+    assertThat(transactionPool.getPendingTransactions().getTransactionByHash(transaction2.hash()))
+        .contains(transaction2);
 
     Set<Capability> caps = new HashSet<>(Collections.singletonList(EthProtocol.ETH63));
     PeerSendHandler onSend =
@@ -1150,11 +1146,8 @@ public final class EthProtocolManagerTest {
           if (message.getCode() == EthPV62.STATUS) {
             return;
           }
-          BytesValue localTransactionData = TransactionsMessage.create(Collections.singletonList(transaction1)).getData();
-
-            System.out.println(TransactionsMessage.create(Collections.singletonList(transaction1)).getData());
-            System.out.println(message.getData());
-
+          BytesValue localTransactionData =
+              TransactionsMessage.create(Collections.singletonList(transaction1)).getData();
           assertThat(message.getData()).isEqualTo(localTransactionData);
         };
 
@@ -1167,16 +1160,11 @@ public final class EthProtocolManagerTest {
             1,
             true,
             EthereumWireProtocolConfiguration.defaultConfig(),
-                transactionPool,
-                peerTransactionTracker,
-                ethScheduler);
+            transactionPool,
+            peerTransactionTracker,
+            ethScheduler);
 
     ethProtocolManager.handleNewConnection(peer);
-  }
-
-  private void assertTransactionPending(
-      final Transaction t, final PendingTransactions transactions) {
-    assertThat(transactions.getTransactionByHash(t.hash())).contains(t);
   }
 
   private Transaction createTransaction(
