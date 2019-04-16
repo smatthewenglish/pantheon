@@ -48,6 +48,8 @@ import tech.pegasys.pantheon.ethereum.core.Transaction;
 import tech.pegasys.pantheon.ethereum.core.TransactionReceipt;
 import tech.pegasys.pantheon.ethereum.core.TransactionTestFixture;
 import tech.pegasys.pantheon.ethereum.core.Wei;
+import tech.pegasys.pantheon.ethereum.eth.manager.EthContext;
+import tech.pegasys.pantheon.ethereum.eth.manager.EthPeers;
 import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncState;
 import tech.pegasys.pantheon.ethereum.eth.transactions.TransactionPool.TransactionBatchAddedListener;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
@@ -101,9 +103,20 @@ public class TransactionPoolTest {
     SyncState syncState = mock(SyncState.class);
     when(syncState.isInSync(anyLong())).thenReturn(true);
 
+    PeerTransactionTracker peerTransactionTracker = mock(PeerTransactionTracker.class);
+    EthContext ethContext = mock(EthContext.class);
+    EthPeers ethPeers = mock(EthPeers.class);
+    when(ethContext.getEthPeers()).thenReturn(ethPeers);
+
     transactionPool =
         new TransactionPool(
-            transactions, protocolSchedule, protocolContext, batchAddedListener, syncState);
+            transactions,
+            protocolSchedule,
+            protocolContext,
+            batchAddedListener,
+            syncState,
+            ethContext,
+            peerTransactionTracker);
     blockchain.observeBlockAdded(transactionPool);
   }
 
@@ -432,9 +445,19 @@ public class TransactionPoolTest {
   public void shouldRejectRemoteTransactionsWhenNotInSync() {
     SyncState syncState = mock(SyncState.class);
     when(syncState.isInSync(anyLong())).thenReturn(false);
+    EthContext ethContext = mock(EthContext.class);
+    EthPeers ethPeers = mock(EthPeers.class);
+    when(ethContext.getEthPeers()).thenReturn(ethPeers);
+    PeerTransactionTracker peerTransactionTracker = mock(PeerTransactionTracker.class);
     TransactionPool transactionPool =
         new TransactionPool(
-            transactions, protocolSchedule, protocolContext, batchAddedListener, syncState);
+            transactions,
+            protocolSchedule,
+            protocolContext,
+            batchAddedListener,
+            syncState,
+            ethContext,
+            peerTransactionTracker);
 
     final TransactionTestFixture builder = new TransactionTestFixture();
     final Transaction transaction1 = builder.nonce(1).createTransaction(KEY_PAIR1);
@@ -464,9 +487,19 @@ public class TransactionPoolTest {
   public void shouldAllowRemoteTransactionsWhenInSync() {
     SyncState syncState = mock(SyncState.class);
     when(syncState.isInSync(anyLong())).thenReturn(true);
+    EthContext ethContext = mock(EthContext.class);
+    EthPeers ethPeers = mock(EthPeers.class);
+    when(ethContext.getEthPeers()).thenReturn(ethPeers);
+    PeerTransactionTracker peerTransactionTracker = mock(PeerTransactionTracker.class);
     TransactionPool transactionPool =
         new TransactionPool(
-            transactions, protocolSchedule, protocolContext, batchAddedListener, syncState);
+            transactions,
+            protocolSchedule,
+            protocolContext,
+            batchAddedListener,
+            syncState,
+            ethContext,
+            peerTransactionTracker);
 
     final TransactionTestFixture builder = new TransactionTestFixture();
     final Transaction transaction1 = builder.nonce(1).createTransaction(KEY_PAIR1);
