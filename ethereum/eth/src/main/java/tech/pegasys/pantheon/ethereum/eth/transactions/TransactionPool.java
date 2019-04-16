@@ -88,11 +88,11 @@ public class TransactionPool implements BlockAddedObserver {
     for (Transaction transaction : localTransactions) {
       peerTransactionTracker.addToPeerSendQueue(peer, transaction);
     }
-    peerTransactionTracker.markTransactionsAsSeen(peer, localTransactions);
-    Iterable<Transaction> localTransactionsX = getLocalTransactions();
-    try {
-      peer.send(TransactionsMessage.create(localTransactionsX));
-    }catch (Exception ignored){}
+//    peerTransactionTracker.markTransactionsAsSeen(peer, localTransactions);
+//    Iterable<Transaction> localTransactionsX = getLocalTransactions();
+//    try {
+//      peer.send(TransactionsMessage.create(localTransactionsX));
+//    }catch (Exception ignored){}
   }
 
   public List<Transaction> getLocalTransactions() {

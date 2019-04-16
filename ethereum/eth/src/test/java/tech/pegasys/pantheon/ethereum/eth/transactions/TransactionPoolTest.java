@@ -599,7 +599,7 @@ public class TransactionPoolTest {
     when(syncState.isInSync(anyLong())).thenReturn(true);
     EthProtocolManager ethProtocolManager = EthProtocolManagerTestUtil.create();
     EthContext ethContext = ethProtocolManager.ethContext();
-    PeerTransactionTracker peerTransactionTracker = mock(PeerTransactionTracker.class);
+    PeerTransactionTracker peerTransactionTracker = new PeerTransactionTracker();
     TransactionPool transactionPool =
             new TransactionPool(
                     transactions,
@@ -611,39 +611,27 @@ public class TransactionPoolTest {
                     peerTransactionTracker);
 
     final TransactionTestFixture builder = new TransactionTestFixture();
-    final Transaction transaction1 = builder.nonce(1).createTransaction(KEY_PAIR1);
-    final Transaction transaction2 = builder.nonce(2).createTransaction(KEY_PAIR1);
+    final Transaction transactionLocal = builder.nonce(1).createTransaction(KEY_PAIR1);
+    final Transaction transactionRemote = builder.nonce(2).createTransaction(KEY_PAIR1);
     when(transactionValidator.validate(any(Transaction.class))).thenReturn(valid());
     when(transactionValidator.validateForSender(
-            eq(transaction1), nullable(Account.class), eq(true)))
+            eq(transactionLocal), nullable(Account.class), eq(true)))
             .thenReturn(valid());
     when(transactionValidator.validateForSender(
-            eq(transaction2), nullable(Account.class), eq(true)))
+            eq(transactionRemote), nullable(Account.class), eq(true)))
             .thenReturn(valid());
-    transactionPool.addLocalTransaction(transaction1);
-    transactionPool.addRemoteTransactions(Collections.singletonList(transaction2));
+    transactionPool.addLocalTransaction(transactionLocal);
+    transactionPool.addRemoteTransactions(Collections.singletonList(transactionRemote));
 
-    Set<Capability> caps = new HashSet<>(Collections.singletonList(EthProtocol.ETH63));
-    MockPeerConnection.PeerSendHandler onSend =
-            (cap, message, conn) -> {
-              if (message.getCode() == EthPV62.STATUS) {
-                return;
-              }
-
-              System.out.println("000");
-              System.out.println(TransactionsMessage.create(Collections.singletonList(transaction1)).getData());
-              System.out.println(message.getData());
-
-              BytesValue localTransactionData = TransactionsMessage.create(Collections.singletonList(transaction1)).getData();
-              assertThat(message.getData()).isEqualTo(localTransactionData);
-            };
-
-    MockPeerConnection mockPeerConnection = new MockPeerConnection(caps, onSend);
-
-    RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, mockPeerConnection);
+    RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager);
     EthPeers ethPeers = ethContext.getEthPeers();
 
     ethPeers.registerConnection(peer.getPeerConnection());
+
+    Set<Transaction> transactionsToSendToPeer = peerTransactionTracker.claimTransactionsToSendToPeer(peer.getEthPeer());
+
+    assertThat(transactionsToSendToPeer.size()).isEqualTo(1);
+    assertThat(transactionsToSendToPeer.iterator().next().hash()).isEqualTo(transactionLocal.hash());
   }
 
 }
