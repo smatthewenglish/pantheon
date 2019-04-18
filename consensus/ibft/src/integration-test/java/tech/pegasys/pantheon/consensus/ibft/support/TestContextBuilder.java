@@ -63,6 +63,8 @@ import tech.pegasys.pantheon.ethereum.core.Util;
 import tech.pegasys.pantheon.ethereum.core.Wei;
 import tech.pegasys.pantheon.ethereum.eth.transactions.PendingTransactions;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
+import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.TimerUtil;
+import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.VertxTimerUtil;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateArchive;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
@@ -83,6 +85,7 @@ import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
 import com.google.common.collect.Iterables;
+import io.vertx.core.Vertx;
 
 public class TestContextBuilder {
   private static MetricsSystem metricsSystem = new NoOpMetricsSystem();
@@ -282,10 +285,15 @@ public class TestContextBuilder {
         new ProtocolContext<>(
             blockChain, worldStateArchive, new IbftContext(voteTallyCache, voteProposer));
 
+    final Vertx vertx = Vertx.vertx();
+    final TimerUtil timerUtil = new VertxTimerUtil(vertx);
+    final PendingTransactions pendingTransactions =
+        new PendingTransactions(timerUtil, 1, clock, metricsSystem);
+
     final IbftBlockCreatorFactory blockCreatorFactory =
         new IbftBlockCreatorFactory(
             (gasLimit) -> gasLimit,
-            new PendingTransactions(1, clock, metricsSystem), // changed from IbftPantheonController
+            pendingTransactions, // changed from IbftPantheonController
             protocolContext,
             protocolSchedule,
             miningParams,

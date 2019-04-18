@@ -17,6 +17,8 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import tech.pegasys.pantheon.ethereum.core.MiningParameters;
 import tech.pegasys.pantheon.ethereum.core.MiningParametersTestBuilder;
 import tech.pegasys.pantheon.ethereum.eth.transactions.PendingTransactions;
+import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.TimerUtil;
+import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.VertxTimerUtil;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 import tech.pegasys.pantheon.testutil.TestClock;
@@ -24,6 +26,7 @@ import tech.pegasys.pantheon.util.Subscribers;
 
 import java.util.concurrent.Executors;
 
+import io.vertx.core.Vertx;
 import org.junit.Test;
 
 public class EthHashMinerExecutorTest {
@@ -34,12 +37,17 @@ public class EthHashMinerExecutorTest {
     final MiningParameters miningParameters =
         new MiningParametersTestBuilder().coinbase(null).build();
 
+    final Vertx vertx = Vertx.vertx();
+    final TimerUtil timerUtil = new VertxTimerUtil(vertx);
+    final PendingTransactions pendingTransactions =
+        new PendingTransactions(timerUtil, 1, TestClock.fixed(), metricsSystem);
+
     final EthHashMinerExecutor executor =
         new EthHashMinerExecutor(
             null,
             Executors.newCachedThreadPool(),
             null,
-            new PendingTransactions(1, TestClock.fixed(), metricsSystem),
+            pendingTransactions,
             miningParameters,
             new DefaultBlockScheduler(1, 10, TestClock.fixed()));
 
@@ -52,12 +60,17 @@ public class EthHashMinerExecutorTest {
   public void settingCoinbaseToNullThrowsException() {
     final MiningParameters miningParameters = new MiningParametersTestBuilder().build();
 
+    final Vertx vertx = Vertx.vertx();
+    final TimerUtil timerUtil = new VertxTimerUtil(vertx);
+    final PendingTransactions pendingTransactions =
+        new PendingTransactions(timerUtil, 1, TestClock.fixed(), metricsSystem);
+
     final EthHashMinerExecutor executor =
         new EthHashMinerExecutor(
             null,
             Executors.newCachedThreadPool(),
             null,
-            new PendingTransactions(1, TestClock.fixed(), metricsSystem),
+            pendingTransactions,
             miningParameters,
             new DefaultBlockScheduler(1, 10, TestClock.fixed()));
 

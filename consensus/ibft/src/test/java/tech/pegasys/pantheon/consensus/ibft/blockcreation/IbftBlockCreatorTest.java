@@ -37,6 +37,8 @@ import tech.pegasys.pantheon.ethereum.eth.transactions.PendingTransactions;
 import tech.pegasys.pantheon.ethereum.mainnet.BlockHeaderValidator;
 import tech.pegasys.pantheon.ethereum.mainnet.HeaderValidationMode;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
+import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.TimerUtil;
+import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.VertxTimerUtil;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 import tech.pegasys.pantheon.testutil.TestClock;
@@ -48,6 +50,7 @@ import java.util.List;
 import java.util.Optional;
 
 import com.google.common.collect.Lists;
+import io.vertx.core.Vertx;
 import org.junit.Test;
 
 public class IbftBlockCreatorTest {
@@ -81,6 +84,11 @@ public class IbftBlockCreatorTest {
             createInMemoryWorldStateArchive(),
             setupContextWithValidators(initialValidatorList));
 
+    final Vertx vertx = Vertx.vertx();
+    final TimerUtil timerUtil = new VertxTimerUtil(vertx);
+    final PendingTransactions pendingTransactions =
+        new PendingTransactions(timerUtil, 1, TestClock.fixed(), metricsSystem);
+
     final IbftBlockCreator blockCreator =
         new IbftBlockCreator(
             initialValidatorList.get(0),
@@ -92,7 +100,7 @@ public class IbftBlockCreatorTest {
                         0,
                         initialValidatorList)
                     .encode(),
-            new PendingTransactions(1, TestClock.fixed(), metricsSystem),
+            pendingTransactions,
             protContext,
             protocolSchedule,
             parentGasLimit -> parentGasLimit,

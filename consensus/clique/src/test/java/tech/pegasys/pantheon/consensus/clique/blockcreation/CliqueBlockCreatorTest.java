@@ -43,6 +43,8 @@ import tech.pegasys.pantheon.ethereum.core.Util;
 import tech.pegasys.pantheon.ethereum.core.Wei;
 import tech.pegasys.pantheon.ethereum.eth.transactions.PendingTransactions;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
+import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.TimerUtil;
+import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.VertxTimerUtil;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateArchive;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
@@ -52,6 +54,7 @@ import tech.pegasys.pantheon.util.bytes.BytesValue;
 import java.util.List;
 
 import com.google.common.collect.Lists;
+import io.vertx.core.Vertx;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -108,12 +111,15 @@ public class CliqueBlockCreatorTest {
     final CliqueExtraData extraData =
         new CliqueExtraData(BytesValue.wrap(new byte[32]), null, validatorList);
 
+    final Vertx vertx = Vertx.vertx();
+    final TimerUtil timerUtil = new VertxTimerUtil(vertx);
+
     final Address coinbase = AddressHelpers.ofValue(1);
     final CliqueBlockCreator blockCreator =
         new CliqueBlockCreator(
             coinbase,
             parent -> extraData.encode(),
-            new PendingTransactions(5, TestClock.fixed(), metricsSystem),
+            new PendingTransactions(timerUtil, 5, TestClock.fixed(), metricsSystem),
             protocolContext,
             protocolSchedule,
             gasLimit -> gasLimit,
@@ -136,11 +142,14 @@ public class CliqueBlockCreatorTest {
     voteProposer.auth(a1);
     final Address coinbase = AddressHelpers.ofValue(1);
 
+    final Vertx vertx = Vertx.vertx();
+    final TimerUtil timerUtil = new VertxTimerUtil(vertx);
+
     final CliqueBlockCreator blockCreator =
         new CliqueBlockCreator(
             coinbase,
             parent -> extraData.encode(),
-            new PendingTransactions(5, TestClock.fixed(), metricsSystem),
+            new PendingTransactions(timerUtil, 5, TestClock.fixed(), metricsSystem),
             protocolContext,
             protocolSchedule,
             gasLimit -> gasLimit,
@@ -162,11 +171,14 @@ public class CliqueBlockCreatorTest {
     voteProposer.auth(a1);
     final Address coinbase = AddressHelpers.ofValue(1);
 
+    final Vertx vertx = Vertx.vertx();
+    final TimerUtil timerUtil = new VertxTimerUtil(vertx);
+
     final CliqueBlockCreator blockCreator =
         new CliqueBlockCreator(
             coinbase,
             parent -> extraData.encode(),
-            new PendingTransactions(5, TestClock.fixed(), metricsSystem),
+            new PendingTransactions(timerUtil, 5, TestClock.fixed(), metricsSystem),
             protocolContext,
             protocolSchedule,
             gasLimit -> gasLimit,
@@ -191,11 +203,14 @@ public class CliqueBlockCreatorTest {
     voteProposer.auth(a1);
     final Address coinbase = AddressHelpers.ofValue(1);
 
+    final Vertx vertx = Vertx.vertx();
+    final TimerUtil timerUtil = new VertxTimerUtil(vertx);
+
     final CliqueBlockCreator blockCreator =
         new CliqueBlockCreator(
             coinbase,
             parent -> extraData.encode(),
-            new PendingTransactions(5, TestClock.fixed(), metricsSystem),
+            new PendingTransactions(timerUtil, 5, TestClock.fixed(), metricsSystem),
             protocolContext,
             protocolSchedule,
             gasLimit -> gasLimit,

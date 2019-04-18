@@ -25,6 +25,8 @@ import tech.pegasys.pantheon.ethereum.core.TransactionTestFixture;
 import tech.pegasys.pantheon.ethereum.core.Util;
 import tech.pegasys.pantheon.ethereum.core.Wei;
 import tech.pegasys.pantheon.ethereum.eth.transactions.PendingTransactions.TransactionSelectionResult;
+import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.TimerUtil;
+import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.VertxTimerUtil;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 import tech.pegasys.pantheon.testutil.TestClock;
@@ -34,6 +36,7 @@ import java.util.List;
 import java.util.OptionalLong;
 
 import com.google.common.collect.Lists;
+import io.vertx.core.Vertx;
 import org.junit.Test;
 
 public class PendingTransactionsTest {
@@ -43,8 +46,12 @@ public class PendingTransactionsTest {
   private static final KeyPair KEYS2 = KeyPair.generate();
 
   private final MetricsSystem metricsSystem = new NoOpMetricsSystem();
+
+  final Vertx vertx = Vertx.vertx();
+  final TimerUtil timerUtil = new VertxTimerUtil(vertx);
+
   private final PendingTransactions transactions =
-      new PendingTransactions(MAX_TRANSACTIONS, TestClock.fixed(), metricsSystem);
+      new PendingTransactions(timerUtil, MAX_TRANSACTIONS, TestClock.fixed(), metricsSystem);
   private final Transaction transaction1 = createTransaction(2);
   private final Transaction transaction2 = createTransaction(1);
 
