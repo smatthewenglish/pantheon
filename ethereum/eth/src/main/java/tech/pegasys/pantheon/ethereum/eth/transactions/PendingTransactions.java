@@ -72,18 +72,18 @@ public class PendingTransactions {
   private final Counter remoteTransactionAddedCounter;
 
   protected final TimerUtil timerUtil;
-  private final long earliestAllowedTransactionInstantMs;
+  private final long transactionEvictionIntervalMs;
 
   public PendingTransactions(
       final int maxPendingTransactions,
       final Clock clock,
       final TimerUtil timerUtil,
-      final long earliestAllowedTransactionInstantMs,
+      final long transactionEvictionIntervalMs,
       final MetricsSystem metricsSystem) {
     this.maxPendingTransactions = maxPendingTransactions;
     this.clock = clock;
     this.timerUtil = timerUtil;
-    this.earliestAllowedTransactionInstantMs = earliestAllowedTransactionInstantMs;
+    this.transactionEvictionIntervalMs = transactionEvictionIntervalMs;
     final LabelledMetric<Counter> transactionAddedCounter =
         metricsSystem.createLabelledCounter(
             MetricCategory.TRANSACTION_POOL,
@@ -101,8 +101,21 @@ public class PendingTransactions {
             "source",
             "operation");
 
+    timerUtil.setPeriodic(transactionEvictionIntervalMs, this::evictOldTransactions);
+  }
 
-    timerUtil.setPeriodic(earliestAllowedTransactionInstantMs, this::refreshTableIfRequired);
+  private void evictOldTransactions() {
+    final long now = System.currentTimeMillis();
+    System.out.println("now: " + now);
+
+    for (final TransactionInfo transactionInfo : prioritizedTransactions) {
+
+      long addedToPoolAt = transactionInfo.getAddedToPoolAt().toEpochMilli();
+      System.out.println("addedToPoolAt: " + addedToPoolAt);
+
+      long difference = now - addedToPoolAt;
+      System.out.println("difference: " + difference);
+    }
   }
 
   List<Transaction> getLocalTransactions() {
