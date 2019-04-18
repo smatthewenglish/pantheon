@@ -71,7 +71,10 @@ public class PendingTransactions {
   private final Counter remoteTransactionAddedCounter;
 
   public PendingTransactions(
-      final int maxPendingTransactions, final Clock clock, final MetricsSystem metricsSystem) {
+      final int maxPendingTransactions,
+      final Clock clock,
+      final long earliestAllowedTransactionInstantMs,
+      final MetricsSystem metricsSystem) {
     this.maxPendingTransactions = maxPendingTransactions;
     this.clock = clock;
     final LabelledMetric<Counter> transactionAddedCounter =
