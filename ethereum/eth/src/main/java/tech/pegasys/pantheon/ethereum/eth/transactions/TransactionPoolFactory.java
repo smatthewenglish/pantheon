@@ -12,14 +12,18 @@
  */
 package tech.pegasys.pantheon.ethereum.eth.transactions;
 
+import io.vertx.core.Vertx;
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthContext;
 import tech.pegasys.pantheon.ethereum.eth.messages.EthPV62;
 import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncState;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
+import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.TimerUtil;
+import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.VertxTimerUtil;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
 
 import java.time.Clock;
+import java.util.concurrent.TimeUnit;
 
 public class TransactionPoolFactory {
 
@@ -31,8 +35,11 @@ public class TransactionPoolFactory {
       final int maxPendingTransactions,
       final MetricsSystem metricsSystem,
       final SyncState syncState) {
-    final PendingTransactions pendingTransactions =
-        new PendingTransactions(maxPendingTransactions, clock, metricsSystem);
+
+    VertxTimerUtil vertxTimerUtil = new VertxTimerUtil(Vertx.vertx());
+    long TRANSACTION_EVICTION_INTERVAL_MS = TimeUnit.HOURS.toMillis(1);
+
+    final PendingTransactions pendingTransactions = new PendingTransactions(maxPendingTransactions, clock, vertxTimerUtil, TRANSACTION_EVICTION_INTERVAL_MS, metricsSystem);
 
     final PeerTransactionTracker transactionTracker = new PeerTransactionTracker();
     final TransactionsMessageSender transactionsMessageSender =

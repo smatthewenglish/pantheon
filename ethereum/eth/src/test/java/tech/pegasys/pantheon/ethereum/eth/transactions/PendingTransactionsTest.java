@@ -14,6 +14,7 @@ package tech.pegasys.pantheon.ethereum.eth.transactions;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
 
@@ -25,6 +26,7 @@ import tech.pegasys.pantheon.ethereum.core.TransactionTestFixture;
 import tech.pegasys.pantheon.ethereum.core.Util;
 import tech.pegasys.pantheon.ethereum.core.Wei;
 import tech.pegasys.pantheon.ethereum.eth.transactions.PendingTransactions.TransactionSelectionResult;
+import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.TimerUtil;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 import tech.pegasys.pantheon.testutil.TestClock;
@@ -32,6 +34,7 @@ import tech.pegasys.pantheon.testutil.TestClock;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.OptionalLong;
+import java.util.concurrent.TimeUnit;
 
 import com.google.common.collect.Lists;
 import org.junit.Test;
@@ -43,8 +46,22 @@ public class PendingTransactionsTest {
   private static final KeyPair KEYS2 = KeyPair.generate();
 
   private final MetricsSystem metricsSystem = new NoOpMetricsSystem();
-  private final PendingTransactions transactions =
-      new PendingTransactions(MAX_TRANSACTIONS, TestClock.fixed(), metricsSystem);
+
+
+//  public PendingTransactions(
+//          final int maxPendingTransactions,
+//          final Clock clock,
+//          final TimerUtil timerUtil,
+//          final long transactionEvictionIntervalMs,
+//          final MetricsSystem metricsSystem) {
+
+  private static final long TRANSACTION_EVICTION_INTERVAL_MS = TimeUnit.HOURS.toMillis(1);
+  private final TimerUtil timerUtil = mock(TimerUtil.class);
+
+  private final PendingTransactions transactions = new PendingTransactions(MAX_TRANSACTIONS, TestClock.fixed(), timerUtil, TRANSACTION_EVICTION_INTERVAL_MS, metricsSystem);
+
+
+
   private final Transaction transaction1 = createTransaction(2);
   private final Transaction transaction2 = createTransaction(1);
 
