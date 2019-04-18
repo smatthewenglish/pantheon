@@ -615,9 +615,6 @@ public class TransactionPoolTest {
     transactionPool.addRemoteTransactions(Collections.singletonList(transactionRemote));
 
     RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager);
-    EthPeers ethPeers = ethContext.getEthPeers();
-
-    ethPeers.registerConnection(peer.getPeerConnection());
 
     Set<Transaction> transactionsToSendToPeer =
         peerTransactionTracker.claimTransactionsToSendToPeer(peer.getEthPeer());
