@@ -18,6 +18,7 @@ import tech.pegasys.pantheon.ethereum.core.AccountTransactionOrder;
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.ethereum.core.Transaction;
+import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.TimerUtil;
 import tech.pegasys.pantheon.metrics.Counter;
 import tech.pegasys.pantheon.metrics.LabelledMetric;
 import tech.pegasys.pantheon.metrics.MetricCategory;
@@ -70,13 +71,19 @@ public class PendingTransactions {
   private final Counter localTransactionAddedCounter;
   private final Counter remoteTransactionAddedCounter;
 
+  protected final TimerUtil timerUtil;
+  private final long earliestAllowedTransactionInstantMs;
+
   public PendingTransactions(
       final int maxPendingTransactions,
       final Clock clock,
+      final TimerUtil timerUtil,
       final long earliestAllowedTransactionInstantMs,
       final MetricsSystem metricsSystem) {
     this.maxPendingTransactions = maxPendingTransactions;
     this.clock = clock;
+    this.timerUtil = timerUtil;
+    this.earliestAllowedTransactionInstantMs = earliestAllowedTransactionInstantMs;
     final LabelledMetric<Counter> transactionAddedCounter =
         metricsSystem.createLabelledCounter(
             MetricCategory.TRANSACTION_POOL,
@@ -93,6 +100,9 @@ public class PendingTransactions {
             "Count of transactions removed from the transaction pool",
             "source",
             "operation");
+
+
+    timerUtil.setPeriodic(earliestAllowedTransactionInstantMs, this::refreshTableIfRequired);
   }
 
   List<Transaction> getLocalTransactions() {
