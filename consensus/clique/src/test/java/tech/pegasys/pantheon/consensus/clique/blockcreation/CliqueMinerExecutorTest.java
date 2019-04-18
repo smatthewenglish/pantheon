@@ -36,6 +36,8 @@ import tech.pegasys.pantheon.ethereum.core.MiningParameters;
 import tech.pegasys.pantheon.ethereum.core.Util;
 import tech.pegasys.pantheon.ethereum.core.Wei;
 import tech.pegasys.pantheon.ethereum.eth.transactions.PendingTransactions;
+import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.TimerUtil;
+import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.VertxTimerUtil;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 import tech.pegasys.pantheon.testutil.TestClock;
@@ -46,6 +48,7 @@ import java.util.Random;
 import java.util.concurrent.Executors;
 
 import com.google.common.collect.Lists;
+import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import org.junit.Before;
 import org.junit.Test;
@@ -85,12 +88,15 @@ public class CliqueMinerExecutorTest {
     final BytesValue wrappedVanityData = BytesValue.wrap(vanityData);
     final int EPOCH_LENGTH = 10;
 
+    final Vertx vertx = Vertx.vertx();
+    final TimerUtil timerUtil = new VertxTimerUtil(vertx);
+
     final CliqueMinerExecutor executor =
         new CliqueMinerExecutor(
             cliqueProtocolContext,
             Executors.newSingleThreadExecutor(),
             CliqueProtocolSchedule.create(GENESIS_CONFIG_OPTIONS, proposerKeyPair),
-            new PendingTransactions(1, TestClock.fixed(), metricsSystem),
+            new PendingTransactions(timerUtil, 1, TestClock.fixed(), metricsSystem),
             proposerKeyPair,
             new MiningParameters(AddressHelpers.ofValue(1), Wei.ZERO, wrappedVanityData, false),
             mock(CliqueBlockScheduler.class),
@@ -115,12 +121,15 @@ public class CliqueMinerExecutorTest {
     final BytesValue wrappedVanityData = BytesValue.wrap(vanityData);
     final int EPOCH_LENGTH = 10;
 
+    final Vertx vertx = Vertx.vertx();
+    final TimerUtil timerUtil = new VertxTimerUtil(vertx);
+
     final CliqueMinerExecutor executor =
         new CliqueMinerExecutor(
             cliqueProtocolContext,
             Executors.newSingleThreadExecutor(),
             CliqueProtocolSchedule.create(GENESIS_CONFIG_OPTIONS, proposerKeyPair),
-            new PendingTransactions(1, TestClock.fixed(), metricsSystem),
+            new PendingTransactions(timerUtil, 1, TestClock.fixed(), metricsSystem),
             proposerKeyPair,
             new MiningParameters(AddressHelpers.ofValue(1), Wei.ZERO, wrappedVanityData, false),
             mock(CliqueBlockScheduler.class),

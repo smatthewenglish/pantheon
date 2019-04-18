@@ -23,6 +23,8 @@ import tech.pegasys.pantheon.ethereum.mainnet.EthHashSolver;
 import tech.pegasys.pantheon.ethereum.mainnet.EthHasher.Light;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolScheduleBuilder;
 import tech.pegasys.pantheon.ethereum.mainnet.ValidationTestUtils;
+import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.TimerUtil;
+import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.VertxTimerUtil;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 import tech.pegasys.pantheon.testutil.TestClock;
@@ -33,6 +35,7 @@ import java.math.BigInteger;
 import java.util.function.Function;
 
 import com.google.common.collect.Lists;
+import io.vertx.core.Vertx;
 import org.assertj.core.api.Assertions;
 import org.junit.Test;
 
@@ -63,11 +66,17 @@ public class EthHashBlockCreatorTest {
   @Test
   public void createMainnetBlock1() throws IOException {
     final EthHashSolver solver = new EthHashSolver(Lists.newArrayList(BLOCK_1_NONCE), new Light());
+
+    final Vertx vertx = Vertx.vertx();
+    final TimerUtil timerUtil = new VertxTimerUtil(vertx);
+    final PendingTransactions pendingTransactions =
+        new PendingTransactions(timerUtil, 1, TestClock.fixed(), metricsSystem);
+
     final EthHashBlockCreator blockCreator =
         new EthHashBlockCreator(
             BLOCK_1_COINBASE,
             parent -> BLOCK_1_EXTRA_DATA,
-            new PendingTransactions(1, TestClock.fixed(), metricsSystem),
+            pendingTransactions,
             executionContextTestFixture.getProtocolContext(),
             executionContextTestFixture.getProtocolSchedule(),
             gasLimit -> gasLimit,

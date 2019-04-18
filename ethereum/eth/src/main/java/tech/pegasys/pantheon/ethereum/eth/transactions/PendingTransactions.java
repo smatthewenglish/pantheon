@@ -18,6 +18,7 @@ import tech.pegasys.pantheon.ethereum.core.AccountTransactionOrder;
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.ethereum.core.Transaction;
+import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.TimerUtil;
 import tech.pegasys.pantheon.metrics.Counter;
 import tech.pegasys.pantheon.metrics.LabelledMetric;
 import tech.pegasys.pantheon.metrics.MetricCategory;
@@ -70,8 +71,14 @@ public class PendingTransactions {
   private final Counter localTransactionAddedCounter;
   private final Counter remoteTransactionAddedCounter;
 
+  protected final TimerUtil timerUtil;
+
   public PendingTransactions(
-      final int maxPendingTransactions, final Clock clock, final MetricsSystem metricsSystem) {
+      final TimerUtil timerUtil,
+      final int maxPendingTransactions,
+      final Clock clock,
+      final MetricsSystem metricsSystem) {
+    this.timerUtil = timerUtil;
     this.maxPendingTransactions = maxPendingTransactions;
     this.clock = clock;
     final LabelledMetric<Counter> transactionAddedCounter =

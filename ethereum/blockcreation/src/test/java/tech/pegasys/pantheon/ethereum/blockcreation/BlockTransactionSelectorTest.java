@@ -42,6 +42,8 @@ import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.TransactionProcessor;
 import tech.pegasys.pantheon.ethereum.mainnet.TransactionValidator.TransactionInvalidReason;
 import tech.pegasys.pantheon.ethereum.mainnet.ValidationResult;
+import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.TimerUtil;
+import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.VertxTimerUtil;
 import tech.pegasys.pantheon.ethereum.storage.keyvalue.KeyValueStorageWorldStateStorage;
 import tech.pegasys.pantheon.ethereum.vm.TestBlockchain;
 import tech.pegasys.pantheon.ethereum.worldstate.DefaultMutableWorldState;
@@ -58,6 +60,7 @@ import java.util.List;
 import java.util.function.Supplier;
 
 import com.google.common.collect.Lists;
+import io.vertx.core.Vertx;
 import org.junit.Test;
 
 public class BlockTransactionSelectorTest {
@@ -74,8 +77,12 @@ public class BlockTransactionSelectorTest {
         protocolSchedule.getByBlockNumber(0).getTransactionProcessor();
     final DefaultMutableWorldState worldState = inMemoryWorldState();
 
+    final Vertx vertx = Vertx.vertx();
+    final TimerUtil timerUtil = new VertxTimerUtil(vertx);
+
     final PendingTransactions pendingTransactions =
-        new PendingTransactions(5, TestClock.fixed(), metricsSystem);
+        new PendingTransactions(timerUtil, 5, TestClock.fixed(), metricsSystem);
+
     final Supplier<Boolean> isCancelled = () -> false;
 
     final ProcessableBlockHeader blockHeader =
@@ -112,8 +119,12 @@ public class BlockTransactionSelectorTest {
 
   @Test
   public void failedTransactionsAreIncludedInTheBlock() {
+
+    final Vertx vertx = Vertx.vertx();
+    final TimerUtil timerUtil = new VertxTimerUtil(vertx);
+
     final PendingTransactions pendingTransactions =
-        new PendingTransactions(5, TestClock.fixed(), metricsSystem);
+        new PendingTransactions(timerUtil, 5, TestClock.fixed(), metricsSystem);
 
     final Transaction transaction = createTransaction(1);
     pendingTransactions.addRemoteTransaction(transaction);
@@ -164,8 +175,12 @@ public class BlockTransactionSelectorTest {
 
   @Test
   public void invalidTransactionsTransactionProcessingAreSkippedButBlockStillFills() {
+
+    final Vertx vertx = Vertx.vertx();
+    final TimerUtil timerUtil = new VertxTimerUtil(vertx);
+
     final PendingTransactions pendingTransactions =
-        new PendingTransactions(5, TestClock.fixed(), metricsSystem);
+        new PendingTransactions(timerUtil, 5, TestClock.fixed(), metricsSystem);
 
     final List<Transaction> transactionsToInject = Lists.newArrayList();
     for (int i = 0; i < 5; i++) {
@@ -227,8 +242,12 @@ public class BlockTransactionSelectorTest {
 
   @Test
   public void subsetOfPendingTransactionsIncludedWhenBlockGasLimitHit() {
+
+    final Vertx vertx = Vertx.vertx();
+    final TimerUtil timerUtil = new VertxTimerUtil(vertx);
+
     final PendingTransactions pendingTransactions =
-        new PendingTransactions(5, TestClock.fixed(), metricsSystem);
+        new PendingTransactions(timerUtil, 5, TestClock.fixed(), metricsSystem);
 
     final List<Transaction> transactionsToInject = Lists.newArrayList();
     // Transactions are reported in reverse order.
@@ -293,8 +312,12 @@ public class BlockTransactionSelectorTest {
 
   @Test
   public void transactionOfferingGasPriceLessThanMinimumIsIdentifiedAndRemovedFromPending() {
+
+    final Vertx vertx = Vertx.vertx();
+    final TimerUtil timerUtil = new VertxTimerUtil(vertx);
+
     final PendingTransactions pendingTransactions =
-        new PendingTransactions(5, TestClock.fixed(), metricsSystem);
+        new PendingTransactions(timerUtil, 5, TestClock.fixed(), metricsSystem);
 
     final Blockchain blockchain = new TestBlockchain();
 
@@ -338,8 +361,13 @@ public class BlockTransactionSelectorTest {
 
   @Test
   public void transactionTooLargeForBlockDoesNotPreventMoreBeingAddedIfBlockOccupancyNotReached() {
+
+    final Vertx vertx = Vertx.vertx();
+    final TimerUtil timerUtil = new VertxTimerUtil(vertx);
+
     final PendingTransactions pendingTransactions =
-        new PendingTransactions(5, TestClock.fixed(), metricsSystem);
+        new PendingTransactions(timerUtil, 5, TestClock.fixed(), metricsSystem);
+
     final Blockchain blockchain = new TestBlockchain();
     final DefaultMutableWorldState worldState = inMemoryWorldState();
     final Supplier<Boolean> isCancelled = () -> false;
@@ -409,8 +437,13 @@ public class BlockTransactionSelectorTest {
 
   @Test
   public void transactionSelectionStopsWhenSufficientBlockOccupancyIsReached() {
+
+    final Vertx vertx = Vertx.vertx();
+    final TimerUtil timerUtil = new VertxTimerUtil(vertx);
+
     final PendingTransactions pendingTransactions =
-        new PendingTransactions(10, TestClock.fixed(), metricsSystem);
+        new PendingTransactions(timerUtil, 5, TestClock.fixed(), metricsSystem);
+
     final Blockchain blockchain = new TestBlockchain();
     final DefaultMutableWorldState worldState = inMemoryWorldState();
     final Supplier<Boolean> isCancelled = () -> false;
@@ -491,8 +524,13 @@ public class BlockTransactionSelectorTest {
 
   @Test
   public void shouldDiscardTransactionsThatFailValidation() {
+
+    final Vertx vertx = Vertx.vertx();
+    final TimerUtil timerUtil = new VertxTimerUtil(vertx);
+
     final PendingTransactions pendingTransactions =
-        new PendingTransactions(10, TestClock.fixed(), metricsSystem);
+        new PendingTransactions(timerUtil, 5, TestClock.fixed(), metricsSystem);
+
     final TransactionProcessor transactionProcessor = mock(TransactionProcessor.class);
     final Blockchain blockchain = new TestBlockchain();
     final DefaultMutableWorldState worldState = inMemoryWorldState();

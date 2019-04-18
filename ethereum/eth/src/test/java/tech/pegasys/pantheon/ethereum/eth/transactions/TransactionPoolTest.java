@@ -59,6 +59,8 @@ import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSpec;
 import tech.pegasys.pantheon.ethereum.mainnet.TransactionValidator;
 import tech.pegasys.pantheon.ethereum.mainnet.ValidationResult;
+import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.TimerUtil;
+import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.VertxTimerUtil;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 import tech.pegasys.pantheon.testutil.TestClock;
@@ -68,6 +70,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
+import io.vertx.core.Vertx;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -89,8 +92,12 @@ public class TransactionPoolTest {
 
   private final TransactionValidator transactionValidator = mock(TransactionValidator.class);
   private MutableBlockchain blockchain;
+
+  final Vertx vertx = Vertx.vertx();
+  final TimerUtil timerUtil = new VertxTimerUtil(vertx);
+
   private final PendingTransactions transactions =
-      new PendingTransactions(MAX_TRANSACTIONS, TestClock.fixed(), metricsSystem);
+      new PendingTransactions(timerUtil, MAX_TRANSACTIONS, TestClock.fixed(), metricsSystem);
   private final Transaction transaction1 = createTransaction(1);
   private final Transaction transaction2 = createTransaction(2);
   private final ExecutionContextTestFixture executionContext = ExecutionContextTestFixture.create();
