@@ -22,10 +22,13 @@ import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.VertxTimerUtil;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
 
 import java.time.Clock;
+import java.util.concurrent.TimeUnit;
 
 import io.vertx.core.Vertx;
 
 public class TransactionPoolFactory {
+
+  private static final long TRANSACTION_EVICTION_INTERVAL_MS = TimeUnit.HOURS.toMillis(1);
 
   public static TransactionPool createTransactionPool(
       final ProtocolSchedule<?> protocolSchedule,
@@ -40,7 +43,12 @@ public class TransactionPoolFactory {
     TimerUtil timerUtil = new VertxTimerUtil(vertx);
 
     final PendingTransactions pendingTransactions =
-        new PendingTransactions(timerUtil, maxPendingTransactions, clock, metricsSystem);
+        new PendingTransactions(
+            timerUtil,
+            TRANSACTION_EVICTION_INTERVAL_MS,
+            maxPendingTransactions,
+            clock,
+            metricsSystem);
 
     final PeerTransactionTracker transactionTracker = new PeerTransactionTracker();
     final TransactionsMessageSender transactionsMessageSender =

@@ -106,7 +106,9 @@ public class PendingTransactions {
 
   private void evictOldTransactions() {
     final long now = System.currentTimeMillis();
-
+    if (now - transactionEvictionIntervalMs > 0) {
+      return;
+    }
   }
 
   List<Transaction> getLocalTransactions() {

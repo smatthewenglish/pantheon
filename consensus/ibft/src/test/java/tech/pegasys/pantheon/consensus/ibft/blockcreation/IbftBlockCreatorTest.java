@@ -48,6 +48,7 @@ import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 import com.google.common.collect.Lists;
 import io.vertx.core.Vertx;
@@ -86,8 +87,11 @@ public class IbftBlockCreatorTest {
 
     final Vertx vertx = Vertx.vertx();
     final TimerUtil timerUtil = new VertxTimerUtil(vertx);
+    final long TRANSACTION_EVICTION_INTERVAL_MS = TimeUnit.HOURS.toMillis(1);
+
     final PendingTransactions pendingTransactions =
-        new PendingTransactions(timerUtil, 1, TestClock.fixed(), metricsSystem);
+        new PendingTransactions(
+            timerUtil, TRANSACTION_EVICTION_INTERVAL_MS, 1, TestClock.fixed(), metricsSystem);
 
     final IbftBlockCreator blockCreator =
         new IbftBlockCreator(

@@ -57,6 +57,7 @@ import tech.pegasys.pantheon.util.uint.UInt256;
 import java.math.BigInteger;
 import java.time.Instant;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 import com.google.common.collect.Lists;
@@ -79,9 +80,11 @@ public class BlockTransactionSelectorTest {
 
     final Vertx vertx = Vertx.vertx();
     final TimerUtil timerUtil = new VertxTimerUtil(vertx);
+    final long TRANSACTION_EVICTION_INTERVAL_MS = TimeUnit.HOURS.toMillis(1);
 
     final PendingTransactions pendingTransactions =
-        new PendingTransactions(timerUtil, 5, TestClock.fixed(), metricsSystem);
+        new PendingTransactions(
+            timerUtil, TRANSACTION_EVICTION_INTERVAL_MS, 5, TestClock.fixed(), metricsSystem);
 
     final Supplier<Boolean> isCancelled = () -> false;
 
@@ -122,9 +125,11 @@ public class BlockTransactionSelectorTest {
 
     final Vertx vertx = Vertx.vertx();
     final TimerUtil timerUtil = new VertxTimerUtil(vertx);
+    final long TRANSACTION_EVICTION_INTERVAL_MS = TimeUnit.HOURS.toMillis(1);
 
     final PendingTransactions pendingTransactions =
-        new PendingTransactions(timerUtil, 5, TestClock.fixed(), metricsSystem);
+        new PendingTransactions(
+            timerUtil, TRANSACTION_EVICTION_INTERVAL_MS, 5, TestClock.fixed(), metricsSystem);
 
     final Transaction transaction = createTransaction(1);
     pendingTransactions.addRemoteTransaction(transaction);
@@ -178,9 +183,11 @@ public class BlockTransactionSelectorTest {
 
     final Vertx vertx = Vertx.vertx();
     final TimerUtil timerUtil = new VertxTimerUtil(vertx);
+    final long TRANSACTION_EVICTION_INTERVAL_MS = TimeUnit.HOURS.toMillis(1);
 
     final PendingTransactions pendingTransactions =
-        new PendingTransactions(timerUtil, 5, TestClock.fixed(), metricsSystem);
+        new PendingTransactions(
+            timerUtil, TRANSACTION_EVICTION_INTERVAL_MS, 5, TestClock.fixed(), metricsSystem);
 
     final List<Transaction> transactionsToInject = Lists.newArrayList();
     for (int i = 0; i < 5; i++) {
@@ -245,9 +252,11 @@ public class BlockTransactionSelectorTest {
 
     final Vertx vertx = Vertx.vertx();
     final TimerUtil timerUtil = new VertxTimerUtil(vertx);
+    final long TRANSACTION_EVICTION_INTERVAL_MS = TimeUnit.HOURS.toMillis(1);
 
     final PendingTransactions pendingTransactions =
-        new PendingTransactions(timerUtil, 5, TestClock.fixed(), metricsSystem);
+        new PendingTransactions(
+            timerUtil, TRANSACTION_EVICTION_INTERVAL_MS, 5, TestClock.fixed(), metricsSystem);
 
     final List<Transaction> transactionsToInject = Lists.newArrayList();
     // Transactions are reported in reverse order.
@@ -315,9 +324,11 @@ public class BlockTransactionSelectorTest {
 
     final Vertx vertx = Vertx.vertx();
     final TimerUtil timerUtil = new VertxTimerUtil(vertx);
+    final long TRANSACTION_EVICTION_INTERVAL_MS = TimeUnit.HOURS.toMillis(1);
 
     final PendingTransactions pendingTransactions =
-        new PendingTransactions(timerUtil, 5, TestClock.fixed(), metricsSystem);
+        new PendingTransactions(
+            timerUtil, TRANSACTION_EVICTION_INTERVAL_MS, 5, TestClock.fixed(), metricsSystem);
 
     final Blockchain blockchain = new TestBlockchain();
 
@@ -364,9 +375,11 @@ public class BlockTransactionSelectorTest {
 
     final Vertx vertx = Vertx.vertx();
     final TimerUtil timerUtil = new VertxTimerUtil(vertx);
+    final long TRANSACTION_EVICTION_INTERVAL_MS = TimeUnit.HOURS.toMillis(1);
 
     final PendingTransactions pendingTransactions =
-        new PendingTransactions(timerUtil, 5, TestClock.fixed(), metricsSystem);
+        new PendingTransactions(
+            timerUtil, TRANSACTION_EVICTION_INTERVAL_MS, 5, TestClock.fixed(), metricsSystem);
 
     final Blockchain blockchain = new TestBlockchain();
     final DefaultMutableWorldState worldState = inMemoryWorldState();
@@ -440,9 +453,11 @@ public class BlockTransactionSelectorTest {
 
     final Vertx vertx = Vertx.vertx();
     final TimerUtil timerUtil = new VertxTimerUtil(vertx);
+    final long TRANSACTION_EVICTION_INTERVAL_MS = TimeUnit.HOURS.toMillis(1);
 
     final PendingTransactions pendingTransactions =
-        new PendingTransactions(timerUtil, 5, TestClock.fixed(), metricsSystem);
+        new PendingTransactions(
+            timerUtil, TRANSACTION_EVICTION_INTERVAL_MS, 5, TestClock.fixed(), metricsSystem);
 
     final Blockchain blockchain = new TestBlockchain();
     final DefaultMutableWorldState worldState = inMemoryWorldState();
@@ -527,9 +542,11 @@ public class BlockTransactionSelectorTest {
 
     final Vertx vertx = Vertx.vertx();
     final TimerUtil timerUtil = new VertxTimerUtil(vertx);
+    final long TRANSACTION_EVICTION_INTERVAL_MS = TimeUnit.HOURS.toMillis(1);
 
     final PendingTransactions pendingTransactions =
-        new PendingTransactions(timerUtil, 5, TestClock.fixed(), metricsSystem);
+        new PendingTransactions(
+            timerUtil, TRANSACTION_EVICTION_INTERVAL_MS, 5, TestClock.fixed(), metricsSystem);
 
     final TransactionProcessor transactionProcessor = mock(TransactionProcessor.class);
     final Blockchain blockchain = new TestBlockchain();

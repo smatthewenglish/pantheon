@@ -59,6 +59,7 @@ import tech.pegasys.pantheon.util.uint.UInt256;
 
 import java.math.BigInteger;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import io.vertx.core.Vertx;
 import org.assertj.core.util.Lists;
@@ -81,8 +82,15 @@ public class EthGetFilterChangesIntegrationTest {
   private final Vertx vertx = Vertx.vertx();
   private final TimerUtil timerUtil = new VertxTimerUtil(vertx);
 
+  private static final long TRANSACTION_EVICTION_INTERVAL_MS = TimeUnit.HOURS.toMillis(1);
+
   private final PendingTransactions transactions =
-      new PendingTransactions(timerUtil, MAX_TRANSACTIONS, TestClock.fixed(), metricsSystem);
+      new PendingTransactions(
+          timerUtil,
+          TRANSACTION_EVICTION_INTERVAL_MS,
+          MAX_TRANSACTIONS,
+          TestClock.fixed(),
+          metricsSystem);
 
   private static final int MAX_TRANSACTIONS = 5;
   private static final KeyPair keyPair = KeyPair.generate();

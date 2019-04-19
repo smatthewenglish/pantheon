@@ -31,6 +31,7 @@ import tech.pegasys.pantheon.testutil.TestClock;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 import java.math.BigInteger;
 import java.util.function.Function;
 
@@ -69,8 +70,11 @@ public class EthHashBlockCreatorTest {
 
     final Vertx vertx = Vertx.vertx();
     final TimerUtil timerUtil = new VertxTimerUtil(vertx);
+    final long TRANSACTION_EVICTION_INTERVAL_MS = TimeUnit.HOURS.toMillis(1);
+
     final PendingTransactions pendingTransactions =
-        new PendingTransactions(timerUtil, 1, TestClock.fixed(), metricsSystem);
+        new PendingTransactions(
+            timerUtil, TRANSACTION_EVICTION_INTERVAL_MS, 1, TestClock.fixed(), metricsSystem);
 
     final EthHashBlockCreator blockCreator =
         new EthHashBlockCreator(

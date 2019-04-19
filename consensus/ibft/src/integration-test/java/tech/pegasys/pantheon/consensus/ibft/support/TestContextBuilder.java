@@ -82,6 +82,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import com.google.common.collect.Iterables;
@@ -287,8 +288,11 @@ public class TestContextBuilder {
 
     final Vertx vertx = Vertx.vertx();
     final TimerUtil timerUtil = new VertxTimerUtil(vertx);
+    final long TRANSACTION_EVICTION_INTERVAL_MS = TimeUnit.HOURS.toMillis(1);
+
     final PendingTransactions pendingTransactions =
-        new PendingTransactions(timerUtil, 1, clock, metricsSystem);
+        new PendingTransactions(
+            timerUtil, TRANSACTION_EVICTION_INTERVAL_MS, 1, clock, metricsSystem);
 
     final IbftBlockCreatorFactory blockCreatorFactory =
         new IbftBlockCreatorFactory(

@@ -46,6 +46,7 @@ import tech.pegasys.pantheon.util.bytes.BytesValue;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import com.google.common.collect.Lists;
 import io.vertx.core.Vertx;
@@ -90,13 +91,15 @@ public class CliqueMinerExecutorTest {
 
     final Vertx vertx = Vertx.vertx();
     final TimerUtil timerUtil = new VertxTimerUtil(vertx);
+    final long TRANSACTION_EVICTION_INTERVAL_MS = TimeUnit.HOURS.toMillis(1);
 
     final CliqueMinerExecutor executor =
         new CliqueMinerExecutor(
             cliqueProtocolContext,
             Executors.newSingleThreadExecutor(),
             CliqueProtocolSchedule.create(GENESIS_CONFIG_OPTIONS, proposerKeyPair),
-            new PendingTransactions(timerUtil, 1, TestClock.fixed(), metricsSystem),
+            new PendingTransactions(
+                timerUtil, TRANSACTION_EVICTION_INTERVAL_MS, 1, TestClock.fixed(), metricsSystem),
             proposerKeyPair,
             new MiningParameters(AddressHelpers.ofValue(1), Wei.ZERO, wrappedVanityData, false),
             mock(CliqueBlockScheduler.class),
@@ -123,13 +126,15 @@ public class CliqueMinerExecutorTest {
 
     final Vertx vertx = Vertx.vertx();
     final TimerUtil timerUtil = new VertxTimerUtil(vertx);
+    final long TRANSACTION_EVICTION_INTERVAL_MS = TimeUnit.HOURS.toMillis(1);
 
     final CliqueMinerExecutor executor =
         new CliqueMinerExecutor(
             cliqueProtocolContext,
             Executors.newSingleThreadExecutor(),
             CliqueProtocolSchedule.create(GENESIS_CONFIG_OPTIONS, proposerKeyPair),
-            new PendingTransactions(timerUtil, 1, TestClock.fixed(), metricsSystem),
+            new PendingTransactions(
+                timerUtil, TRANSACTION_EVICTION_INTERVAL_MS, 1, TestClock.fixed(), metricsSystem),
             proposerKeyPair,
             new MiningParameters(AddressHelpers.ofValue(1), Wei.ZERO, wrappedVanityData, false),
             mock(CliqueBlockScheduler.class),

@@ -34,6 +34,7 @@ import tech.pegasys.pantheon.testutil.TestClock;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.OptionalLong;
+import java.util.concurrent.TimeUnit;
 
 import com.google.common.collect.Lists;
 import io.vertx.core.Vertx;
@@ -49,9 +50,15 @@ public class PendingTransactionsTest {
 
   final Vertx vertx = Vertx.vertx();
   final TimerUtil timerUtil = new VertxTimerUtil(vertx);
+  final long TRANSACTION_EVICTION_INTERVAL_MS = TimeUnit.HOURS.toMillis(1);
 
   private final PendingTransactions transactions =
-      new PendingTransactions(timerUtil, MAX_TRANSACTIONS, TestClock.fixed(), metricsSystem);
+      new PendingTransactions(
+          timerUtil,
+          TRANSACTION_EVICTION_INTERVAL_MS,
+          MAX_TRANSACTIONS,
+          TestClock.fixed(),
+          metricsSystem);
   private final Transaction transaction1 = createTransaction(2);
   private final Transaction transaction2 = createTransaction(1);
 
