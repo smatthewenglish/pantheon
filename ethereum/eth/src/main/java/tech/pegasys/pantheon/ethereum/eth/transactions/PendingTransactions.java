@@ -72,13 +72,16 @@ public class PendingTransactions {
   private final Counter remoteTransactionAddedCounter;
 
   protected final TimerUtil timerUtil;
+  private final long transactionEvictionIntervalMs;
 
   public PendingTransactions(
       final TimerUtil timerUtil,
+      final long transactionEvictionIntervalMs,
       final int maxPendingTransactions,
       final Clock clock,
       final MetricsSystem metricsSystem) {
     this.timerUtil = timerUtil;
+    this.transactionEvictionIntervalMs = transactionEvictionIntervalMs;
     this.maxPendingTransactions = maxPendingTransactions;
     this.clock = clock;
     final LabelledMetric<Counter> transactionAddedCounter =
@@ -97,6 +100,13 @@ public class PendingTransactions {
             "Count of transactions removed from the transaction pool",
             "source",
             "operation");
+
+    timerUtil.setPeriodic(transactionEvictionIntervalMs, this::evictOldTransactions);
+  }
+
+  private void evictOldTransactions() {
+    final long now = System.currentTimeMillis();
+
   }
 
   List<Transaction> getLocalTransactions() {
