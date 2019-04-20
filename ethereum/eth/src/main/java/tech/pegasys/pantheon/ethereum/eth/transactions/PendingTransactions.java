@@ -108,7 +108,7 @@ public class PendingTransactions {
     final long now = System.currentTimeMillis();
     for (Map.Entry<Hash, TransactionInfo> transaction : pendingTransactions.entrySet()) {
       final long then = transaction.getValue().getAddedToPoolAt().getEpochSecond();
-      if (then - now > transactionEvictionIntervalMs) {
+      if (now - then > transactionEvictionIntervalMs) {
         removeTransaction(transaction.getValue().getTransaction());
       }
     }

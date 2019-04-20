@@ -423,4 +423,23 @@ public class PendingTransactionsTest {
         .nonce(transactionNumber)
         .createTransaction(KEYS1);
   }
+
+  @Test
+  public void shouldEvictOldTransactions() {
+    final long TRANSACTION_EVICTION_INTERVAL_MS = TimeUnit.SECONDS.toMillis(1);
+    final PendingTransactions transactions =
+        new PendingTransactions(
+            timerUtil,
+            TRANSACTION_EVICTION_INTERVAL_MS,
+            MAX_TRANSACTIONS,
+            TestClock.fixed(),
+            metricsSystem);
+    transactions.addRemoteTransaction(transaction1);
+    assertThat(transactions.size()).isEqualTo(1);
+    try {
+      TimeUnit.SECONDS.sleep(2);
+    } catch (Exception ignored) {
+    }
+    assertThat(transactions.size()).isEqualTo(0);
+  }
 }
