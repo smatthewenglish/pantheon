@@ -105,7 +105,7 @@ public class PendingTransactions {
     timerUtil.setPeriodic(transactionEvictionIntervalMs, this::evictOldTransactions);
   }
 
-  private boolean filterStream(TransactionInfo transaction) {
+  private boolean applyEvictionThreshold(final TransactionInfo transaction) {
     final long now = System.currentTimeMillis();
     return now - transaction.getAddedToPoolAt().getEpochSecond() > transactionEvictionIntervalMs;
   }
@@ -113,7 +113,7 @@ public class PendingTransactions {
   private void evictOldTransactions() {
     synchronized (pendingTransactions) {
       final List<TransactionInfo> transactionsToRemove =
-          prioritizedTransactions.stream().filter(this::filterStream).collect(toList());
+          prioritizedTransactions.stream().filter(this::applyEvictionThreshold).collect(toList());
       transactionsToRemove.forEach(transaction -> removeTransaction(transaction.getTransaction()));
     }
   }
