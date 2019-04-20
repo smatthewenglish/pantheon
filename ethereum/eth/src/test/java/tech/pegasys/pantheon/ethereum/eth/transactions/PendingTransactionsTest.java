@@ -425,7 +425,7 @@ public class PendingTransactionsTest {
   }
 
   @Test
-  public void shouldEvictOldTransactions() {
+  public void shouldEvictSingleOldTransaction() {
     final long TRANSACTION_EVICTION_INTERVAL_MS = TimeUnit.SECONDS.toMillis(1);
     final PendingTransactions transactions =
         new PendingTransactions(
@@ -436,6 +436,29 @@ public class PendingTransactionsTest {
             metricsSystem);
     transactions.addRemoteTransaction(transaction1);
     assertThat(transactions.size()).isEqualTo(1);
+    try {
+      TimeUnit.SECONDS.sleep(2);
+    } catch (Exception ignored) {
+    }
+    assertThat(transactions.size()).isEqualTo(0);
+  }
+
+  @Test
+  public void shouldEvictMultipleOldTransactions() {
+    final long TRANSACTION_EVICTION_INTERVAL_MS = TimeUnit.SECONDS.toMillis(1);
+    final PendingTransactions transactions =
+        new PendingTransactions(
+            timerUtil,
+            TRANSACTION_EVICTION_INTERVAL_MS,
+            MAX_TRANSACTIONS,
+            TestClock.fixed(),
+            metricsSystem);
+
+    transactions.addRemoteTransaction(transaction1);
+    assertThat(transactions.size()).isEqualTo(1);
+    transactions.addRemoteTransaction(transaction2);
+    assertThat(transactions.size()).isEqualTo(2);
+
     try {
       TimeUnit.SECONDS.sleep(2);
     } catch (Exception ignored) {

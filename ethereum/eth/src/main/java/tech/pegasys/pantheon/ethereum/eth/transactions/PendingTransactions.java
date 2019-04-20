@@ -13,6 +13,7 @@
 package tech.pegasys.pantheon.ethereum.eth.transactions;
 
 import static java.util.Comparator.comparing;
+import static java.util.stream.Collectors.toList;
 
 import tech.pegasys.pantheon.ethereum.core.AccountTransactionOrder;
 import tech.pegasys.pantheon.ethereum.core.Address;
@@ -104,13 +105,16 @@ public class PendingTransactions {
     timerUtil.setPeriodic(transactionEvictionIntervalMs, this::evictOldTransactions);
   }
 
-  private void evictOldTransactions() {
+  private boolean filterStream(TransactionInfo transaction) {
     final long now = System.currentTimeMillis();
-    for (Map.Entry<Hash, TransactionInfo> transaction : pendingTransactions.entrySet()) {
-      final long then = transaction.getValue().getAddedToPoolAt().getEpochSecond();
-      if (now - then > transactionEvictionIntervalMs) {
-        removeTransaction(transaction.getValue().getTransaction());
-      }
+    return now - transaction.getAddedToPoolAt().getEpochSecond() > transactionEvictionIntervalMs;
+  }
+
+  private void evictOldTransactions() {
+    synchronized (pendingTransactions) {
+      final List<TransactionInfo> transactionsToRemove =
+          prioritizedTransactions.stream().filter(this::filterStream).collect(toList());
+      transactionsToRemove.forEach(transaction -> removeTransaction(transaction.getTransaction()));
     }
   }
 
