@@ -107,7 +107,7 @@ public class PendingTransactions {
 
   private boolean applyEvictionThreshold(final TransactionInfo transaction) {
     final long now = System.currentTimeMillis();
-    return now - transaction.getAddedToPoolAt().getEpochSecond() > transactionEvictionIntervalMs;
+    return now - transaction.getAddedToPoolAt().getNano() > transactionEvictionIntervalMs;
   }
 
   private void evictOldTransactions() {

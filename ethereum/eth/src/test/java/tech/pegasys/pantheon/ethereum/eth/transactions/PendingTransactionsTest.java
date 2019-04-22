@@ -48,9 +48,9 @@ public class PendingTransactionsTest {
 
   private final MetricsSystem metricsSystem = new NoOpMetricsSystem();
 
+  final long TRANSACTION_EVICTION_INTERVAL_MS = TimeUnit.HOURS.toMillis(1);
   final Vertx vertx = Vertx.vertx();
   final TimerUtil timerUtil = new VertxTimerUtil(vertx);
-  final long TRANSACTION_EVICTION_INTERVAL_MS = TimeUnit.HOURS.toMillis(1);
 
   private final PendingTransactions transactions =
       new PendingTransactions(
@@ -424,51 +424,37 @@ public class PendingTransactionsTest {
         .createTransaction(KEYS1);
   }
 
+//  @Test
+//  public void shouldEvictMultipleOldTransactions() {
+//    final long TRANSACTION_EVICTION_INTERVAL_MS = TimeUnit.SECONDS.toMillis(1);
+//    final Vertx vertx = Vertx.vertx();
+//    final TimerUtil timerUtil = new VertxTimerUtil(vertx);
+//    final PendingTransactions transactions =
+//        new PendingTransactions(
+//            timerUtil,
+//            TRANSACTION_EVICTION_INTERVAL_MS,
+//            MAX_TRANSACTIONS,
+//            TestClock.fixed(),
+//            metricsSystem);
+//
+//    transactions.addRemoteTransaction(transaction1);
+//    assertThat(transactions.size()).isEqualTo(1);
+//    transactions.addRemoteTransaction(transaction2);
+//    assertThat(transactions.size()).isEqualTo(2);
+//
+//    try {
+//      TimeUnit.SECONDS.sleep(2);
+//    } catch (Exception ignored) {
+//    }
+//    assertThat(transactions.size()).isEqualTo(0);
+//    vertx.close();
+//  }
+
   @Test
   public void shouldEvictSingleOldTransaction() {
     final long TRANSACTION_EVICTION_INTERVAL_MS = TimeUnit.SECONDS.toMillis(1);
-    final PendingTransactions transactions =
-        new PendingTransactions(
-            timerUtil,
-            TRANSACTION_EVICTION_INTERVAL_MS,
-            MAX_TRANSACTIONS,
-            TestClock.fixed(),
-            metricsSystem);
-    transactions.addRemoteTransaction(transaction1);
-    assertThat(transactions.size()).isEqualTo(1);
-    try {
-      TimeUnit.SECONDS.sleep(2);
-    } catch (Exception ignored) {
-    }
-    assertThat(transactions.size()).isEqualTo(0);
-  }
-
-  @Test
-  public void shouldEvictMultipleOldTransactions() {
-    final long TRANSACTION_EVICTION_INTERVAL_MS = TimeUnit.SECONDS.toMillis(1);
-    final PendingTransactions transactions =
-        new PendingTransactions(
-            timerUtil,
-            TRANSACTION_EVICTION_INTERVAL_MS,
-            MAX_TRANSACTIONS,
-            TestClock.fixed(),
-            metricsSystem);
-
-    transactions.addRemoteTransaction(transaction1);
-    assertThat(transactions.size()).isEqualTo(1);
-    transactions.addRemoteTransaction(transaction2);
-    assertThat(transactions.size()).isEqualTo(2);
-
-    try {
-      TimeUnit.SECONDS.sleep(2);
-    } catch (Exception ignored) {
-    }
-    assertThat(transactions.size()).isEqualTo(0);
-  }
-
-  @Test
-  public void shouldEvictExclusivelyOldTransactions() {
-    final long TRANSACTION_EVICTION_INTERVAL_MS = TimeUnit.SECONDS.toMillis(2);
+    final Vertx vertx = Vertx.vertx();
+    final TimerUtil timerUtil = new VertxTimerUtil(vertx);
     final PendingTransactions transactions =
             new PendingTransactions(
                     timerUtil,
@@ -476,14 +462,42 @@ public class PendingTransactionsTest {
                     MAX_TRANSACTIONS,
                     TestClock.fixed(),
                     metricsSystem);
-
     transactions.addRemoteTransaction(transaction1);
     assertThat(transactions.size()).isEqualTo(1);
     try {
       TimeUnit.SECONDS.sleep(2);
     } catch (Exception ignored) {
     }
-    transactions.addRemoteTransaction(transaction2);
-    assertThat(transactions.size()).isEqualTo(1);
+    assertThat(transactions.size()).isEqualTo(0);
+    vertx.close();
+  }
+
+  @Test
+  public void shouldEvictExclusivelyOldTransactions() {
+    final long transactionEvictionIntervalMs = TimeUnit.SECONDS.toMillis(2);
+    final Vertx vertx = Vertx.vertx();
+    final TimerUtil timerUtil = new VertxTimerUtil(vertx);
+    final PendingTransactions transactionsX =
+            new PendingTransactions(
+                    timerUtil,
+                    transactionEvictionIntervalMs,
+                    MAX_TRANSACTIONS,
+                    TestClock.fixed(),
+                    metricsSystem);
+
+    transactionsX.addRemoteTransaction(transaction1);
+    assertThat(transactionsX.size()).isEqualTo(1);
+    try {
+      TimeUnit.MILLISECONDS.sleep(1000);
+    } catch (Exception ignored) {
+    }
+    transactionsX.addRemoteTransaction(transaction2);
+    assertThat(transactionsX.size()).isEqualTo(2);
+    try {
+      TimeUnit.MILLISECONDS.sleep(1000);
+    } catch (Exception ignored) {
+    }
+    assertThat(transactionsX.size()).isEqualTo(1);
+    vertx.close();
   }
 }
