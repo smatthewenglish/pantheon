@@ -57,7 +57,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 public class CliqueBlockCreatorTest {
-  private static final long TRANSACTION_EVICTION_INTERVAL_MS = TimeUnit.HOURS.toMillis(1);
+  private static final long TRANSACTION_EVICTION_INTERVAL_MS = TimeUnit.HOURS.toMillis(6);
 
   private final KeyPair proposerKeyPair = KeyPair.generate();
   private final Address proposerAddress = Util.publicKeyToAddress(proposerKeyPair.getPublicKey());

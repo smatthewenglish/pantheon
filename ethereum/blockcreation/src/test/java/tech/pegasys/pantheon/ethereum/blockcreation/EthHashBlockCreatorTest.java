@@ -48,7 +48,7 @@ public class EthHashBlockCreatorTest {
 
   private static final BytesValue BLOCK_1_EXTRA_DATA =
       BytesValue.fromHexString("0x476574682f76312e302e302f6c696e75782f676f312e342e32");
-  private static final long TRANSACTION_EVICTION_INTERVAL_MS = TimeUnit.HOURS.toMillis(1);
+  private static final long TRANSACTION_EVICTION_INTERVAL_MS = TimeUnit.HOURS.toMillis(6);
   private final MetricsSystem metricsSystem = new NoOpMetricsSystem();
 
   private final ExecutionContextTestFixture executionContextTestFixture =

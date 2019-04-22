@@ -74,7 +74,7 @@ import org.junit.Test;
 
 public class TransactionPoolTest {
 
-  private static final long TRANSACTION_EVICTION_INTERVAL_MS = TimeUnit.HOURS.toMillis(1);
+  private static final long TRANSACTION_EVICTION_INTERVAL_MS = TimeUnit.HOURS.toMillis(6);
   private static final int MAX_TRANSACTIONS = 5;
   private static final KeyPair KEY_PAIR1 = KeyPair.generate();
 
