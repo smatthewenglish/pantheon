@@ -19,7 +19,6 @@ import tech.pegasys.pantheon.ethereum.core.MiningParameters;
 import tech.pegasys.pantheon.ethereum.core.MiningParametersTestBuilder;
 import tech.pegasys.pantheon.ethereum.eth.transactions.PendingTransactions;
 import tech.pegasys.pantheon.ethereum.mainnet.TimerUtil;
-import tech.pegasys.pantheon.ethereum.mainnet.VertxTimerUtil;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 import tech.pegasys.pantheon.testutil.TestClock;
@@ -28,7 +27,6 @@ import tech.pegasys.pantheon.util.Subscribers;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-import io.vertx.core.Vertx;
 import org.junit.Test;
 
 public class EthHashMinerExecutorTest {

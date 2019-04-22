@@ -38,7 +38,6 @@ import tech.pegasys.pantheon.ethereum.mainnet.BlockHeaderValidator;
 import tech.pegasys.pantheon.ethereum.mainnet.HeaderValidationMode;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.TimerUtil;
-import tech.pegasys.pantheon.ethereum.mainnet.VertxTimerUtil;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 import tech.pegasys.pantheon.testutil.TestClock;
@@ -51,7 +50,6 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 import com.google.common.collect.Lists;
-import io.vertx.core.Vertx;
 import org.junit.Test;
 
 public class IbftBlockCreatorTest {

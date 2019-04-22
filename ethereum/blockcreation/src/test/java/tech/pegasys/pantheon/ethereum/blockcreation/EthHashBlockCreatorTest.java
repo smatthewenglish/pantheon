@@ -12,6 +12,8 @@
  */
 package tech.pegasys.pantheon.ethereum.blockcreation;
 
+import static org.mockito.Mockito.mock;
+
 import tech.pegasys.pantheon.config.GenesisConfigFile;
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.Block;
@@ -24,7 +26,6 @@ import tech.pegasys.pantheon.ethereum.mainnet.EthHasher.Light;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolScheduleBuilder;
 import tech.pegasys.pantheon.ethereum.mainnet.TimerUtil;
 import tech.pegasys.pantheon.ethereum.mainnet.ValidationTestUtils;
-import tech.pegasys.pantheon.ethereum.mainnet.VertxTimerUtil;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 import tech.pegasys.pantheon.testutil.TestClock;
@@ -36,11 +37,8 @@ import java.math.BigInteger;
 import java.util.function.Function;
 
 import com.google.common.collect.Lists;
-import io.vertx.core.Vertx;
 import org.assertj.core.api.Assertions;
 import org.junit.Test;
-
-import static org.mockito.Mockito.mock;
 
 public class EthHashBlockCreatorTest {
 
