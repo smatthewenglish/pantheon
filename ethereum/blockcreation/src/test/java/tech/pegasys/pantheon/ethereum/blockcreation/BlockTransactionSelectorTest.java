@@ -65,7 +65,6 @@ import org.junit.Test;
 public class BlockTransactionSelectorTest {
 
   private static final KeyPair keyPair = KeyPair.generate();
-  private static final TimerUtil timerUtil = mock(TimerUtil.class);
   private static final long TRANSACTION_EVICTION_INTERVAL_MS = TimeUnit.HOURS.toMillis(1);
   private final MetricsSystem metricsSystem = new NoOpMetricsSystem();
 
