@@ -425,44 +425,38 @@ public class PendingTransactionsTest {
         .createTransaction(KEYS1);
   }
 
-//  @Test
-//  public void shouldEvictMultipleOldTransactions() {
-//    final long TRANSACTION_EVICTION_INTERVAL_MS = TimeUnit.SECONDS.toMillis(1);
-//    final Vertx vertx = Vertx.vertx();
-//    final TimerUtil timerUtil = new VertxTimerUtil(vertx);
-//    final PendingTransactions transactions =
-//        new PendingTransactions(
-//            timerUtil,
-//            TRANSACTION_EVICTION_INTERVAL_MS,
-//            MAX_TRANSACTIONS,
-//            TestClock.fixed(),
-//            metricsSystem);
-//
-//    transactions.addRemoteTransaction(transaction1);
-//    assertThat(transactions.size()).isEqualTo(1);
-//    transactions.addRemoteTransaction(transaction2);
-//    assertThat(transactions.size()).isEqualTo(2);
-//
-//    try {
-//      TimeUnit.SECONDS.sleep(2);
-//    } catch (Exception ignored) {
-//    }
-//    assertThat(transactions.size()).isEqualTo(0);
-//    vertx.close();
-//  }
+  @Test
+  public void shouldEvictMultipleOldTransactions() {
+    final long TRANSACTION_EVICTION_INTERVAL_MS = TimeUnit.SECONDS.toMillis(1);
+    final Vertx vertx = Vertx.vertx();
+    final TimerUtil timerUtil = new VertxTimerUtil(vertx);
+    final Clock clock = java.time.Clock.systemUTC();
+    final PendingTransactions transactions =
+        new PendingTransactions(
+            timerUtil, TRANSACTION_EVICTION_INTERVAL_MS, MAX_TRANSACTIONS, clock, metricsSystem);
+
+    transactions.addRemoteTransaction(transaction1);
+    assertThat(transactions.size()).isEqualTo(1);
+    transactions.addRemoteTransaction(transaction2);
+    assertThat(transactions.size()).isEqualTo(2);
+
+    try {
+      TimeUnit.SECONDS.sleep(2);
+    } catch (Exception ignored) {
+    }
+    assertThat(transactions.size()).isEqualTo(0);
+    vertx.close();
+  }
 
   @Test
   public void shouldEvictSingleOldTransaction() {
     final long TRANSACTION_EVICTION_INTERVAL_MS = TimeUnit.SECONDS.toMillis(1);
     final Vertx vertx = Vertx.vertx();
     final TimerUtil timerUtil = new VertxTimerUtil(vertx);
+    final Clock clock = java.time.Clock.systemUTC();
     final PendingTransactions transactions =
-            new PendingTransactions(
-                    timerUtil,
-                    TRANSACTION_EVICTION_INTERVAL_MS,
-                    MAX_TRANSACTIONS,
-                    TestClock.fixed(),
-                    metricsSystem);
+        new PendingTransactions(
+            timerUtil, TRANSACTION_EVICTION_INTERVAL_MS, MAX_TRANSACTIONS, clock, metricsSystem);
     transactions.addRemoteTransaction(transaction1);
     assertThat(transactions.size()).isEqualTo(1);
     try {
@@ -478,16 +472,11 @@ public class PendingTransactionsTest {
     final long transactionEvictionIntervalMs = TimeUnit.SECONDS.toMillis(2);
     final Vertx vertx = Vertx.vertx();
     final TimerUtil timerUtil = new VertxTimerUtil(vertx);
-
-    Clock clock = java.time.Clock.systemUTC();
+    final Clock clock = java.time.Clock.systemUTC();
 
     final PendingTransactions transactionsX =
-            new PendingTransactions(
-                    timerUtil,
-                    transactionEvictionIntervalMs,
-                    MAX_TRANSACTIONS,
-                    clock,
-                    metricsSystem);
+        new PendingTransactions(
+            timerUtil, transactionEvictionIntervalMs, MAX_TRANSACTIONS, clock, metricsSystem);
 
     transactionsX.addRemoteTransaction(transaction1);
     assertThat(transactionsX.size()).isEqualTo(1);

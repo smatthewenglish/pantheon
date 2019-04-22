@@ -27,7 +27,6 @@ import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.util.Subscribers;
 
 import java.time.Clock;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -111,15 +110,11 @@ public class PendingTransactions {
   }
 
   private void evictOldTransactions() {
-    //synchronized (pendingTransactions) {
-      final List<TransactionInfo> transactionsToRemove = prioritizedTransactions.stream().filter(this::applyEvictionThreshold).collect(toList());
-
-      for(TransactionInfo t : transactionsToRemove) {
-        System.out.println("t: " + t.getAddedToPoolAt());
-      }
-
+    synchronized (pendingTransactions) {
+      final List<TransactionInfo> transactionsToRemove =
+          prioritizedTransactions.stream().filter(this::applyEvictionThreshold).collect(toList());
       transactionsToRemove.forEach(transaction -> removeTransaction(transaction.getTransaction()));
-    //}
+    }
   }
 
   List<Transaction> getLocalTransactions() {
@@ -135,8 +130,7 @@ public class PendingTransactions {
   }
 
   public boolean addRemoteTransaction(final Transaction transaction) {
-    final TransactionInfo transactionInfo =
-        new TransactionInfo(transaction, false, clock.millis());
+    final TransactionInfo transactionInfo = new TransactionInfo(transaction, false, clock.millis());
     final boolean addTransaction = addTransaction(transactionInfo);
     remoteTransactionAddedCounter.inc();
     return addTransaction;
