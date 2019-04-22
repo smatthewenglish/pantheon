@@ -465,4 +465,25 @@ public class PendingTransactionsTest {
     }
     assertThat(transactions.size()).isEqualTo(0);
   }
+
+  @Test
+  public void shouldEvictExclusivelyOldTransactions() {
+    final long TRANSACTION_EVICTION_INTERVAL_MS = TimeUnit.SECONDS.toMillis(2);
+    final PendingTransactions transactions =
+            new PendingTransactions(
+                    timerUtil,
+                    TRANSACTION_EVICTION_INTERVAL_MS,
+                    MAX_TRANSACTIONS,
+                    TestClock.fixed(),
+                    metricsSystem);
+
+    transactions.addRemoteTransaction(transaction1);
+    assertThat(transactions.size()).isEqualTo(1);
+    try {
+      TimeUnit.SECONDS.sleep(2);
+    } catch (Exception ignored) {
+    }
+    transactions.addRemoteTransaction(transaction2);
+    assertThat(transactions.size()).isEqualTo(1);
+  }
 }
