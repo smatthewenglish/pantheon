@@ -40,6 +40,8 @@ import io.vertx.core.Vertx;
 import org.assertj.core.api.Assertions;
 import org.junit.Test;
 
+import static org.mockito.Mockito.mock;
+
 public class EthHashBlockCreatorTest {
 
   private final Address BLOCK_1_COINBASE =
@@ -51,6 +53,8 @@ public class EthHashBlockCreatorTest {
 
   private static final BytesValue BLOCK_1_EXTRA_DATA =
       BytesValue.fromHexString("0x476574682f76312e302e302f6c696e75782f676f312e342e32");
+  private static final long TRANSACTION_EVICTION_INTERVAL_MS = TimeUnit.HOURS.toMillis(1);
+  private final TimerUtil timerUtil = mock(TimerUtil.class);
   private final MetricsSystem metricsSystem = new NoOpMetricsSystem();
 
   private final ExecutionContextTestFixture executionContextTestFixture =
@@ -67,10 +71,6 @@ public class EthHashBlockCreatorTest {
   @Test
   public void createMainnetBlock1() throws IOException {
     final EthHashSolver solver = new EthHashSolver(Lists.newArrayList(BLOCK_1_NONCE), new Light());
-
-    final Vertx vertx = Vertx.vertx();
-    final TimerUtil timerUtil = new VertxTimerUtil(vertx);
-    final long TRANSACTION_EVICTION_INTERVAL_MS = TimeUnit.HOURS.toMillis(1);
 
     final PendingTransactions pendingTransactions =
         new PendingTransactions(

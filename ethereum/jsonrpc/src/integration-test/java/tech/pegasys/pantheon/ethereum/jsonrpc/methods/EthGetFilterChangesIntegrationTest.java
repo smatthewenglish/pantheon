@@ -72,17 +72,14 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class EthGetFilterChangesIntegrationTest {
 
+  private static final long TRANSACTION_EVICTION_INTERVAL_MS = TimeUnit.HOURS.toMillis(1);
   @Mock private TransactionBatchAddedListener batchAddedListener;
   private MutableBlockchain blockchain;
   private final String ETH_METHOD = "eth_getFilterChanges";
   private final String JSON_RPC_VERSION = "2.0";
   private TransactionPool transactionPool;
   private final MetricsSystem metricsSystem = new NoOpMetricsSystem();
-
-  private final Vertx vertx = Vertx.vertx();
-  private final TimerUtil timerUtil = new VertxTimerUtil(vertx);
-
-  private static final long TRANSACTION_EVICTION_INTERVAL_MS = TimeUnit.HOURS.toMillis(1);
+  private final TimerUtil timerUtil = mock(TimerUtil.class);
 
   private final PendingTransactions transactions =
       new PendingTransactions(
