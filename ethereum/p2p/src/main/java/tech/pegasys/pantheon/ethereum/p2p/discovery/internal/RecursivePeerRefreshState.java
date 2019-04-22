@@ -14,6 +14,7 @@ package tech.pegasys.pantheon.ethereum.p2p.discovery.internal;
 
 import static tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PeerDistanceCalculator.distance;
 
+import tech.pegasys.pantheon.ethereum.mainnet.TimerUtil;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.DiscoveryPeer;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.PeerDiscoveryStatus;
 import tech.pegasys.pantheon.ethereum.p2p.peers.PeerBlacklist;

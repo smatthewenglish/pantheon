@@ -25,8 +25,8 @@ import tech.pegasys.pantheon.ethereum.core.TransactionTestFixture;
 import tech.pegasys.pantheon.ethereum.core.Util;
 import tech.pegasys.pantheon.ethereum.core.Wei;
 import tech.pegasys.pantheon.ethereum.eth.transactions.PendingTransactions.TransactionSelectionResult;
-import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.TimerUtil;
-import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.VertxTimerUtil;
+import tech.pegasys.pantheon.ethereum.mainnet.TimerUtil;
+import tech.pegasys.pantheon.ethereum.mainnet.VertxTimerUtil;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 import tech.pegasys.pantheon.testutil.TestClock;
@@ -427,7 +427,7 @@ public class PendingTransactionsTest {
 
   @Test
   public void shouldEvictMultipleOldTransactions() {
-    final long TRANSACTION_EVICTION_INTERVAL_MS = TimeUnit.SECONDS.toMillis(1);
+    final long TRANSACTION_EVICTION_INTERVAL_MS = TimeUnit.MILLISECONDS.toMillis(500);
     final Vertx vertx = Vertx.vertx();
     final TimerUtil timerUtil = new VertxTimerUtil(vertx);
     final Clock clock = java.time.Clock.systemUTC();
@@ -487,7 +487,7 @@ public class PendingTransactionsTest {
     transactionsX.addRemoteTransaction(transaction2);
     assertThat(transactionsX.size()).isEqualTo(2);
     try {
-      TimeUnit.MILLISECONDS.sleep(1700);
+      TimeUnit.MILLISECONDS.sleep(1600);
     } catch (Exception ignored) {
     }
     assertThat(transactionsX.size()).isEqualTo(1);

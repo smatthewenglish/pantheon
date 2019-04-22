@@ -15,13 +15,13 @@ package tech.pegasys.pantheon.ethereum.p2p.discovery;
 import static com.google.common.base.Preconditions.checkArgument;
 
 import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
+import tech.pegasys.pantheon.ethereum.mainnet.TimerUtil;
+import tech.pegasys.pantheon.ethereum.mainnet.VertxTimerUtil;
 import tech.pegasys.pantheon.ethereum.p2p.config.DiscoveryConfiguration;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.Packet;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PeerDiscoveryController;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PeerDiscoveryController.AsyncExecutor;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PeerRequirement;
-import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.TimerUtil;
-import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.VertxTimerUtil;
 import tech.pegasys.pantheon.ethereum.p2p.peers.Endpoint;
 import tech.pegasys.pantheon.ethereum.p2p.peers.PeerBlacklist;
 import tech.pegasys.pantheon.ethereum.permissioning.NodeLocalConfigPermissioningController;

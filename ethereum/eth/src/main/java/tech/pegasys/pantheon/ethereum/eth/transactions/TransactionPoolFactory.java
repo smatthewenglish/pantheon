@@ -17,8 +17,8 @@ import tech.pegasys.pantheon.ethereum.eth.manager.EthContext;
 import tech.pegasys.pantheon.ethereum.eth.messages.EthPV62;
 import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncState;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
-import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.TimerUtil;
-import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.VertxTimerUtil;
+import tech.pegasys.pantheon.ethereum.mainnet.TimerUtil;
+import tech.pegasys.pantheon.ethereum.mainnet.VertxTimerUtil;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
 
 import java.time.Clock;
