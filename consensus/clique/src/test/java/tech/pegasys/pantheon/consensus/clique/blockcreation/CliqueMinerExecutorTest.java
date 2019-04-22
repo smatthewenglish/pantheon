@@ -55,7 +55,7 @@ public class CliqueMinerExecutorTest {
 
   private static final GenesisConfigOptions GENESIS_CONFIG_OPTIONS =
       GenesisConfigFile.fromConfig(new JsonObject()).getConfigOptions();
-  private static final long TRANSACTION_EVICTION_INTERVAL_MS = TimeUnit.HOURS.toMillis(6);
+  private static final long TRANSACTION_EVICTION_INTERVAL_MS = TimeUnit.MINUTES.toMillis(1);
   private final KeyPair proposerKeyPair = KeyPair.generate();
   private Address localAddress;
   private final List<Address> validatorList = Lists.newArrayList();

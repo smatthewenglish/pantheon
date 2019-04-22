@@ -52,7 +52,7 @@ import com.google.common.collect.Lists;
 import org.junit.Test;
 
 public class IbftBlockCreatorTest {
-  private static final long TRANSACTION_EVICTION_INTERVAL_MS = TimeUnit.HOURS.toMillis(6);
+  private static final long TRANSACTION_EVICTION_INTERVAL_MS = TimeUnit.MINUTES.toMillis(1);
   private final MetricsSystem metricsSystem = new NoOpMetricsSystem();
 
   @Test

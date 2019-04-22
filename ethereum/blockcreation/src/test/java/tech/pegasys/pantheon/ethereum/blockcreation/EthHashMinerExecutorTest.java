@@ -28,7 +28,7 @@ import java.util.concurrent.TimeUnit;
 import org.junit.Test;
 
 public class EthHashMinerExecutorTest {
-  private static final long TRANSACTION_EVICTION_INTERVAL_MS = TimeUnit.HOURS.toMillis(6);
+  private static final long TRANSACTION_EVICTION_INTERVAL_MS = TimeUnit.MINUTES.toMillis(1);
   private final MetricsSystem metricsSystem = new NoOpMetricsSystem();
 
   @Test

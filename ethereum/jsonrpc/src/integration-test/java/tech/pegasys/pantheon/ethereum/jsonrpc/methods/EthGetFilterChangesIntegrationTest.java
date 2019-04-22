@@ -69,7 +69,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class EthGetFilterChangesIntegrationTest {
 
-  private static final long TRANSACTION_EVICTION_INTERVAL_MS = TimeUnit.HOURS.toMillis(6);
+  private static final long TRANSACTION_EVICTION_INTERVAL_MS = TimeUnit.MINUTES.toMillis(1);
   @Mock private TransactionBatchAddedListener batchAddedListener;
   private MutableBlockchain blockchain;
   private final String ETH_METHOD = "eth_getFilterChanges";

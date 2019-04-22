@@ -87,7 +87,7 @@ import com.google.common.collect.Iterables;
 
 public class TestContextBuilder {
 
-  private static final long TRANSACTION_EVICTION_INTERVAL_MS = TimeUnit.HOURS.toMillis(6);
+  private static final long TRANSACTION_EVICTION_INTERVAL_MS = TimeUnit.MINUTES.toMillis(1);
   private static MetricsSystem metricsSystem = new NoOpMetricsSystem();
 
   private static class ControllerAndState {

@@ -24,7 +24,7 @@ import java.util.concurrent.TimeUnit;
 
 public class TransactionPoolFactory {
 
-  private static final long TRANSACTION_EVICTION_INTERVAL_MS = TimeUnit.HOURS.toMillis(6);
+  private static final long TRANSACTION_EVICTION_INTERVAL_MS = TimeUnit.MINUTES.toMillis(1);
 
   public static TransactionPool createTransactionPool(
       final ProtocolSchedule<?> protocolSchedule,
