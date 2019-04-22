@@ -13,6 +13,7 @@
 package tech.pegasys.pantheon.ethereum.blockcreation;
 
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.mockito.Mockito.mock;
 
 import tech.pegasys.pantheon.ethereum.core.MiningParameters;
 import tech.pegasys.pantheon.ethereum.core.MiningParametersTestBuilder;
@@ -31,16 +32,14 @@ import io.vertx.core.Vertx;
 import org.junit.Test;
 
 public class EthHashMinerExecutorTest {
+  private static final long TRANSACTION_EVICTION_INTERVAL_MS = TimeUnit.HOURS.toMillis(1);
+  private final TimerUtil timerUtil = mock(TimerUtil.class);
   private final MetricsSystem metricsSystem = new NoOpMetricsSystem();
 
   @Test
   public void startingMiningWithoutCoinbaseThrowsException() {
     final MiningParameters miningParameters =
         new MiningParametersTestBuilder().coinbase(null).build();
-
-    final Vertx vertx = Vertx.vertx();
-    final TimerUtil timerUtil = new VertxTimerUtil(vertx);
-    final long TRANSACTION_EVICTION_INTERVAL_MS = TimeUnit.HOURS.toMillis(1);
 
     final PendingTransactions pendingTransactions =
         new PendingTransactions(
@@ -63,10 +62,6 @@ public class EthHashMinerExecutorTest {
   @Test
   public void settingCoinbaseToNullThrowsException() {
     final MiningParameters miningParameters = new MiningParametersTestBuilder().build();
-
-    final Vertx vertx = Vertx.vertx();
-    final TimerUtil timerUtil = new VertxTimerUtil(vertx);
-    final long TRANSACTION_EVICTION_INTERVAL_MS = TimeUnit.HOURS.toMillis(1);
 
     final PendingTransactions pendingTransactions =
         new PendingTransactions(
