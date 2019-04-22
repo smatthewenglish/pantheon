@@ -44,7 +44,6 @@ import tech.pegasys.pantheon.ethereum.core.Wei;
 import tech.pegasys.pantheon.ethereum.eth.transactions.PendingTransactions;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.TimerUtil;
-import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.VertxTimerUtil;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateArchive;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
@@ -55,11 +54,12 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import com.google.common.collect.Lists;
-import io.vertx.core.Vertx;
 import org.junit.Before;
 import org.junit.Test;
 
 public class CliqueBlockCreatorTest {
+  private static final long TRANSACTION_EVICTION_INTERVAL_MS = TimeUnit.HOURS.toMillis(1);
+  private final TimerUtil timerUtil = mock(TimerUtil.class);
 
   private final KeyPair proposerKeyPair = KeyPair.generate();
   private final Address proposerAddress = Util.publicKeyToAddress(proposerKeyPair.getPublicKey());
@@ -112,10 +112,6 @@ public class CliqueBlockCreatorTest {
     final CliqueExtraData extraData =
         new CliqueExtraData(BytesValue.wrap(new byte[32]), null, validatorList);
 
-    final Vertx vertx = Vertx.vertx();
-    final TimerUtil timerUtil = new VertxTimerUtil(vertx);
-    final long TRANSACTION_EVICTION_INTERVAL_MS = TimeUnit.HOURS.toMillis(1);
-
     final Address coinbase = AddressHelpers.ofValue(1);
     final CliqueBlockCreator blockCreator =
         new CliqueBlockCreator(
@@ -145,10 +141,6 @@ public class CliqueBlockCreatorTest {
     voteProposer.auth(a1);
     final Address coinbase = AddressHelpers.ofValue(1);
 
-    final Vertx vertx = Vertx.vertx();
-    final TimerUtil timerUtil = new VertxTimerUtil(vertx);
-    final long TRANSACTION_EVICTION_INTERVAL_MS = TimeUnit.HOURS.toMillis(1);
-
     final CliqueBlockCreator blockCreator =
         new CliqueBlockCreator(
             coinbase,
@@ -175,10 +167,6 @@ public class CliqueBlockCreatorTest {
     final Address a1 = Util.publicKeyToAddress(otherKeyPair.getPublicKey());
     voteProposer.auth(a1);
     final Address coinbase = AddressHelpers.ofValue(1);
-
-    final Vertx vertx = Vertx.vertx();
-    final TimerUtil timerUtil = new VertxTimerUtil(vertx);
-    final long TRANSACTION_EVICTION_INTERVAL_MS = TimeUnit.HOURS.toMillis(1);
 
     final CliqueBlockCreator blockCreator =
         new CliqueBlockCreator(
@@ -209,10 +197,6 @@ public class CliqueBlockCreatorTest {
     final Address a1 = Address.fromHexString("5");
     voteProposer.auth(a1);
     final Address coinbase = AddressHelpers.ofValue(1);
-
-    final Vertx vertx = Vertx.vertx();
-    final TimerUtil timerUtil = new VertxTimerUtil(vertx);
-    final long TRANSACTION_EVICTION_INTERVAL_MS = TimeUnit.HOURS.toMillis(1);
 
     final CliqueBlockCreator blockCreator =
         new CliqueBlockCreator(

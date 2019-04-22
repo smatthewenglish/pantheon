@@ -487,7 +487,7 @@ public class PendingTransactionsTest {
     transactionsX.addRemoteTransaction(transaction2);
     assertThat(transactionsX.size()).isEqualTo(2);
     try {
-      TimeUnit.MILLISECONDS.sleep(1600);
+      TimeUnit.MILLISECONDS.sleep(1700);
     } catch (Exception ignored) {
     }
     assertThat(transactionsX.size()).isEqualTo(1);
