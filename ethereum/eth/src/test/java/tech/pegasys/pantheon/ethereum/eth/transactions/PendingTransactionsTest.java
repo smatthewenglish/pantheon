@@ -31,6 +31,7 @@ import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 import tech.pegasys.pantheon.testutil.TestClock;
 
+import java.time.Clock;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.OptionalLong;
@@ -477,12 +478,15 @@ public class PendingTransactionsTest {
     final long transactionEvictionIntervalMs = TimeUnit.SECONDS.toMillis(2);
     final Vertx vertx = Vertx.vertx();
     final TimerUtil timerUtil = new VertxTimerUtil(vertx);
+
+    Clock clock = java.time.Clock.systemUTC();
+
     final PendingTransactions transactionsX =
             new PendingTransactions(
                     timerUtil,
                     transactionEvictionIntervalMs,
                     MAX_TRANSACTIONS,
-                    TestClock.fixed(),
+                    clock,
                     metricsSystem);
 
     transactionsX.addRemoteTransaction(transaction1);

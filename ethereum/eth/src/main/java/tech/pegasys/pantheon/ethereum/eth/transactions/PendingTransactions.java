@@ -107,15 +107,19 @@ public class PendingTransactions {
 
   private boolean applyEvictionThreshold(final TransactionInfo transaction) {
     final long now = System.currentTimeMillis();
-    return now - transaction.getAddedToPoolAt().getNano() > transactionEvictionIntervalMs;
+    return now - transaction.getAddedToPoolAt() > transactionEvictionIntervalMs;
   }
 
   private void evictOldTransactions() {
-    synchronized (pendingTransactions) {
-      final List<TransactionInfo> transactionsToRemove =
-          prioritizedTransactions.stream().filter(this::applyEvictionThreshold).collect(toList());
+    //synchronized (pendingTransactions) {
+      final List<TransactionInfo> transactionsToRemove = prioritizedTransactions.stream().filter(this::applyEvictionThreshold).collect(toList());
+
+      for(TransactionInfo t : transactionsToRemove) {
+        System.out.println("t: " + t.getAddedToPoolAt());
+      }
+
       transactionsToRemove.forEach(transaction -> removeTransaction(transaction.getTransaction()));
-    }
+    //}
   }
 
   List<Transaction> getLocalTransactions() {
@@ -132,7 +136,7 @@ public class PendingTransactions {
 
   public boolean addRemoteTransaction(final Transaction transaction) {
     final TransactionInfo transactionInfo =
-        new TransactionInfo(transaction, false, clock.instant());
+        new TransactionInfo(transaction, false, clock.millis());
     final boolean addTransaction = addTransaction(transactionInfo);
     remoteTransactionAddedCounter.inc();
     return addTransaction;
@@ -140,7 +144,7 @@ public class PendingTransactions {
 
   boolean addLocalTransaction(final Transaction transaction) {
     final boolean addTransaction =
-        addTransaction(new TransactionInfo(transaction, true, clock.instant()));
+        addTransaction(new TransactionInfo(transaction, true, clock.millis()));
     localTransactionAddedCounter.inc();
     return addTransaction;
   }
@@ -325,13 +329,13 @@ public class PendingTransactions {
     private static final AtomicLong TRANSACTIONS_ADDED = new AtomicLong();
     private final Transaction transaction;
     private final boolean receivedFromLocalSource;
-    private final Instant addedToPoolAt;
+    private final long addedToPoolAt;
     private final long sequence; // Allows prioritization based on order transactions are added
 
     TransactionInfo(
         final Transaction transaction,
         final boolean receivedFromLocalSource,
-        final Instant addedToPoolAt) {
+        final long addedToPoolAt) {
       this.transaction = transaction;
       this.receivedFromLocalSource = receivedFromLocalSource;
       this.addedToPoolAt = addedToPoolAt;
@@ -362,7 +366,7 @@ public class PendingTransactions {
       return transaction.hash();
     }
 
-    public Instant getAddedToPoolAt() {
+    public long getAddedToPoolAt() {
       return addedToPoolAt;
     }
   }
