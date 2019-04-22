@@ -55,6 +55,8 @@ import io.vertx.core.Vertx;
 import org.junit.Test;
 
 public class IbftBlockCreatorTest {
+  private static final long TRANSACTION_EVICTION_INTERVAL_MS = TimeUnit.HOURS.toMillis(1);
+  private final TimerUtil timerUtil = mock(TimerUtil.class);
   private final MetricsSystem metricsSystem = new NoOpMetricsSystem();
 
   @Test
@@ -90,10 +92,6 @@ public class IbftBlockCreatorTest {
             blockchain,
             createInMemoryWorldStateArchive(),
             setupContextWithValidators(initialValidatorList));
-
-    final Vertx vertx = Vertx.vertx();
-    final TimerUtil timerUtil = new VertxTimerUtil(vertx);
-    final long TRANSACTION_EVICTION_INTERVAL_MS = TimeUnit.HOURS.toMillis(1);
 
     final IbftBlockCreator blockCreator =
         new IbftBlockCreator(
