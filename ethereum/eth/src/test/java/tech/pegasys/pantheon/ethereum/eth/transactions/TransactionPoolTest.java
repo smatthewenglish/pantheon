@@ -94,9 +94,8 @@ public class TransactionPoolTest {
   private final TransactionValidator transactionValidator = mock(TransactionValidator.class);
   private MutableBlockchain blockchain;
 
-  final Vertx vertx = Vertx.vertx();
-  final TimerUtil timerUtil = new VertxTimerUtil(vertx);
-  final long TRANSACTION_EVICTION_INTERVAL_MS = TimeUnit.HOURS.toMillis(1);
+  private static final long TRANSACTION_EVICTION_INTERVAL_MS = TimeUnit.HOURS.toMillis(1);
+  private final TimerUtil timerUtil = mock(TimerUtil.class);
 
   private final PendingTransactions transactions =
       new PendingTransactions(
