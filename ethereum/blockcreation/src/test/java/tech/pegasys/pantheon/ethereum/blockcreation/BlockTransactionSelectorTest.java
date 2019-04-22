@@ -43,7 +43,6 @@ import tech.pegasys.pantheon.ethereum.mainnet.TimerUtil;
 import tech.pegasys.pantheon.ethereum.mainnet.TransactionProcessor;
 import tech.pegasys.pantheon.ethereum.mainnet.TransactionValidator.TransactionInvalidReason;
 import tech.pegasys.pantheon.ethereum.mainnet.ValidationResult;
-import tech.pegasys.pantheon.ethereum.mainnet.VertxTimerUtil;
 import tech.pegasys.pantheon.ethereum.storage.keyvalue.KeyValueStorageWorldStateStorage;
 import tech.pegasys.pantheon.ethereum.vm.TestBlockchain;
 import tech.pegasys.pantheon.ethereum.worldstate.DefaultMutableWorldState;
@@ -61,12 +60,13 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 import com.google.common.collect.Lists;
-import io.vertx.core.Vertx;
 import org.junit.Test;
 
 public class BlockTransactionSelectorTest {
 
   private static final KeyPair keyPair = KeyPair.generate();
+  private static final TimerUtil timerUtil = mock(TimerUtil.class);
+  private static final long TRANSACTION_EVICTION_INTERVAL_MS = TimeUnit.HOURS.toMillis(1);
   private final MetricsSystem metricsSystem = new NoOpMetricsSystem();
 
   @Test
@@ -77,10 +77,6 @@ public class BlockTransactionSelectorTest {
     final TransactionProcessor transactionProcessor =
         protocolSchedule.getByBlockNumber(0).getTransactionProcessor();
     final DefaultMutableWorldState worldState = inMemoryWorldState();
-
-    final Vertx vertx = Vertx.vertx();
-    final TimerUtil timerUtil = new VertxTimerUtil(vertx);
-    final long TRANSACTION_EVICTION_INTERVAL_MS = TimeUnit.HOURS.toMillis(1);
 
     final PendingTransactions pendingTransactions =
         new PendingTransactions(
@@ -122,11 +118,6 @@ public class BlockTransactionSelectorTest {
 
   @Test
   public void failedTransactionsAreIncludedInTheBlock() {
-
-    final Vertx vertx = Vertx.vertx();
-    final TimerUtil timerUtil = new VertxTimerUtil(vertx);
-    final long TRANSACTION_EVICTION_INTERVAL_MS = TimeUnit.HOURS.toMillis(1);
-
     final PendingTransactions pendingTransactions =
         new PendingTransactions(
             timerUtil, TRANSACTION_EVICTION_INTERVAL_MS, 5, TestClock.fixed(), metricsSystem);
@@ -180,11 +171,6 @@ public class BlockTransactionSelectorTest {
 
   @Test
   public void invalidTransactionsTransactionProcessingAreSkippedButBlockStillFills() {
-
-    final Vertx vertx = Vertx.vertx();
-    final TimerUtil timerUtil = new VertxTimerUtil(vertx);
-    final long TRANSACTION_EVICTION_INTERVAL_MS = TimeUnit.HOURS.toMillis(1);
-
     final PendingTransactions pendingTransactions =
         new PendingTransactions(
             timerUtil, TRANSACTION_EVICTION_INTERVAL_MS, 5, TestClock.fixed(), metricsSystem);
@@ -249,11 +235,6 @@ public class BlockTransactionSelectorTest {
 
   @Test
   public void subsetOfPendingTransactionsIncludedWhenBlockGasLimitHit() {
-
-    final Vertx vertx = Vertx.vertx();
-    final TimerUtil timerUtil = new VertxTimerUtil(vertx);
-    final long TRANSACTION_EVICTION_INTERVAL_MS = TimeUnit.HOURS.toMillis(1);
-
     final PendingTransactions pendingTransactions =
         new PendingTransactions(
             timerUtil, TRANSACTION_EVICTION_INTERVAL_MS, 5, TestClock.fixed(), metricsSystem);
@@ -321,11 +302,6 @@ public class BlockTransactionSelectorTest {
 
   @Test
   public void transactionOfferingGasPriceLessThanMinimumIsIdentifiedAndRemovedFromPending() {
-
-    final Vertx vertx = Vertx.vertx();
-    final TimerUtil timerUtil = new VertxTimerUtil(vertx);
-    final long TRANSACTION_EVICTION_INTERVAL_MS = TimeUnit.HOURS.toMillis(1);
-
     final PendingTransactions pendingTransactions =
         new PendingTransactions(
             timerUtil, TRANSACTION_EVICTION_INTERVAL_MS, 5, TestClock.fixed(), metricsSystem);
@@ -372,11 +348,6 @@ public class BlockTransactionSelectorTest {
 
   @Test
   public void transactionTooLargeForBlockDoesNotPreventMoreBeingAddedIfBlockOccupancyNotReached() {
-
-    final Vertx vertx = Vertx.vertx();
-    final TimerUtil timerUtil = new VertxTimerUtil(vertx);
-    final long TRANSACTION_EVICTION_INTERVAL_MS = TimeUnit.HOURS.toMillis(1);
-
     final PendingTransactions pendingTransactions =
         new PendingTransactions(
             timerUtil, TRANSACTION_EVICTION_INTERVAL_MS, 5, TestClock.fixed(), metricsSystem);
@@ -450,11 +421,6 @@ public class BlockTransactionSelectorTest {
 
   @Test
   public void transactionSelectionStopsWhenSufficientBlockOccupancyIsReached() {
-
-    final Vertx vertx = Vertx.vertx();
-    final TimerUtil timerUtil = new VertxTimerUtil(vertx);
-    final long TRANSACTION_EVICTION_INTERVAL_MS = TimeUnit.HOURS.toMillis(1);
-
     final PendingTransactions pendingTransactions =
         new PendingTransactions(
             timerUtil, TRANSACTION_EVICTION_INTERVAL_MS, 5, TestClock.fixed(), metricsSystem);
@@ -539,11 +505,6 @@ public class BlockTransactionSelectorTest {
 
   @Test
   public void shouldDiscardTransactionsThatFailValidation() {
-
-    final Vertx vertx = Vertx.vertx();
-    final TimerUtil timerUtil = new VertxTimerUtil(vertx);
-    final long TRANSACTION_EVICTION_INTERVAL_MS = TimeUnit.HOURS.toMillis(1);
-
     final PendingTransactions pendingTransactions =
         new PendingTransactions(
             timerUtil, TRANSACTION_EVICTION_INTERVAL_MS, 5, TestClock.fixed(), metricsSystem);

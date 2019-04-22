@@ -37,7 +37,6 @@ import tech.pegasys.pantheon.ethereum.core.Util;
 import tech.pegasys.pantheon.ethereum.core.Wei;
 import tech.pegasys.pantheon.ethereum.eth.transactions.PendingTransactions;
 import tech.pegasys.pantheon.ethereum.mainnet.TimerUtil;
-import tech.pegasys.pantheon.ethereum.mainnet.VertxTimerUtil;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 import tech.pegasys.pantheon.testutil.TestClock;
@@ -49,7 +48,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import com.google.common.collect.Lists;
-import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import org.junit.Before;
 import org.junit.Test;
@@ -58,6 +56,8 @@ public class CliqueMinerExecutorTest {
 
   private static final GenesisConfigOptions GENESIS_CONFIG_OPTIONS =
       GenesisConfigFile.fromConfig(new JsonObject()).getConfigOptions();
+  private static final long TRANSACTION_EVICTION_INTERVAL_MS = TimeUnit.HOURS.toMillis(1);
+  private final TimerUtil timerUtil = mock(TimerUtil.class);
   private final KeyPair proposerKeyPair = KeyPair.generate();
   private Address localAddress;
   private final List<Address> validatorList = Lists.newArrayList();
@@ -89,10 +89,6 @@ public class CliqueMinerExecutorTest {
     final BytesValue wrappedVanityData = BytesValue.wrap(vanityData);
     final int EPOCH_LENGTH = 10;
 
-    final Vertx vertx = Vertx.vertx();
-    final TimerUtil timerUtil = new VertxTimerUtil(vertx);
-    final long TRANSACTION_EVICTION_INTERVAL_MS = TimeUnit.HOURS.toMillis(1);
-
     final CliqueMinerExecutor executor =
         new CliqueMinerExecutor(
             cliqueProtocolContext,
@@ -123,10 +119,6 @@ public class CliqueMinerExecutorTest {
     new Random().nextBytes(vanityData);
     final BytesValue wrappedVanityData = BytesValue.wrap(vanityData);
     final int EPOCH_LENGTH = 10;
-
-    final Vertx vertx = Vertx.vertx();
-    final TimerUtil timerUtil = new VertxTimerUtil(vertx);
-    final long TRANSACTION_EVICTION_INTERVAL_MS = TimeUnit.HOURS.toMillis(1);
 
     final CliqueMinerExecutor executor =
         new CliqueMinerExecutor(
