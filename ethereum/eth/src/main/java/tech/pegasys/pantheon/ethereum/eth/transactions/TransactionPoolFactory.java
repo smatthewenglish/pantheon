@@ -17,14 +17,10 @@ import tech.pegasys.pantheon.ethereum.eth.manager.EthContext;
 import tech.pegasys.pantheon.ethereum.eth.messages.EthPV62;
 import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncState;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
-import tech.pegasys.pantheon.ethereum.mainnet.TimerUtil;
-import tech.pegasys.pantheon.ethereum.mainnet.VertxTimerUtil;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
 
 import java.time.Clock;
 import java.util.concurrent.TimeUnit;
-
-import io.vertx.core.Vertx;
 
 public class TransactionPoolFactory {
 
@@ -39,12 +35,8 @@ public class TransactionPoolFactory {
       final MetricsSystem metricsSystem,
       final SyncState syncState) {
 
-    Vertx vertx = Vertx.vertx();
-    TimerUtil timerUtil = new VertxTimerUtil(vertx);
-
     final PendingTransactions pendingTransactions =
         new PendingTransactions(
-            timerUtil,
             TRANSACTION_EVICTION_INTERVAL_MS,
             maxPendingTransactions,
             clock,

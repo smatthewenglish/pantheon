@@ -19,7 +19,6 @@ import tech.pegasys.pantheon.ethereum.core.AccountTransactionOrder;
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.ethereum.core.Transaction;
-import tech.pegasys.pantheon.ethereum.mainnet.TimerUtil;
 import tech.pegasys.pantheon.metrics.Counter;
 import tech.pegasys.pantheon.metrics.LabelledMetric;
 import tech.pegasys.pantheon.metrics.MetricCategory;
@@ -71,16 +70,13 @@ public class PendingTransactions {
   private final Counter localTransactionAddedCounter;
   private final Counter remoteTransactionAddedCounter;
 
-  protected final TimerUtil timerUtil;
   private final long transactionEvictionIntervalMs;
 
   public PendingTransactions(
-      final TimerUtil timerUtil,
       final long transactionEvictionIntervalMs,
       final int maxPendingTransactions,
       final Clock clock,
       final MetricsSystem metricsSystem) {
-    this.timerUtil = timerUtil;
     this.transactionEvictionIntervalMs = transactionEvictionIntervalMs;
     this.maxPendingTransactions = maxPendingTransactions;
     this.clock = clock;
@@ -100,15 +96,13 @@ public class PendingTransactions {
             "Count of transactions removed from the transaction pool",
             "source",
             "operation");
-
-    timerUtil.setPeriodic(transactionEvictionIntervalMs, this::evictOldTransactions);
   }
 
   private boolean applyEvictionThreshold(final TransactionInfo transaction) {
     return clock.millis() - transaction.getAddedToPoolAt() > transactionEvictionIntervalMs;
   }
 
-  private void evictOldTransactions() {
+  public void evictOldTransactions() {
     synchronized (pendingTransactions) {
       final List<TransactionInfo> transactionsToRemove =
           prioritizedTransactions.stream().filter(this::applyEvictionThreshold).collect(toList());
