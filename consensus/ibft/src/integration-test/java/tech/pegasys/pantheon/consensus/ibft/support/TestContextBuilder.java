@@ -89,6 +89,9 @@ import com.google.common.collect.Iterables;
 import io.vertx.core.Vertx;
 
 public class TestContextBuilder {
+
+  private static final long TRANSACTION_EVICTION_INTERVAL_MS = TimeUnit.HOURS.toMillis(1);
+  private static final TimerUtil timerUtil = mock(TimerUtil.class);
   private static MetricsSystem metricsSystem = new NoOpMetricsSystem();
 
   private static class ControllerAndState {
@@ -285,10 +288,6 @@ public class TestContextBuilder {
     final ProtocolContext<IbftContext> protocolContext =
         new ProtocolContext<>(
             blockChain, worldStateArchive, new IbftContext(voteTallyCache, voteProposer));
-
-    final Vertx vertx = Vertx.vertx();
-    final TimerUtil timerUtil = new VertxTimerUtil(vertx);
-    final long TRANSACTION_EVICTION_INTERVAL_MS = TimeUnit.HOURS.toMillis(1);
 
     final PendingTransactions pendingTransactions =
         new PendingTransactions(
