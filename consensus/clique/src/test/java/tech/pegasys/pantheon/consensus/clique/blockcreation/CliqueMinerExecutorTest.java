@@ -36,7 +36,6 @@ import tech.pegasys.pantheon.ethereum.core.MiningParameters;
 import tech.pegasys.pantheon.ethereum.core.Util;
 import tech.pegasys.pantheon.ethereum.core.Wei;
 import tech.pegasys.pantheon.ethereum.eth.transactions.PendingTransactions;
-import tech.pegasys.pantheon.ethereum.mainnet.TimerUtil;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 import tech.pegasys.pantheon.testutil.TestClock;
@@ -57,7 +56,6 @@ public class CliqueMinerExecutorTest {
   private static final GenesisConfigOptions GENESIS_CONFIG_OPTIONS =
       GenesisConfigFile.fromConfig(new JsonObject()).getConfigOptions();
   private static final long TRANSACTION_EVICTION_INTERVAL_MS = TimeUnit.HOURS.toMillis(1);
-  private final TimerUtil timerUtil = mock(TimerUtil.class);
   private final KeyPair proposerKeyPair = KeyPair.generate();
   private Address localAddress;
   private final List<Address> validatorList = Lists.newArrayList();
@@ -95,7 +93,7 @@ public class CliqueMinerExecutorTest {
             Executors.newSingleThreadExecutor(),
             CliqueProtocolSchedule.create(GENESIS_CONFIG_OPTIONS, proposerKeyPair),
             new PendingTransactions(
-                timerUtil, TRANSACTION_EVICTION_INTERVAL_MS, 1, TestClock.fixed(), metricsSystem),
+                TRANSACTION_EVICTION_INTERVAL_MS, 1, TestClock.fixed(), metricsSystem),
             proposerKeyPair,
             new MiningParameters(AddressHelpers.ofValue(1), Wei.ZERO, wrappedVanityData, false),
             mock(CliqueBlockScheduler.class),
@@ -126,7 +124,7 @@ public class CliqueMinerExecutorTest {
             Executors.newSingleThreadExecutor(),
             CliqueProtocolSchedule.create(GENESIS_CONFIG_OPTIONS, proposerKeyPair),
             new PendingTransactions(
-                timerUtil, TRANSACTION_EVICTION_INTERVAL_MS, 1, TestClock.fixed(), metricsSystem),
+                TRANSACTION_EVICTION_INTERVAL_MS, 1, TestClock.fixed(), metricsSystem),
             proposerKeyPair,
             new MiningParameters(AddressHelpers.ofValue(1), Wei.ZERO, wrappedVanityData, false),
             mock(CliqueBlockScheduler.class),

@@ -13,12 +13,10 @@
 package tech.pegasys.pantheon.ethereum.blockcreation;
 
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
-import static org.mockito.Mockito.mock;
 
 import tech.pegasys.pantheon.ethereum.core.MiningParameters;
 import tech.pegasys.pantheon.ethereum.core.MiningParametersTestBuilder;
 import tech.pegasys.pantheon.ethereum.eth.transactions.PendingTransactions;
-import tech.pegasys.pantheon.ethereum.mainnet.TimerUtil;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 import tech.pegasys.pantheon.testutil.TestClock;
@@ -31,7 +29,6 @@ import org.junit.Test;
 
 public class EthHashMinerExecutorTest {
   private static final long TRANSACTION_EVICTION_INTERVAL_MS = TimeUnit.HOURS.toMillis(1);
-  private final TimerUtil timerUtil = mock(TimerUtil.class);
   private final MetricsSystem metricsSystem = new NoOpMetricsSystem();
 
   @Test
@@ -41,7 +38,7 @@ public class EthHashMinerExecutorTest {
 
     final PendingTransactions pendingTransactions =
         new PendingTransactions(
-            timerUtil, TRANSACTION_EVICTION_INTERVAL_MS, 1, TestClock.fixed(), metricsSystem);
+            TRANSACTION_EVICTION_INTERVAL_MS, 1, TestClock.fixed(), metricsSystem);
 
     final EthHashMinerExecutor executor =
         new EthHashMinerExecutor(
@@ -63,7 +60,7 @@ public class EthHashMinerExecutorTest {
 
     final PendingTransactions pendingTransactions =
         new PendingTransactions(
-            timerUtil, TRANSACTION_EVICTION_INTERVAL_MS, 1, TestClock.fixed(), metricsSystem);
+            TRANSACTION_EVICTION_INTERVAL_MS, 1, TestClock.fixed(), metricsSystem);
 
     final EthHashMinerExecutor executor =
         new EthHashMinerExecutor(

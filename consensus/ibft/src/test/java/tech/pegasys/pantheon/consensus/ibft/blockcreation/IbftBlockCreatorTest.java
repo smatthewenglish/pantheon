@@ -37,7 +37,6 @@ import tech.pegasys.pantheon.ethereum.eth.transactions.PendingTransactions;
 import tech.pegasys.pantheon.ethereum.mainnet.BlockHeaderValidator;
 import tech.pegasys.pantheon.ethereum.mainnet.HeaderValidationMode;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
-import tech.pegasys.pantheon.ethereum.mainnet.TimerUtil;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 import tech.pegasys.pantheon.testutil.TestClock;
@@ -54,7 +53,6 @@ import org.junit.Test;
 
 public class IbftBlockCreatorTest {
   private static final long TRANSACTION_EVICTION_INTERVAL_MS = TimeUnit.HOURS.toMillis(1);
-  private final TimerUtil timerUtil = mock(TimerUtil.class);
   private final MetricsSystem metricsSystem = new NoOpMetricsSystem();
 
   @Test
@@ -87,7 +85,7 @@ public class IbftBlockCreatorTest {
 
     final PendingTransactions pendingTransactions =
         new PendingTransactions(
-            timerUtil, TRANSACTION_EVICTION_INTERVAL_MS, 1, TestClock.fixed(), metricsSystem);
+            TRANSACTION_EVICTION_INTERVAL_MS, 1, TestClock.fixed(), metricsSystem);
 
     final IbftBlockCreator blockCreator =
         new IbftBlockCreator(

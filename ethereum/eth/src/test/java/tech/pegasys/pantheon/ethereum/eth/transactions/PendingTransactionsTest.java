@@ -25,8 +25,6 @@ import tech.pegasys.pantheon.ethereum.core.TransactionTestFixture;
 import tech.pegasys.pantheon.ethereum.core.Util;
 import tech.pegasys.pantheon.ethereum.core.Wei;
 import tech.pegasys.pantheon.ethereum.eth.transactions.PendingTransactions.TransactionSelectionResult;
-import tech.pegasys.pantheon.ethereum.mainnet.MockTimerUtil;
-import tech.pegasys.pantheon.ethereum.mainnet.TimerUtil;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 import tech.pegasys.pantheon.testutil.TestClock;
@@ -47,15 +45,9 @@ public class PendingTransactionsTest {
   private static final KeyPair KEYS2 = KeyPair.generate();
 
   private final MetricsSystem metricsSystem = new NoOpMetricsSystem();
-  private final TimerUtil timerUtil = mock(TimerUtil.class);
-
   private final PendingTransactions transactions =
       new PendingTransactions(
-          timerUtil,
-          TRANSACTION_EVICTION_INTERVAL_MS,
-          MAX_TRANSACTIONS,
-          TestClock.fixed(),
-          metricsSystem);
+          TRANSACTION_EVICTION_INTERVAL_MS, MAX_TRANSACTIONS, TestClock.fixed(), metricsSystem);
   private final Transaction transaction1 = createTransaction(2);
   private final Transaction transaction2 = createTransaction(1);
 
@@ -424,11 +416,10 @@ public class PendingTransactionsTest {
   @Test
   public void shouldEvictMultipleOldTransactions() {
     final long transactionEvictionIntervalMs = 1L;
-    final MockTimerUtil timerUtil = new MockTimerUtil();
     final TestClock clock = new TestClock();
     final PendingTransactions transactions =
         new PendingTransactions(
-            timerUtil, transactionEvictionIntervalMs, MAX_TRANSACTIONS, clock, metricsSystem);
+            transactionEvictionIntervalMs, MAX_TRANSACTIONS, clock, metricsSystem);
 
     transactions.addRemoteTransaction(transaction1);
     assertThat(transactions.size()).isEqualTo(1);
@@ -436,37 +427,33 @@ public class PendingTransactionsTest {
     assertThat(transactions.size()).isEqualTo(2);
 
     clock.stepMillis(2000);
-    timerUtil.runHandlers();
-
+    transactions.evictOldTransactions();
     assertThat(transactions.size()).isEqualTo(0);
   }
 
   @Test
   public void shouldEvictSingleOldTransaction() {
     final long transactionEvictionIntervalMs = 1L;
-    final MockTimerUtil timerUtil = new MockTimerUtil();
     final TestClock clock = new TestClock();
     final PendingTransactions transactions =
         new PendingTransactions(
-            timerUtil, transactionEvictionIntervalMs, MAX_TRANSACTIONS, clock, metricsSystem);
+            transactionEvictionIntervalMs, MAX_TRANSACTIONS, clock, metricsSystem);
 
     transactions.addRemoteTransaction(transaction1);
     assertThat(transactions.size()).isEqualTo(1);
 
     clock.stepMillis(2000);
-    timerUtil.runHandlers();
-
+    transactions.evictOldTransactions();
     assertThat(transactions.size()).isEqualTo(0);
   }
 
   @Test
   public void shouldEvictExclusivelyOldTransactions() {
     final long transactionEvictionIntervalMs = 2L;
-    final MockTimerUtil timerUtil = new MockTimerUtil();
     final TestClock clock = new TestClock();
     final PendingTransactions transactions =
         new PendingTransactions(
-            timerUtil, transactionEvictionIntervalMs, MAX_TRANSACTIONS, clock, metricsSystem);
+            transactionEvictionIntervalMs, MAX_TRANSACTIONS, clock, metricsSystem);
 
     transactions.addRemoteTransaction(transaction1);
     assertThat(transactions.size()).isEqualTo(1);
@@ -476,7 +463,7 @@ public class PendingTransactionsTest {
     transactions.addRemoteTransaction(transaction2);
     assertThat(transactions.size()).isEqualTo(2);
 
-    timerUtil.runHandlers();
+    transactions.evictOldTransactions();
     assertThat(transactions.size()).isEqualTo(1);
   }
 }

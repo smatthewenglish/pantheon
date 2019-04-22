@@ -12,8 +12,6 @@
  */
 package tech.pegasys.pantheon.ethereum.blockcreation;
 
-import static org.mockito.Mockito.mock;
-
 import tech.pegasys.pantheon.config.GenesisConfigFile;
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.Block;
@@ -24,7 +22,6 @@ import tech.pegasys.pantheon.ethereum.eth.transactions.PendingTransactions;
 import tech.pegasys.pantheon.ethereum.mainnet.EthHashSolver;
 import tech.pegasys.pantheon.ethereum.mainnet.EthHasher.Light;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolScheduleBuilder;
-import tech.pegasys.pantheon.ethereum.mainnet.TimerUtil;
 import tech.pegasys.pantheon.ethereum.mainnet.ValidationTestUtils;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
@@ -52,7 +49,6 @@ public class EthHashBlockCreatorTest {
   private static final BytesValue BLOCK_1_EXTRA_DATA =
       BytesValue.fromHexString("0x476574682f76312e302e302f6c696e75782f676f312e342e32");
   private static final long TRANSACTION_EVICTION_INTERVAL_MS = TimeUnit.HOURS.toMillis(1);
-  private final TimerUtil timerUtil = mock(TimerUtil.class);
   private final MetricsSystem metricsSystem = new NoOpMetricsSystem();
 
   private final ExecutionContextTestFixture executionContextTestFixture =
@@ -72,7 +68,7 @@ public class EthHashBlockCreatorTest {
 
     final PendingTransactions pendingTransactions =
         new PendingTransactions(
-            timerUtil, TRANSACTION_EVICTION_INTERVAL_MS, 1, TestClock.fixed(), metricsSystem);
+            TRANSACTION_EVICTION_INTERVAL_MS, 1, TestClock.fixed(), metricsSystem);
 
     final EthHashBlockCreator blockCreator =
         new EthHashBlockCreator(

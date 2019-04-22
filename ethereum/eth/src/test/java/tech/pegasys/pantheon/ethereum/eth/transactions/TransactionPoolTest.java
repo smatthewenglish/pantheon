@@ -57,7 +57,6 @@ import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncState;
 import tech.pegasys.pantheon.ethereum.eth.transactions.TransactionPool.TransactionBatchAddedListener;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSpec;
-import tech.pegasys.pantheon.ethereum.mainnet.TimerUtil;
 import tech.pegasys.pantheon.ethereum.mainnet.TransactionValidator;
 import tech.pegasys.pantheon.ethereum.mainnet.ValidationResult;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
@@ -75,6 +74,7 @@ import org.junit.Test;
 
 public class TransactionPoolTest {
 
+  private static final long TRANSACTION_EVICTION_INTERVAL_MS = TimeUnit.HOURS.toMillis(1);
   private static final int MAX_TRANSACTIONS = 5;
   private static final KeyPair KEY_PAIR1 = KeyPair.generate();
 
@@ -92,16 +92,9 @@ public class TransactionPoolTest {
   private final TransactionValidator transactionValidator = mock(TransactionValidator.class);
   private MutableBlockchain blockchain;
 
-  private static final long TRANSACTION_EVICTION_INTERVAL_MS = TimeUnit.HOURS.toMillis(1);
-  private final TimerUtil timerUtil = mock(TimerUtil.class);
-
   private final PendingTransactions transactions =
       new PendingTransactions(
-          timerUtil,
-          TRANSACTION_EVICTION_INTERVAL_MS,
-          MAX_TRANSACTIONS,
-          TestClock.fixed(),
-          metricsSystem);
+          TRANSACTION_EVICTION_INTERVAL_MS, MAX_TRANSACTIONS, TestClock.fixed(), metricsSystem);
   private final Transaction transaction1 = createTransaction(1);
   private final Transaction transaction2 = createTransaction(2);
   private final ExecutionContextTestFixture executionContext = ExecutionContextTestFixture.create();

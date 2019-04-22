@@ -49,7 +49,6 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcError;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcErrorResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessResponse;
-import tech.pegasys.pantheon.ethereum.mainnet.TimerUtil;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 import tech.pegasys.pantheon.testutil.TestClock;
@@ -77,15 +76,10 @@ public class EthGetFilterChangesIntegrationTest {
   private final String JSON_RPC_VERSION = "2.0";
   private TransactionPool transactionPool;
   private final MetricsSystem metricsSystem = new NoOpMetricsSystem();
-  private final TimerUtil timerUtil = mock(TimerUtil.class);
 
   private final PendingTransactions transactions =
       new PendingTransactions(
-          timerUtil,
-          TRANSACTION_EVICTION_INTERVAL_MS,
-          MAX_TRANSACTIONS,
-          TestClock.fixed(),
-          metricsSystem);
+          TRANSACTION_EVICTION_INTERVAL_MS, MAX_TRANSACTIONS, TestClock.fixed(), metricsSystem);
 
   private static final int MAX_TRANSACTIONS = 5;
   private static final KeyPair keyPair = KeyPair.generate();

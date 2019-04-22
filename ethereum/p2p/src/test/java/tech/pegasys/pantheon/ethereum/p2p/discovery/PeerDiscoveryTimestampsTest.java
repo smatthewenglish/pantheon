@@ -17,9 +17,9 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
-import tech.pegasys.pantheon.ethereum.mainnet.MockTimerUtil;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.BlockingAsyncExecutor;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.MockPeerDiscoveryAgent;
+import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.MockTimerUtil;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.OutboundMessageHandler;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.Packet;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PacketType;
