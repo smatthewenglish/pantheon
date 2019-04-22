@@ -25,8 +25,6 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessRe
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.results.PendingTransactionsResult;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.results.TransactionInfoResult;
 
-import java.time.Instant;
-
 import com.google.common.collect.Sets;
 import org.junit.Before;
 import org.junit.Test;
@@ -56,7 +54,7 @@ public class TxPoolPantheonTransactionsTest {
 
   @Test
   public void shouldReturnPendingTransactions() {
-    Instant addedAt = Instant.ofEpochMilli(10_000_000);
+    long addedAt = 10_000_000L;
     final JsonRpcRequest request =
         new JsonRpcRequest(JSON_RPC_VERSION, TXPOOL_PENDING_TRANSACTIONS_METHOD, new Object[] {});
 
@@ -73,6 +71,6 @@ public class TxPoolPantheonTransactionsTest {
         result.getResults().stream().findFirst().get();
     assertEquals(TRANSACTION_HASH, actualTransactionInfo.getHash());
     assertEquals(true, actualTransactionInfo.isReceivedFromLocalSource());
-    assertEquals(addedAt.toString(), actualTransactionInfo.getAddedToPoolAt());
+    assertEquals(Long.toString(addedAt), actualTransactionInfo.getAddedToPoolAt());
   }
 }
