@@ -618,9 +618,7 @@ public class TransactionPoolTest {
 
     Set<Transaction> transactionsToSendToPeer =
         peerTransactionTracker.claimTransactionsToSendToPeer(peer.getEthPeer());
-
-    assertThat(transactionsToSendToPeer.size()).isEqualTo(1);
-    assertThat(transactionsToSendToPeer.iterator().next().hash())
-        .isEqualTo(transactionLocal.hash());
+    
+    assertThat(transactionsToSendToPeer).containsExactly(transactionLocal);
   }
 }
