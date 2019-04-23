@@ -98,6 +98,9 @@ public class TransactionPoolTest {
   private TransactionPool transactionPool;
   private long genesisBlockGasLimit;
   private final AccountFilter accountFilter = mock(AccountFilter.class);
+  private SyncState syncState;
+  private EthContext ethContext;
+  private PeerTransactionTracker peerTransactionTracker;
 
   @Before
   public void setUp() {
@@ -105,14 +108,12 @@ public class TransactionPoolTest {
     when(protocolSchedule.getByBlockNumber(anyLong())).thenReturn(protocolSpec);
     when(protocolSpec.getTransactionValidator()).thenReturn(transactionValidator);
     genesisBlockGasLimit = executionContext.getGenesis().getHeader().getGasLimit();
-    SyncState syncState = mock(SyncState.class);
+    syncState = mock(SyncState.class);
     when(syncState.isInSync(anyLong())).thenReturn(true);
-
-    PeerTransactionTracker peerTransactionTracker = mock(PeerTransactionTracker.class);
-    EthContext ethContext = mock(EthContext.class);
+    ethContext = mock(EthContext.class);
     EthPeers ethPeers = mock(EthPeers.class);
     when(ethContext.getEthPeers()).thenReturn(ethPeers);
-
+    peerTransactionTracker = mock(PeerTransactionTracker.class);
     transactionPool =
         new TransactionPool(
             transactions,
@@ -450,10 +451,6 @@ public class TransactionPoolTest {
   public void shouldRejectRemoteTransactionsWhenNotInSync() {
     SyncState syncState = mock(SyncState.class);
     when(syncState.isInSync(anyLong())).thenReturn(false);
-    EthContext ethContext = mock(EthContext.class);
-    EthPeers ethPeers = mock(EthPeers.class);
-    when(ethContext.getEthPeers()).thenReturn(ethPeers);
-    PeerTransactionTracker peerTransactionTracker = mock(PeerTransactionTracker.class);
     TransactionPool transactionPool =
         new TransactionPool(
             transactions,
@@ -490,22 +487,6 @@ public class TransactionPoolTest {
 
   @Test
   public void shouldAllowRemoteTransactionsWhenInSync() {
-    SyncState syncState = mock(SyncState.class);
-    when(syncState.isInSync(anyLong())).thenReturn(true);
-    EthContext ethContext = mock(EthContext.class);
-    EthPeers ethPeers = mock(EthPeers.class);
-    when(ethContext.getEthPeers()).thenReturn(ethPeers);
-    PeerTransactionTracker peerTransactionTracker = mock(PeerTransactionTracker.class);
-    TransactionPool transactionPool =
-        new TransactionPool(
-            transactions,
-            protocolSchedule,
-            protocolContext,
-            batchAddedListener,
-            syncState,
-            ethContext,
-            peerTransactionTracker);
-
     final TransactionTestFixture builder = new TransactionTestFixture();
     final Transaction transaction1 = builder.nonce(1).createTransaction(KEY_PAIR1);
     final Transaction transaction2 = builder.nonce(2).createTransaction(KEY_PAIR1);
@@ -527,6 +508,40 @@ public class TransactionPoolTest {
     assertTransactionPending(transaction1);
     assertTransactionPending(transaction2);
     assertTransactionPending(transaction3);
+  }
+
+  @Test
+  public void shouldSendOnlyLocalTransactionToNewlyConnectedPeer() {
+    EthProtocolManager ethProtocolManager = EthProtocolManagerTestUtil.create();
+    EthContext ethContext = ethProtocolManager.ethContext();
+    PeerTransactionTracker peerTransactionTracker = new PeerTransactionTracker();
+    TransactionPool transactionPool =
+        new TransactionPool(
+            transactions,
+            protocolSchedule,
+            protocolContext,
+            batchAddedListener,
+            syncState,
+            ethContext,
+            peerTransactionTracker);
+
+    final TransactionTestFixture builder = new TransactionTestFixture();
+    final Transaction transactionLocal = builder.nonce(1).createTransaction(KEY_PAIR1);
+    final Transaction transactionRemote = builder.nonce(2).createTransaction(KEY_PAIR1);
+    when(transactionValidator.validate(any(Transaction.class))).thenReturn(valid());
+    when(transactionValidator.validateForSender(
+            any(Transaction.class), nullable(Account.class), eq(true)))
+        .thenReturn(valid());
+
+    transactionPool.addLocalTransaction(transactionLocal);
+    transactionPool.addRemoteTransactions(Collections.singletonList(transactionRemote));
+
+    RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager);
+
+    Set<Transaction> transactionsToSendToPeer =
+        peerTransactionTracker.claimTransactionsToSendToPeer(peer.getEthPeer());
+
+    assertThat(transactionsToSendToPeer).containsExactly(transactionLocal);
   }
 
   private void assertTransactionPending(final Transaction t) {
@@ -582,43 +597,5 @@ public class TransactionPoolTest {
     when(transactionValidator.validateForSender(
             eq(transaction), nullable(Account.class), anyBoolean()))
         .thenReturn(valid());
-  }
-
-  @Test
-  public void shouldSendOnlyLocalTransactionToNewlyConnectedPeer() {
-    SyncState syncState = mock(SyncState.class);
-    when(syncState.isInSync(anyLong())).thenReturn(true);
-    EthProtocolManager ethProtocolManager = EthProtocolManagerTestUtil.create();
-    EthContext ethContext = ethProtocolManager.ethContext();
-    PeerTransactionTracker peerTransactionTracker = new PeerTransactionTracker();
-    TransactionPool transactionPool =
-        new TransactionPool(
-            transactions,
-            protocolSchedule,
-            protocolContext,
-            batchAddedListener,
-            syncState,
-            ethContext,
-            peerTransactionTracker);
-
-    final TransactionTestFixture builder = new TransactionTestFixture();
-    final Transaction transactionLocal = builder.nonce(1).createTransaction(KEY_PAIR1);
-    final Transaction transactionRemote = builder.nonce(2).createTransaction(KEY_PAIR1);
-    when(transactionValidator.validate(any(Transaction.class))).thenReturn(valid());
-    when(transactionValidator.validateForSender(
-            eq(transactionLocal), nullable(Account.class), eq(true)))
-        .thenReturn(valid());
-    when(transactionValidator.validateForSender(
-            eq(transactionRemote), nullable(Account.class), eq(true)))
-        .thenReturn(valid());
-    transactionPool.addLocalTransaction(transactionLocal);
-    transactionPool.addRemoteTransactions(Collections.singletonList(transactionRemote));
-
-    RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager);
-
-    Set<Transaction> transactionsToSendToPeer =
-        peerTransactionTracker.claimTransactionsToSendToPeer(peer.getEthPeer());
-    
-    assertThat(transactionsToSendToPeer).containsExactly(transactionLocal);
   }
 }
