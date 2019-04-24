@@ -416,7 +416,7 @@ public class PendingTransactionsTest {
 
   @Test
   public void shouldEvictMultipleOldTransactions() {
-    final long transactionEvictionIntervalMs = 1L;
+    final long transactionEvictionIntervalMs = 1000L;
     final PendingTransactions transactions =
         new PendingTransactions(
             transactionEvictionIntervalMs, MAX_TRANSACTIONS, clock, metricsSystem);
@@ -433,7 +433,7 @@ public class PendingTransactionsTest {
 
   @Test
   public void shouldEvictSingleOldTransaction() {
-    final long transactionEvictionIntervalMs = 1L;
+    final long transactionEvictionIntervalMs = 1000L;
     final PendingTransactions transactions =
         new PendingTransactions(
             transactionEvictionIntervalMs, MAX_TRANSACTIONS, clock, metricsSystem);
