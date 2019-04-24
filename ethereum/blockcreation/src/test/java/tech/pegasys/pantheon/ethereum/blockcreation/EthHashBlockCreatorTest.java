@@ -29,8 +29,8 @@ import tech.pegasys.pantheon.testutil.TestClock;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.io.IOException;
-import java.util.concurrent.TimeUnit;
 import java.math.BigInteger;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
 import com.google.common.collect.Lists;

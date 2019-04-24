@@ -44,6 +44,7 @@ public class PendingTransactionsTest {
   private static final KeyPair KEYS1 = KeyPair.generate();
   private static final KeyPair KEYS2 = KeyPair.generate();
 
+  private final TestClock clock = new TestClock();
   private final MetricsSystem metricsSystem = new NoOpMetricsSystem();
   private final PendingTransactions transactions =
       new PendingTransactions(
@@ -416,7 +417,6 @@ public class PendingTransactionsTest {
   @Test
   public void shouldEvictMultipleOldTransactions() {
     final long transactionEvictionIntervalMs = 1L;
-    final TestClock clock = new TestClock();
     final PendingTransactions transactions =
         new PendingTransactions(
             transactionEvictionIntervalMs, MAX_TRANSACTIONS, clock, metricsSystem);
@@ -434,14 +434,11 @@ public class PendingTransactionsTest {
   @Test
   public void shouldEvictSingleOldTransaction() {
     final long transactionEvictionIntervalMs = 1L;
-    final TestClock clock = new TestClock();
     final PendingTransactions transactions =
         new PendingTransactions(
             transactionEvictionIntervalMs, MAX_TRANSACTIONS, clock, metricsSystem);
-
     transactions.addRemoteTransaction(transaction1);
     assertThat(transactions.size()).isEqualTo(1);
-
     clock.stepMillis(2000);
     transactions.evictOldTransactions();
     assertThat(transactions.size()).isEqualTo(0);
@@ -450,19 +447,14 @@ public class PendingTransactionsTest {
   @Test
   public void shouldEvictExclusivelyOldTransactions() {
     final long transactionEvictionIntervalMs = 2L;
-    final TestClock clock = new TestClock();
     final PendingTransactions transactions =
         new PendingTransactions(
             transactionEvictionIntervalMs, MAX_TRANSACTIONS, clock, metricsSystem);
-
     transactions.addRemoteTransaction(transaction1);
     assertThat(transactions.size()).isEqualTo(1);
-
     clock.stepMillis(2001);
-
     transactions.addRemoteTransaction(transaction2);
     assertThat(transactions.size()).isEqualTo(2);
-
     transactions.evictOldTransactions();
     assertThat(transactions.size()).isEqualTo(1);
   }
