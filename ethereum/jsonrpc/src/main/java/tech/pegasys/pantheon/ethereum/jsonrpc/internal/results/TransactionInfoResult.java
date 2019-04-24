@@ -14,10 +14,10 @@ package tech.pegasys.pantheon.ethereum.jsonrpc.internal.results;
 
 import tech.pegasys.pantheon.ethereum.eth.transactions.PendingTransactions.TransactionInfo;
 
+import java.time.Instant;
+
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-
-import java.time.Instant;
 
 @JsonPropertyOrder({"hash", "isReceivedFromLocalSource"})
 public class TransactionInfoResult implements TransactionResult {

@@ -100,7 +100,8 @@ public class PendingTransactions {
   }
 
   private boolean applyEvictionThreshold(final TransactionInfo transaction) {
-    return clock.millis() - transaction.getAddedToPoolAt().toEpochMilli() > transactionEvictionIntervalMs;
+    return clock.millis() - transaction.getAddedToPoolAt().toEpochMilli()
+        > transactionEvictionIntervalMs;
   }
 
   public void evictOldTransactions() {
@@ -124,7 +125,8 @@ public class PendingTransactions {
   }
 
   public boolean addRemoteTransaction(final Transaction transaction) {
-    final TransactionInfo transactionInfo = new TransactionInfo(transaction, false, clock.instant());
+    final TransactionInfo transactionInfo =
+        new TransactionInfo(transaction, false, clock.instant());
     final boolean addTransaction = addTransaction(transactionInfo);
     remoteTransactionAddedCounter.inc();
     return addTransaction;
