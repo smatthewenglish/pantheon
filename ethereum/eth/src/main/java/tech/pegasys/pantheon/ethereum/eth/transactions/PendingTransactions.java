@@ -99,15 +99,16 @@ public class PendingTransactions {
             "operation");
   }
 
-  private boolean applyEvictionThreshold(final TransactionInfo transaction) {
-    return clock.millis() - transaction.getAddedToPoolAt().toEpochMilli()
-        > transactionEvictionIntervalMs;
-  }
-
   public void evictOldTransactions() {
     synchronized (pendingTransactions) {
+      long now = clock.millis();
       final List<TransactionInfo> transactionsToRemove =
-          prioritizedTransactions.stream().filter(this::applyEvictionThreshold).collect(toList());
+          prioritizedTransactions.stream()
+              .filter(
+                  transaction ->
+                      now - transaction.getAddedToPoolAt().toEpochMilli()
+                          > transactionEvictionIntervalMs)
+              .collect(toList());
       transactionsToRemove.forEach(transaction -> removeTransaction(transaction.getTransaction()));
     }
   }
