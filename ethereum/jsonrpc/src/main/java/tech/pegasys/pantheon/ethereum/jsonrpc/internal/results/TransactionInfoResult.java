@@ -17,12 +17,14 @@ import tech.pegasys.pantheon.ethereum.eth.transactions.PendingTransactions.Trans
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import java.time.Instant;
+
 @JsonPropertyOrder({"hash", "isReceivedFromLocalSource"})
 public class TransactionInfoResult implements TransactionResult {
 
   private final String hash;
   private final boolean isReceivedFromLocalSource;
-  private final long addedToPoolAt;
+  private final Instant addedToPoolAt;
 
   public TransactionInfoResult(final TransactionInfo transactionInfo) {
     hash = transactionInfo.getHash().toString();
@@ -37,7 +39,7 @@ public class TransactionInfoResult implements TransactionResult {
 
   @JsonGetter(value = "addedToPoolAt")
   public String getAddedToPoolAt() {
-    return Long.toString(addedToPoolAt);
+    return addedToPoolAt.toString();
   }
 
   @JsonGetter(value = "isReceivedFromLocalSource")
