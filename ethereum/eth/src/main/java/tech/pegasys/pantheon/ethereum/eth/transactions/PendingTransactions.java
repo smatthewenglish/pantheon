@@ -26,6 +26,7 @@ import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.util.Subscribers;
 
 import java.time.Clock;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -99,7 +100,7 @@ public class PendingTransactions {
   }
 
   private boolean applyEvictionThreshold(final TransactionInfo transaction) {
-    return clock.millis() - transaction.getAddedToPoolAt() > transactionEvictionIntervalMs;
+    return clock.millis() - transaction.getAddedToPoolAt().toEpochMilli() > transactionEvictionIntervalMs;
   }
 
   public void evictOldTransactions() {
@@ -123,7 +124,7 @@ public class PendingTransactions {
   }
 
   public boolean addRemoteTransaction(final Transaction transaction) {
-    final TransactionInfo transactionInfo = new TransactionInfo(transaction, false, clock.millis());
+    final TransactionInfo transactionInfo = new TransactionInfo(transaction, false, clock.instant());
     final boolean addTransaction = addTransaction(transactionInfo);
     remoteTransactionAddedCounter.inc();
     return addTransaction;
@@ -131,7 +132,7 @@ public class PendingTransactions {
 
   boolean addLocalTransaction(final Transaction transaction) {
     final boolean addTransaction =
-        addTransaction(new TransactionInfo(transaction, true, clock.millis()));
+        addTransaction(new TransactionInfo(transaction, true, clock.instant()));
     localTransactionAddedCounter.inc();
     return addTransaction;
   }
@@ -316,13 +317,13 @@ public class PendingTransactions {
     private static final AtomicLong TRANSACTIONS_ADDED = new AtomicLong();
     private final Transaction transaction;
     private final boolean receivedFromLocalSource;
-    private final long addedToPoolAt;
+    private final Instant addedToPoolAt;
     private final long sequence; // Allows prioritization based on order transactions are added
 
     TransactionInfo(
         final Transaction transaction,
         final boolean receivedFromLocalSource,
-        final long addedToPoolAt) {
+        final Instant addedToPoolAt) {
       this.transaction = transaction;
       this.receivedFromLocalSource = receivedFromLocalSource;
       this.addedToPoolAt = addedToPoolAt;
@@ -353,7 +354,7 @@ public class PendingTransactions {
       return transaction.hash();
     }
 
-    public long getAddedToPoolAt() {
+    public Instant getAddedToPoolAt() {
       return addedToPoolAt;
     }
   }
