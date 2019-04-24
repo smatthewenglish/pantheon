@@ -32,6 +32,8 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import java.time.Instant;
+
 @RunWith(MockitoJUnitRunner.class)
 public class TxPoolPantheonTransactionsTest {
 
@@ -54,7 +56,7 @@ public class TxPoolPantheonTransactionsTest {
 
   @Test
   public void shouldReturnPendingTransactions() {
-    long addedAt = 10_000_000L;
+    Instant addedAt = Instant.ofEpochMilli(10_000_000);
     final JsonRpcRequest request =
         new JsonRpcRequest(JSON_RPC_VERSION, TXPOOL_PENDING_TRANSACTIONS_METHOD, new Object[] {});
 
@@ -71,6 +73,6 @@ public class TxPoolPantheonTransactionsTest {
         result.getResults().stream().findFirst().get();
     assertEquals(TRANSACTION_HASH, actualTransactionInfo.getHash());
     assertEquals(true, actualTransactionInfo.isReceivedFromLocalSource());
-    assertEquals(Long.toString(addedAt), actualTransactionInfo.getAddedToPoolAt());
+    assertEquals(addedAt.toString(), actualTransactionInfo.getAddedToPoolAt());
   }
 }
