@@ -610,7 +610,7 @@ public class PantheonCommandTest extends CommandTestAbstract {
 
     /* * */
     verify(mockControllerBuilder)
-            .pendingTransactionRetentionPeriod(eq(PendingTransactions.PENDING_TX_RETENTION_PERIOD));
+        .pendingTransactionRetentionPeriod(eq(PendingTransactions.PENDING_TX_RETENTION_PERIOD));
     /* * */
 
     verify(mockControllerBuilder).build();

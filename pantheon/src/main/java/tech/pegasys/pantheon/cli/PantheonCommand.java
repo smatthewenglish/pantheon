@@ -484,11 +484,11 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
   private final Integer txPoolMaxSize = PendingTransactions.MAX_PENDING_TRANSACTIONS;
 
   @Option(
-          names = {"--tx-pool-retention-period"},
-          paramLabel = PENDING_TX_RETENTION_PERIOD_FORMAT_HELP,
-          description =
-                  "Maximum retention period of pending transactions in the transaction pool (default: ${DEFAULT-VALUE})",
-          arity = "1")
+      names = {"--tx-pool-retention-period"},
+      paramLabel = PENDING_TX_RETENTION_PERIOD_FORMAT_HELP,
+      description =
+          "Maximum retention period of pending transactions in the transaction pool (default: ${DEFAULT-VALUE})",
+      arity = "1")
   private final Integer pendingTxRetentionPeriod = PendingTransactions.PENDING_TX_RETENTION_PERIOD;
 
   // Inner class so we can get to loggingLevel.
@@ -709,7 +709,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
           .miningParameters(
               new MiningParameters(coinbase, minTransactionGasPrice, extraData, isMiningEnabled))
           .maxPendingTransactions(txPoolMaxSize)
-              .pendingTransactionRetentionPeriod(pendingTxRetentionPeriod)
+          .pendingTransactionRetentionPeriod(pendingTxRetentionPeriod)
           .nodePrivateKeyFile(nodePrivateKeyFile())
           .metricsSystem(metricsSystem.get())
           .privacyParameters(privacyParameters())

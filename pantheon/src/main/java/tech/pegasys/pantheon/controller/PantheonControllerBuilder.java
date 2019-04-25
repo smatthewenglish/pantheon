@@ -155,7 +155,8 @@ public abstract class PantheonControllerBuilder<C> {
     return this;
   }
 
-  public PantheonControllerBuilder<C> pendingTransactionRetentionPeriod(final int pendingTransactionRetentionPeriod) {
+  public PantheonControllerBuilder<C> pendingTransactionRetentionPeriod(
+      final int pendingTransactionRetentionPeriod) {
     this.pendingTransactionRetentionPeriod = pendingTransactionRetentionPeriod;
     return this;
   }
@@ -233,7 +234,7 @@ public abstract class PantheonControllerBuilder<C> {
             maxPendingTransactions,
             metricsSystem,
             syncState,
-                pendingTransactionRetentionPeriod);
+            pendingTransactionRetentionPeriod);
 
     final MiningCoordinator miningCoordinator =
         createMiningCoordinator(
