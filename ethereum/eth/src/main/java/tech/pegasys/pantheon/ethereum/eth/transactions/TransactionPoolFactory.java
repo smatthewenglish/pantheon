@@ -33,7 +33,12 @@ public class TransactionPoolFactory {
       final Clock clock,
       final int maxPendingTransactions,
       final MetricsSystem metricsSystem,
-      final SyncState syncState) {
+      final SyncState syncState,
+      final int pendingTransactionRetentionPeriod) {
+
+    /* * */
+    System.out.println("pendingTransactionRetentionPeriod: " + pendingTransactionRetentionPeriod);
+    /* * */
 
     final PendingTransactions pendingTransactions =
         new PendingTransactions(

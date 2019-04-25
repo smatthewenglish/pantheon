@@ -77,6 +77,10 @@ public abstract class PantheonControllerBuilder<C> {
   private final List<Runnable> shutdownActions = new ArrayList<>();
   private RocksDbConfiguration rocksdDbConfiguration;
 
+  /* * */
+  protected Integer pendingTransactionRetentionPeriod;
+  /* * */
+
   public PantheonControllerBuilder<C> rocksdDbConfiguration(
       final RocksDbConfiguration rocksDbConfiguration) {
     this.rocksdDbConfiguration = rocksDbConfiguration;
@@ -148,6 +152,11 @@ public abstract class PantheonControllerBuilder<C> {
 
   public PantheonControllerBuilder<C> maxPendingTransactions(final int maxPendingTransactions) {
     this.maxPendingTransactions = maxPendingTransactions;
+    return this;
+  }
+
+  public PantheonControllerBuilder<C> pendingTransactionRetentionPeriod(final int pendingTransactionRetentionPeriod) {
+    this.pendingTransactionRetentionPeriod = pendingTransactionRetentionPeriod;
     return this;
   }
 
@@ -223,7 +232,8 @@ public abstract class PantheonControllerBuilder<C> {
             clock,
             maxPendingTransactions,
             metricsSystem,
-            syncState);
+            syncState,
+                pendingTransactionRetentionPeriod);
 
     final MiningCoordinator miningCoordinator =
         createMiningCoordinator(
