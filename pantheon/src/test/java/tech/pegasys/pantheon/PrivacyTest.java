@@ -64,6 +64,7 @@ public class PrivacyTest {
             .clock(TestClock.fixed())
             .privacyParameters(privacyParameters)
             .maxPendingTransactions(PendingTransactions.MAX_PENDING_TRANSACTIONS)
+            .pendingTransactionRetentionPeriod(PendingTransactions.PENDING_TX_RETENTION_PERIOD)
             .build();
 
     final Address privacyContractAddress = Address.privacyPrecompiled(ADDRESS);
