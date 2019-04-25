@@ -709,11 +709,11 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
           .miningParameters(
               new MiningParameters(coinbase, minTransactionGasPrice, extraData, isMiningEnabled))
           .maxPendingTransactions(txPoolMaxSize)
-          .pendingTransactionRetentionPeriod(pendingTxRetentionPeriod)
           .nodePrivateKeyFile(nodePrivateKeyFile())
           .metricsSystem(metricsSystem.get())
           .privacyParameters(privacyParameters())
           .clock(Clock.systemUTC())
+          .pendingTransactionRetentionPeriod(pendingTxRetentionPeriod)
           .build();
     } catch (final InvalidConfigurationException e) {
       throw new ExecutionException(this.commandLine, e.getMessage());

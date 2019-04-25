@@ -65,6 +65,7 @@ public final class BlockImporterTest {
             .dataDirectory(dataDir)
             .clock(TestClock.fixed())
             .maxPendingTransactions(PendingTransactions.MAX_PENDING_TRANSACTIONS)
+            .pendingTransactionRetentionPeriod(PendingTransactions.PENDING_TX_RETENTION_PERIOD)
             .build();
     final BlockImporter.ImportResult result =
         blockImporter.importBlockchain(source, targetController);
@@ -104,6 +105,7 @@ public final class BlockImporterTest {
             .dataDirectory(dataDir)
             .clock(TestClock.fixed())
             .maxPendingTransactions(PendingTransactions.MAX_PENDING_TRANSACTIONS)
+            .pendingTransactionRetentionPeriod(PendingTransactions.PENDING_TX_RETENTION_PERIOD)
             .build();
     final BlockImporter.ImportResult result = blockImporter.importBlockchain(source, controller);
 

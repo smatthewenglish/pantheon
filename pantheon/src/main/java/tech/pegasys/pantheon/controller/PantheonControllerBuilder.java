@@ -225,6 +225,10 @@ public abstract class PantheonControllerBuilder<C> {
       PeerValidatorRunner.runValidator(ethContext, daoForkPeerValidator);
     }
 
+    if (pendingTransactionRetentionPeriod == null) {
+      System.out.println();
+    }
+
     final TransactionPool transactionPool =
         TransactionPoolFactory.createTransactionPool(
             protocolSchedule,
