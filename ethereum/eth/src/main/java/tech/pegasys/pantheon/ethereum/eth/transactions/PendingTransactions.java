@@ -101,13 +101,12 @@ public class PendingTransactions {
 
   public void evictOldTransactions() {
     synchronized (pendingTransactions) {
-      long now = clock.millis();
+      final Instant removeTransactionsBefore =
+          clock.instant().minusMillis(transactionEvictionIntervalMs);
       final List<TransactionInfo> transactionsToRemove =
           prioritizedTransactions.stream()
               .filter(
-                  transaction ->
-                      now - transaction.getAddedToPoolAt().toEpochMilli()
-                          > transactionEvictionIntervalMs)
+                  transaction -> transaction.getAddedToPoolAt().isBefore(removeTransactionsBefore))
               .collect(toList());
       transactionsToRemove.forEach(transaction -> removeTransaction(transaction.getTransaction()));
     }
