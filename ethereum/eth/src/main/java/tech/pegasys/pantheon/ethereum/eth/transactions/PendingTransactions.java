@@ -48,7 +48,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * <p>This class is safe for use across multiple threads.
  */
 public class PendingTransactions {
-  public static final int PENDING_TX_RETENTION_PERIOD = 13;
+  public static final int PENDING_TX_RETENTION_HOURS = 13;
   public static final int MAX_PENDING_TRANSACTIONS = 4096;
 
   private final Map<Hash, TransactionInfo> pendingTransactions = new HashMap<>();
