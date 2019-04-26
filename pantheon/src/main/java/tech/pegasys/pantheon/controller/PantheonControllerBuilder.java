@@ -72,14 +72,11 @@ public abstract class PantheonControllerBuilder<C> {
   protected Path dataDirectory;
   protected Clock clock;
   protected Integer maxPendingTransactions;
+  protected Integer pendingTransactionRetentionPeriod;
   protected KeyPair nodeKeys;
   private StorageProvider storageProvider;
   private final List<Runnable> shutdownActions = new ArrayList<>();
   private RocksDbConfiguration rocksdDbConfiguration;
-
-  /* * */
-  protected Integer pendingTransactionRetentionPeriod;
-  /* * */
 
   public PantheonControllerBuilder<C> rocksdDbConfiguration(
       final RocksDbConfiguration rocksDbConfiguration) {
