@@ -153,7 +153,7 @@ public class TestNode implements Closeable {
             PendingTransactions.MAX_PENDING_TRANSACTIONS,
             metricsSystem,
             syncState,
-            13);
+                PendingTransactions.PENDING_TX_RETENTION_HOURS);
 
     networkRunner.start();
     this.port = network.getLocalEnode().get().getListeningPort();
