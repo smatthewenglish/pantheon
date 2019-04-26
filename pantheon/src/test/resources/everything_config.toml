@@ -86,6 +86,6 @@ privacy-enabled=false
 privacy-precompiled-address=9
 
 # Transaction Pool
-tx-pool-retention-period=999
+tx-pool-retention-hours=999
 
 tx-pool-max-size=1234

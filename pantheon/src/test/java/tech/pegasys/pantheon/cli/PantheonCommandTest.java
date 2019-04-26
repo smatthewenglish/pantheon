@@ -2342,4 +2342,20 @@ public class PantheonCommandTest extends CommandTestAbstract {
     assertThat(commandErrorOutput.toString())
         .contains(staticNodeURI.toString(), "not in nodes-whitelist");
   }
+
+  @Test
+  public void pendingTransactionRetentionPeriod() {
+
+    final int pendingTxRetentionHours = 999;
+    parseCommand("--tx-pool-retention-hours", String.valueOf(pendingTxRetentionHours));
+
+    verify(mockRunnerBuilder).maxPeers(intArgumentCaptor.capture());
+    verify(mockRunnerBuilder).build();
+
+    assertThat(intArgumentCaptor.getValue()).isEqualTo(pendingTxRetentionHours);
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
 }
