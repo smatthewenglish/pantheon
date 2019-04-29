@@ -33,7 +33,9 @@ public class TransactionPoolFactory {
       final SyncState syncState,
       final int maxTransactionRetentionHours) {
 
-    final PendingTransactions pendingTransactions = new PendingTransactions(maxTransactionRetentionHours, maxPendingTransactions, clock, metricsSystem);
+    final PendingTransactions pendingTransactions =
+        new PendingTransactions(
+            maxTransactionRetentionHours, maxPendingTransactions, clock, metricsSystem);
 
     final PeerTransactionTracker transactionTracker = new PeerTransactionTracker();
     final TransactionsMessageSender transactionsMessageSender =
