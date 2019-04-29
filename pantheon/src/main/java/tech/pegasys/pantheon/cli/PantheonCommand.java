@@ -489,7 +489,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
       description =
           "Maximum retention period of pending transactions, expressed in hours. Represented by primitive type 'long'. (default: ${DEFAULT-VALUE})",
       arity = "1")
-  private final Integer pendingTxRetentionPeriod = PendingTransactions.PENDING_TX_RETENTION_HOURS;
+  private final Integer pendingTxRetentionPeriod = PendingTransactions.DEFAULT_TX_RETENTION_HOURS;
 
   // Inner class so we can get to loggingLevel.
   public class PantheonExceptionHandler

@@ -27,6 +27,8 @@ import tech.pegasys.pantheon.util.Subscribers;
 
 import java.time.Clock;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.time.temporal.TemporalUnit;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -39,6 +41,7 @@ import java.util.SortedMap;
 import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -48,8 +51,11 @@ import java.util.concurrent.atomic.AtomicLong;
  * <p>This class is safe for use across multiple threads.
  */
 public class PendingTransactions {
-  public static final int PENDING_TX_RETENTION_HOURS = 13;
   public static final int MAX_PENDING_TRANSACTIONS = 4096;
+  public static final int DEFAULT_TX_RETENTION_HOURS = 13;
+
+  private final int maxTransactionRetentionHours;
+  private final Clock clock;
 
   private final Map<Hash, TransactionInfo> pendingTransactions = new HashMap<>();
   private final SortedSet<TransactionInfo> prioritizedTransactions =
@@ -65,21 +71,18 @@ public class PendingTransactions {
   private final Subscribers<PendingTransactionDroppedListener> transactionDroppedListeners =
       new Subscribers<>();
 
-  private final int maxPendingTransactions;
-  private final Clock clock;
-
   private final LabelledMetric<Counter> transactionRemovedCounter;
   private final Counter localTransactionAddedCounter;
   private final Counter remoteTransactionAddedCounter;
 
-  private final long transactionEvictionIntervalMs;
+  private final long maxPendingTransactions;
 
   public PendingTransactions(
-      final long transactionEvictionIntervalMs,
+      final int maxTransactionRetentionHours,
       final int maxPendingTransactions,
       final Clock clock,
       final MetricsSystem metricsSystem) {
-    this.transactionEvictionIntervalMs = transactionEvictionIntervalMs;
+    this.maxTransactionRetentionHours = maxTransactionRetentionHours;
     this.maxPendingTransactions = maxPendingTransactions;
     this.clock = clock;
     final LabelledMetric<Counter> transactionAddedCounter =
@@ -102,8 +105,7 @@ public class PendingTransactions {
 
   public void evictOldTransactions() {
     synchronized (pendingTransactions) {
-      final Instant removeTransactionsBefore =
-          clock.instant().minusMillis(transactionEvictionIntervalMs);
+      final Instant removeTransactionsBefore = clock.instant().minus(maxTransactionRetentionHours, ChronoUnit.HOURS);
       final List<TransactionInfo> transactionsToRemove =
           prioritizedTransactions.stream()
               .filter(
