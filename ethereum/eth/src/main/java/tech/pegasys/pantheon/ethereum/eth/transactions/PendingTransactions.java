@@ -28,7 +28,6 @@ import tech.pegasys.pantheon.util.Subscribers;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.time.temporal.TemporalUnit;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -41,7 +40,6 @@ import java.util.SortedMap;
 import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -105,7 +103,8 @@ public class PendingTransactions {
 
   public void evictOldTransactions() {
     synchronized (pendingTransactions) {
-      final Instant removeTransactionsBefore = clock.instant().minus(maxTransactionRetentionHours, ChronoUnit.HOURS);
+      final Instant removeTransactionsBefore =
+          clock.instant().minus(maxTransactionRetentionHours, ChronoUnit.HOURS);
       final List<TransactionInfo> transactionsToRemove =
           prioritizedTransactions.stream()
               .filter(
