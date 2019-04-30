@@ -34,7 +34,6 @@ public interface DefaultCommandValues {
   String PANTHEON_HOME_PROPERTY_NAME = "pantheon.home";
   String DEFAULT_DATA_DIR_PATH = "./build/data";
   String MANDATORY_INTEGER_FORMAT_HELP = "<INTEGER>";
-  String DURATION_HELP = "<INTEGER>";
   String MANDATORY_MODE_FORMAT_HELP = "<MODE>";
   String MANDATORY_NETWORK_FORMAT_HELP = "<NETWORK>";
   String MANDATORY_NODE_ID_FORMAT_HELP = "<NODEID>";
