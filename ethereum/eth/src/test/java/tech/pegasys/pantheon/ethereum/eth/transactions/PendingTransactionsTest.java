@@ -418,7 +418,7 @@ public class PendingTransactionsTest {
 
   @Test
   public void shouldEvictMultipleOldTransactions() {
-    final int maxTransactionRetentionHours = 1000;
+    final int maxTransactionRetentionHours = 1;
     final PendingTransactions transactions =
         new PendingTransactions(
             maxTransactionRetentionHours, MAX_TRANSACTIONS, clock, metricsSystem);
@@ -428,7 +428,7 @@ public class PendingTransactionsTest {
     transactions.addRemoteTransaction(transaction2);
     assertThat(transactions.size()).isEqualTo(2);
 
-    clock.stepMillis(2000);
+    clock.step(2L, ChronoUnit.HOURS);
     transactions.evictOldTransactions();
     assertThat(transactions.size()).isEqualTo(0);
   }
@@ -441,9 +441,7 @@ public class PendingTransactionsTest {
             maxTransactionRetentionHours, MAX_TRANSACTIONS, clock, metricsSystem);
     transactions.addRemoteTransaction(transaction1);
     assertThat(transactions.size()).isEqualTo(1);
-
     clock.step(2L, ChronoUnit.HOURS);
-
     transactions.evictOldTransactions();
     assertThat(transactions.size()).isEqualTo(0);
   }
@@ -456,7 +454,7 @@ public class PendingTransactionsTest {
             maxTransactionRetentionHours, MAX_TRANSACTIONS, clock, metricsSystem);
     transactions.addRemoteTransaction(transaction1);
     assertThat(transactions.size()).isEqualTo(1);
-    clock.stepMillis(2001);
+    clock.step(3L, ChronoUnit.HOURS);
     transactions.addRemoteTransaction(transaction2);
     assertThat(transactions.size()).isEqualTo(2);
     transactions.evictOldTransactions();

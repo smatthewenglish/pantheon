@@ -16,7 +16,6 @@ import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
-import java.time.temporal.TemporalAmount;
 import java.time.temporal.TemporalUnit;
 
 public class TestClock extends Clock {

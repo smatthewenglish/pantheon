@@ -103,12 +103,8 @@ public class PendingTransactions {
 
   public void evictOldTransactions() {
     synchronized (pendingTransactions) {
-      final Instant removeTransactionsBefore = clock.instant().minus(maxTransactionRetentionHours, ChronoUnit.HOURS);
-
-        System.out.println("clock.instant(): " + clock.instant());
-        System.out.println("maxTransactionRetentionHours: " + maxTransactionRetentionHours);
-        System.out.println("clock.instant().minus(maxTransactionRetentionHours, ChronoUnit.HOURS): " + clock.instant().minus(maxTransactionRetentionHours, ChronoUnit.HOURS));
-
+      final Instant removeTransactionsBefore =
+          clock.instant().minus(maxTransactionRetentionHours, ChronoUnit.HOURS);
       final List<TransactionInfo> transactionsToRemove =
           prioritizedTransactions.stream()
               .filter(
