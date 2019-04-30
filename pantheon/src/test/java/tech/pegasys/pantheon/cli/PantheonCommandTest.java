@@ -2346,13 +2346,9 @@ public class PantheonCommandTest extends CommandTestAbstract {
   @Test
   public void pendingTransactionRetentionPeriod() {
     final int pendingTxRetentionHours = 999;
-
     parseCommand("--tx-pool-retention-hours", String.valueOf(pendingTxRetentionHours));
 
     verify(mockControllerBuilder).pendingTransactionRetentionPeriod(intArgumentCaptor.capture());
-
-    assertThat(intArgumentCaptor.getAllValues().get(0)).isEqualTo(pendingTxRetentionHours);
-
     verify(mockControllerBuilder).pendingTransactionRetentionPeriod(eq(pendingTxRetentionHours));
 
     assertThat(commandOutput.toString()).isEmpty();

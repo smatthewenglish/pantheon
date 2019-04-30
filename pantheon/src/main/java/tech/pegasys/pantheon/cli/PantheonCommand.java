@@ -487,7 +487,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
       names = {"--tx-pool-retention-hours"},
       paramLabel = MANDATORY_INTEGER_FORMAT_HELP,
       description =
-          "Maximum retention period of pending transactions, expressed in hours. Represented by primitive type 'long'. (default: ${DEFAULT-VALUE})",
+          "Maximum retention period of pending transactions in hours (default: ${DEFAULT-VALUE})",
       arity = "1")
   private final Integer pendingTxRetentionPeriod = PendingTransactions.DEFAULT_TX_RETENTION_HOURS;
 
