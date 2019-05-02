@@ -62,6 +62,7 @@ dependencies {
   testImplementation 'org.awaitility:awaitility'
   testImplementation 'org.mockito:mockito-core'
   testImplementation 'org.apache.commons:commons-text'
+  testImplementation 'org.rocksdb:rocksdbjni'
 }
 
 task writeInfoFile(type: ProjectPropertiesFile) {
