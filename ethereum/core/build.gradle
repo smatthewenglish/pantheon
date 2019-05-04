@@ -108,6 +108,10 @@ def generateTestFiles(FileTree jsonPath, File templateFile, String pathstrip, St
           if(testJsonFile.getParentFile().getParentFile().getName().toString() == generalStateTests){
             paths << pathstrip + generalStateTests + "/" + parentDirectory + testFile
           }
+          String transitionTests = "TransitionTests"
+          if(testJsonFile.getParentFile().getParentFile().getName().toString() == transitionTests){
+            paths << pathstrip + transitionTests + "/" + parentDirectory + testFile
+          }
         } else {
           paths << pathstrip + parentDirectory + testFile
         }
