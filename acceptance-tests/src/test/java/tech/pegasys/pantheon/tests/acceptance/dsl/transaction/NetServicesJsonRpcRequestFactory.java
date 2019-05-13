@@ -19,9 +19,9 @@ import org.web3j.protocol.Web3jService;
 import org.web3j.protocol.core.Request;
 import org.web3j.protocol.core.Response;
 
+@SuppressWarnings({"unchecked", "rawtypes"})
 public class NetServicesJsonRpcRequestFactory {
 
-  // public static class ProposalsResponse extends Response<Map<Address, Boolean>> {}
   public static class NetServicesResponse extends Response<Map<String, Map<String, String>>> {}
 
   private final Web3jService web3jService;
@@ -32,7 +32,7 @@ public class NetServicesJsonRpcRequestFactory {
 
   public Request<?, NetServicesResponse> netServices() {
 
-    Request request =
+    final Request request =
         new Request<>(
             "net_services", Collections.EMPTY_LIST, web3jService, NetServicesResponse.class);
 

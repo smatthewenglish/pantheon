@@ -30,7 +30,7 @@ public class NetServices {
             new Transaction<Map<String, Map<String, String>>>() {
               @Override
               public Map<String, Map<String, String>> execute(
-                  JsonRequestFactories requestFactories) {
+                  final JsonRequestFactories requestFactories) {
                 NetServicesJsonRpcRequestFactory.NetServicesResponse c = null;
                 try {
                   NetServicesJsonRpcRequestFactory s = requestFactories.netServices();
