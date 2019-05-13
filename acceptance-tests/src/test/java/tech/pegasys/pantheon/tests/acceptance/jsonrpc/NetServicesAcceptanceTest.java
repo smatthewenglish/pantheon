@@ -11,17 +11,28 @@ import tech.pegasys.pantheon.tests.acceptance.dsl.node.cluster.ClusterConfigurat
 
 public class NetServicesAcceptanceTest extends AcceptanceTestBase {
 
+    private Cluster noDiscoveryCluster;
+
     private Node nodeA;
+    private Node nodeB;
 
     @Before
     public void setUp() throws Exception {
-
+        final ClusterConfiguration clusterConfiguration =
+                new ClusterConfigurationBuilder().setAwaitPeerDiscovery(false).build();
+        noDiscoveryCluster = new Cluster(clusterConfiguration, net);
         nodeA = pantheon.createArchiveNodeWithDiscoveryDisabledAndAdmin("nodeA");
+        nodeB = pantheon.createArchiveNodeWithDiscoveryDisabledAndAdmin("nodeB");
+        noDiscoveryCluster.start(nodeA, nodeB);
     }
 
     @Test
     public void adminAddPeerForcesConnection() {
 
-        netServices.addPeer(nodeA);
+        System.out.println("AAA");
+
+        nodeA.verify(netServices.addPeer(nodeA));
+
+        System.out.println("ZZZ");
     }
 }

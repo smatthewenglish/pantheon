@@ -30,14 +30,22 @@ public class Admin {
 
     public Condition addPeer(final Node node) {
 
+        System.out.println("999");
+
         return new Condition() {
             @Override
             public void verify(Node x) {
+
+                System.out.println("888");
+
                 final Boolean result =
                         node.execute(
                                 new Transaction<Boolean>() {
                                     @Override
                                     public Boolean execute(JsonRequestFactories requestFactories) {
+
+                                        System.out.println("777");
+
                                         Response<Boolean> resp = null;
                                         try {
                                             URI enodeUrl = ((RunnableNode) x).enodeUrl();
