@@ -34,6 +34,11 @@ public class NetServices {
 
                                         Response<Boolean> resp = null;
                                         try {
+
+                                            System.out.println("netVersion: " + requestFactories.net().netVersion().send().getNetVersion());
+
+                                            System.out.println("netVersion: " + requestFactories.net().netListening().send().isListening());
+
                                             URI enodeUrl = ((RunnableNode) x).enodeUrl();
                                             resp = requestFactories.admin().adminAddPeer(enodeUrl).send();
                                             assertThat(resp).isNotNull();
