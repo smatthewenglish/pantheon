@@ -45,7 +45,7 @@ public class NetServicesAcceptanceTest extends AcceptanceTestBase {
   }
 
   @Test
-  public void adminAddPeerForcesConnection() {
+  public void shouldIndicateNetServicesEnabled() {
     final Map<String, Map<String, String>> result = netServices.addPeer(nodeA);
     final Map<String, Map<String, String>> expectation = new HashMap<>();
     final Map<String, String> constituentMap =
@@ -64,4 +64,7 @@ public class NetServicesAcceptanceTest extends AcceptanceTestBase {
     assertThat(expectation.get("ws").get("port")).isEqualTo(result.get("ws").get("port"));
     assertThat(expectation.get("p2p").get("host")).isEqualTo(result.get("p2p").get("host"));
   }
+
+  @Test
+  public void shouldIndicateNetServicesDisabled() {}
 }

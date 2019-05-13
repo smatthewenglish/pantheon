@@ -342,28 +342,28 @@ public class RunnerBuilder {
     }
 
     Optional<GraphQLRpcHttpService> graphQLRpcHttpService = Optional.empty();
-//    if (graphQLRpcConfiguration.isEnabled()) {
-//      final GraphQLDataFetchers fetchers = new GraphQLDataFetchers(supportedCapabilities);
-//      final GraphQLDataFetcherContext dataFetcherContext =
-//          new GraphQLDataFetcherContext(
-//              context.getBlockchain(),
-//              context.getWorldStateArchive(),
-//              protocolSchedule,
-//              transactionPool,
-//              miningCoordinator,
-//              synchronizer);
-//      GraphQL graphQL = null;
-//      try {
-//        graphQL = GraphQLProvider.buildGraphQL(fetchers);
-//      } catch (final IOException ioe) {
-//        throw new RuntimeException(ioe);
-//      }
-//
-//      graphQLRpcHttpService =
-//          Optional.of(
-//              new GraphQLRpcHttpService(
-//                  vertx, dataDir, graphQLRpcConfiguration, graphQL, dataFetcherContext));
-//    }
+    if (graphQLRpcConfiguration.isEnabled()) {
+      final GraphQLDataFetchers fetchers = new GraphQLDataFetchers(supportedCapabilities);
+      final GraphQLDataFetcherContext dataFetcherContext =
+          new GraphQLDataFetcherContext(
+              context.getBlockchain(),
+              context.getWorldStateArchive(),
+              protocolSchedule,
+              transactionPool,
+              miningCoordinator,
+              synchronizer);
+      GraphQL graphQL = null;
+      try {
+        graphQL = GraphQLProvider.buildGraphQL(fetchers);
+      } catch (final IOException ioe) {
+        throw new RuntimeException(ioe);
+      }
+
+      graphQLRpcHttpService =
+          Optional.of(
+              new GraphQLRpcHttpService(
+                  vertx, dataDir, graphQLRpcConfiguration, graphQL, dataFetcherContext));
+    }
 
     Optional<WebSocketService> webSocketService = Optional.empty();
     if (webSocketConfiguration.isEnabled()) {
