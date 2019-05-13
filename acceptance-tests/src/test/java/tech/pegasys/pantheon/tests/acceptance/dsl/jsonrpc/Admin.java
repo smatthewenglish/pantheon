@@ -13,7 +13,6 @@
 package tech.pegasys.pantheon.tests.acceptance.dsl.jsonrpc;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.fail;
 
 import tech.pegasys.pantheon.tests.acceptance.dsl.condition.Condition;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.Node;
@@ -21,44 +20,43 @@ import tech.pegasys.pantheon.tests.acceptance.dsl.node.RunnableNode;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.JsonRequestFactories;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.Transaction;
 
-import java.io.IOException;
 import java.net.URI;
 
 import org.web3j.protocol.core.Response;
 
 public class Admin {
 
-    public Condition addPeer(final Node node) {
+  public Condition addPeer(final Node node) {
 
-        System.out.println("999");
+    System.out.println("999");
 
-        return new Condition() {
-            @Override
-            public void verify(Node x) {
+    return new Condition() {
+      @Override
+      public void verify(Node x) {
 
-                System.out.println("888");
+        System.out.println("888");
 
-                final Boolean result =
-                        node.execute(
-                                new Transaction<Boolean>() {
-                                    @Override
-                                    public Boolean execute(JsonRequestFactories requestFactories) {
+        final Boolean result =
+            node.execute(
+                new Transaction<Boolean>() {
+                  @Override
+                  public Boolean execute(JsonRequestFactories requestFactories) {
 
-                                        System.out.println("777");
+                    System.out.println("777");
 
-                                        Response<Boolean> resp = null;
-                                        try {
-                                            URI enodeUrl = ((RunnableNode) x).enodeUrl();
-                                            resp = requestFactories.admin().adminAddPeer(enodeUrl).send();
-                                            assertThat(resp).isNotNull();
-                                            assertThat(resp.hasError()).isFalse();
-                                        } catch (final Exception ignored) {
-                                        }
-                                        return resp.getResult();
-                                    }
-                                });
-                assertThat(result).isTrue();
-            }
-        };
-    }
+                    Response<Boolean> resp = null;
+                    try {
+                      URI enodeUrl = ((RunnableNode) x).enodeUrl();
+                      resp = requestFactories.admin().adminAddPeer(enodeUrl).send();
+                      assertThat(resp).isNotNull();
+                      assertThat(resp.hasError()).isFalse();
+                    } catch (final Exception ignored) {
+                    }
+                    return resp.getResult();
+                  }
+                });
+        assertThat(result).isTrue();
+      }
+    };
+  }
 }
