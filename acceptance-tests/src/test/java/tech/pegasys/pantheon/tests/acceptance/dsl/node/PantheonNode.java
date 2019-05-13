@@ -267,7 +267,7 @@ public class PantheonNode implements NodeConfiguration, RunnableNode, AutoClosea
               new PermissioningJsonRpcRequestFactory(web3jService),
               new AdminJsonRpcRequestFactory(web3jService),
               new EeaJsonRpcRequestFactory(web3jService),
-                  new NetServicesJsonRpcRequestFactory(web3jService),
+              new NetServicesJsonRpcRequestFactory(web3jService),
               websocketService);
     }
 
