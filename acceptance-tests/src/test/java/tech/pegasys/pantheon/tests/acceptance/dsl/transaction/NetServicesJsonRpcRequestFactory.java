@@ -6,10 +6,14 @@ import org.web3j.protocol.core.Response;
 
 import java.net.URI;
 import java.util.Collections;
+import java.util.Map;
 
 public class NetServicesJsonRpcRequestFactory {
 
-    public static class NetServicesResponse extends Response<Boolean> {}
+    //public static class ProposalsResponse extends Response<Map<Address, Boolean>> {}
+    public static class NetServicesResponse extends Response<Map<String, Map<String, String>>> {
+
+    }
 
     private final Web3jService web3jService;
 
@@ -18,10 +22,13 @@ public class NetServicesJsonRpcRequestFactory {
     }
 
     public Request<?, NetServicesResponse> netServices(final URI enodeAddress) {
-        return new Request<>(
+
+        Request request = new Request<>(
                 "net_services",
-                Collections.singletonList(enodeAddress.toASCIIString()),
+                Collections.EMPTY_LIST,
                 web3jService,
                 NetServicesResponse.class);
+
+        return request;
     }
 }
