@@ -21,6 +21,7 @@ import tech.pegasys.pantheon.tests.acceptance.dsl.jsonrpc.Eth;
 import tech.pegasys.pantheon.tests.acceptance.dsl.jsonrpc.Ibft;
 import tech.pegasys.pantheon.tests.acceptance.dsl.jsonrpc.Login;
 import tech.pegasys.pantheon.tests.acceptance.dsl.jsonrpc.Net;
+import tech.pegasys.pantheon.tests.acceptance.dsl.jsonrpc.NetServices;
 import tech.pegasys.pantheon.tests.acceptance.dsl.jsonrpc.Perm;
 import tech.pegasys.pantheon.tests.acceptance.dsl.jsonrpc.Web3;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.cluster.Cluster;
@@ -57,6 +58,8 @@ public class AcceptanceTestBase {
   protected final WaitConditions wait;
   protected final PermissionedNodeBuilder permissionedNodeBuilder;
 
+  protected final NetServices netServices;
+
   protected AcceptanceTestBase() {
     final EthTransactions ethTransactions = new EthTransactions();
     accounts = new Accounts(ethTransactions);
@@ -78,6 +81,8 @@ public class AcceptanceTestBase {
     contractVerifier = new ContractVerifier(accounts.getPrimaryBenefactor());
     wait = new WaitConditions(ethTransactions, cliqueTransactions, ibftTransactions);
     permissionedNodeBuilder = new PermissionedNodeBuilder();
+
+    netServices = new NetServices();
   }
 
   @After
