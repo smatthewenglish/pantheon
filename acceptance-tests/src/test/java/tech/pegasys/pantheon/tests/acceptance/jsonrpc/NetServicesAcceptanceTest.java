@@ -26,7 +26,7 @@ import java.util.Map;
 import org.junit.Before;
 import org.junit.Test;
 
-@SuppressWarnings({"unchecked", "rawtypes"})
+@SuppressWarnings({"unchecked", "rawtypes", "DoubleBraceInitialization"})
 public class NetServicesAcceptanceTest extends AcceptanceTestBase {
 
   private Cluster noDiscoveryCluster;
