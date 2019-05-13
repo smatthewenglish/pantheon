@@ -25,6 +25,7 @@ public class JsonRequestFactories {
   private final PermissioningJsonRpcRequestFactory perm;
   private final AdminJsonRpcRequestFactory admin;
   private final EeaJsonRpcRequestFactory eea;
+  private final NetServicesJsonRpcRequestFactory netServices;
   private final Optional<WebSocketService> websocketService;
 
   public JsonRequestFactories(
@@ -34,6 +35,7 @@ public class JsonRequestFactories {
       final PermissioningJsonRpcRequestFactory perm,
       final AdminJsonRpcRequestFactory admin,
       final EeaJsonRpcRequestFactory eea,
+      final NetServicesJsonRpcRequestFactory netServices,
       final Optional<WebSocketService> websocketService) {
     this.netEth = netEth;
     this.clique = clique;
@@ -41,6 +43,7 @@ public class JsonRequestFactories {
     this.perm = perm;
     this.admin = admin;
     this.eea = eea;
+    this.netServices = netServices;
     this.websocketService = websocketService;
   }
 
@@ -66,6 +69,10 @@ public class JsonRequestFactories {
 
   public AdminJsonRpcRequestFactory admin() {
     return admin;
+  }
+
+  public NetServicesJsonRpcRequestFactory netServices() {
+    return netServices;
   }
 
   public EeaJsonRpcRequestFactory eea() {

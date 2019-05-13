@@ -40,6 +40,10 @@ public class NetServices {
                                             System.out.println("netVersion: " + requestFactories.net().netListening().send().isListening());
 
                                             URI enodeUrl = ((RunnableNode) x).enodeUrl();
+
+                                            System.out.println("-->: " + requestFactories.netServices().netServices(enodeUrl).send().getJsonrpc());
+
+
                                             resp = requestFactories.admin().adminAddPeer(enodeUrl).send();
                                             assertThat(resp).isNotNull();
                                             assertThat(resp.hasError()).isFalse();
