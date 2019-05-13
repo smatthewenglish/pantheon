@@ -26,6 +26,7 @@ import java.util.Map;
 import org.junit.Before;
 import org.junit.Test;
 
+@SuppressWarnings({"unchecked", "rawtypes"})
 public class NetServicesAcceptanceTest extends AcceptanceTestBase {
 
   private Cluster noDiscoveryCluster;
@@ -45,9 +46,9 @@ public class NetServicesAcceptanceTest extends AcceptanceTestBase {
 
   @Test
   public void adminAddPeerForcesConnection() {
-    Map<String, Map<String, String>> result = netServices.addPeer(nodeA);
-    Map<String, Map<String, String>> expectation = new HashMap<>();
-    Map<String, String> constituentMap =
+    final Map<String, Map<String, String>> result = netServices.addPeer(nodeA);
+    final Map<String, Map<String, String>> expectation = new HashMap<>();
+    final Map<String, String> constituentMap =
         new HashMap() {
           {
             put("host", "127.0.0.1");

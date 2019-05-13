@@ -57,7 +57,6 @@ public class AcceptanceTestBase {
   protected final ContractVerifier contractVerifier;
   protected final WaitConditions wait;
   protected final PermissionedNodeBuilder permissionedNodeBuilder;
-
   protected final NetServices netServices;
 
   protected AcceptanceTestBase() {
@@ -81,7 +80,6 @@ public class AcceptanceTestBase {
     contractVerifier = new ContractVerifier(accounts.getPrimaryBenefactor());
     wait = new WaitConditions(ethTransactions, cliqueTransactions, ibftTransactions);
     permissionedNodeBuilder = new PermissionedNodeBuilder();
-
     netServices = new NetServices();
   }
 
