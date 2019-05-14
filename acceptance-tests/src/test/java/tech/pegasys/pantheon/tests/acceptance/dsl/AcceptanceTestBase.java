@@ -21,7 +21,6 @@ import tech.pegasys.pantheon.tests.acceptance.dsl.jsonrpc.Eth;
 import tech.pegasys.pantheon.tests.acceptance.dsl.jsonrpc.Ibft;
 import tech.pegasys.pantheon.tests.acceptance.dsl.jsonrpc.Login;
 import tech.pegasys.pantheon.tests.acceptance.dsl.jsonrpc.Net;
-import tech.pegasys.pantheon.tests.acceptance.dsl.jsonrpc.NetServices;
 import tech.pegasys.pantheon.tests.acceptance.dsl.jsonrpc.Perm;
 import tech.pegasys.pantheon.tests.acceptance.dsl.jsonrpc.Web3;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.cluster.Cluster;

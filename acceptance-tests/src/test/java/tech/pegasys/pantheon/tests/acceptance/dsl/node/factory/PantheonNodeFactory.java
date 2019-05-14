@@ -132,7 +132,11 @@ public class PantheonNodeFactory {
 
   public PantheonNode createArchiveNodeNetServicesDisabled(final String name) throws IOException {
     return create(
-        new PantheonFactoryConfigurationBuilder().setName(name).setDiscoveryEnabled(false).build());
+        new PantheonFactoryConfigurationBuilder()
+            .setName(name)
+            .setP2pEnabled(false)
+            .setDiscoveryEnabled(false)
+            .build());
   }
 
   public PantheonNode createArchiveNodeWithAuthentication(final String name)

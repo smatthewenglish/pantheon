@@ -14,16 +14,15 @@ package tech.pegasys.pantheon.tests.acceptance.dsl.condition.net;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.google.common.net.InetAddresses;
 import tech.pegasys.pantheon.tests.acceptance.dsl.condition.Condition;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.Node;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.net.NetServicesTransaction;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.net.NetTransactions;
 import tech.pegasys.pantheon.util.NetworkUtility;
-import tech.pegasys.pantheon.util.enode.EnodeURL;
 
 import java.util.Map;
-import java.util.regex.Pattern;
+
+import com.google.common.net.InetAddresses;
 
 public class ExpectNetServicesReturnsAllServicesAsActive implements Condition {
 
