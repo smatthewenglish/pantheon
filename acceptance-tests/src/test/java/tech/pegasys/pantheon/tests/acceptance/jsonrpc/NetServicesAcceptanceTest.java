@@ -20,7 +20,6 @@ import tech.pegasys.pantheon.tests.acceptance.dsl.node.cluster.ClusterConfigurat
 
 import org.junit.Test;
 
-@SuppressWarnings({"unchecked", "rawtypes", "DoubleBraceInitialization"})
 public class NetServicesAcceptanceTest extends AcceptanceTestBase {
 
   private Cluster noDiscoveryCluster;
