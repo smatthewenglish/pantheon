@@ -14,11 +14,13 @@ package tech.pegasys.pantheon.tests.acceptance.dsl.condition.net;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.google.common.net.InetAddresses;
 import tech.pegasys.pantheon.tests.acceptance.dsl.condition.Condition;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.Node;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.net.NetServicesTransaction;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.net.NetTransactions;
 import tech.pegasys.pantheon.util.NetworkUtility;
+import tech.pegasys.pantheon.util.enode.EnodeURL;
 
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -26,8 +28,6 @@ import java.util.regex.Pattern;
 public class ExpectNetServicesReturnsAllServicesAsActive implements Condition {
 
   private final NetServicesTransaction transaction;
-  private final Pattern PATTERN =
-      Pattern.compile("^(([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\.){3}([01]?\\d\\d?|2[0-4]\\d|25[0-5])$");
 
   public ExpectNetServicesReturnsAllServicesAsActive(final NetServicesTransaction transaction) {
     this.transaction = transaction;
@@ -37,21 +37,17 @@ public class ExpectNetServicesReturnsAllServicesAsActive implements Condition {
   public void verify(final Node node) {
     final Map<String, Map<String, String>> result = node.execute(transaction);
 
-    assertThat(validateHost(result.get("p2p").get("host"))).isTrue();
+    assertThat(InetAddresses.isUriInetAddress(result.get("p2p").get("host"))).isTrue();
     final int p2pPort = Integer.valueOf(result.get("p2p").get("port"));
     assertThat(NetworkUtility.isValidPort(p2pPort)).isTrue();
 
-    assertThat(validateHost(result.get("ws").get("host"))).isTrue();
+    assertThat(InetAddresses.isUriInetAddress(result.get("ws").get("host"))).isTrue();
     final int wsPort = Integer.valueOf(result.get("ws").get("port"));
     assertThat(NetworkUtility.isValidPort(wsPort) || wsPort == 0).isTrue();
 
-    assertThat(validateHost(result.get("jsonrpc").get("host"))).isTrue();
+    assertThat(InetAddresses.isUriInetAddress(result.get("jsonrpc").get("host"))).isTrue();
     final int jsonRpcPort = Integer.valueOf(result.get("jsonrpc").get("port"));
     assertThat(NetworkUtility.isValidPort(jsonRpcPort) || jsonRpcPort == 0).isTrue();
-  }
-
-  private boolean validateHost(final String ip) {
-    return PATTERN.matcher(ip).matches();
   }
 
   public static class ExpectNetServicesReturnsNoServicesAsActive implements Condition {
