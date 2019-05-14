@@ -32,6 +32,11 @@ public class Net {
     this.transactions = transactions;
   }
 
+  public Condition netServices() {
+
+    return transactions.netServices();
+  }
+
   public Condition netVersion() {
     return new ExpectNetVersionIsNotBlank(transactions.netVersion());
   }
