@@ -12,16 +12,11 @@
  */
 package tech.pegasys.pantheon.tests.acceptance.jsonrpc;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 import tech.pegasys.pantheon.tests.acceptance.dsl.AcceptanceTestBase;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.Node;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.cluster.Cluster;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.cluster.ClusterConfiguration;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.cluster.ClusterConfigurationBuilder;
-
-import java.util.HashMap;
-import java.util.Map;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -46,23 +41,8 @@ public class NetServicesAcceptanceTest extends AcceptanceTestBase {
 
   @Test
   public void shouldIndicateNetServicesEnabled() {
-    final Map<String, Map<String, String>> result = netServices.addPeer(nodeA);
-    final Map<String, Map<String, String>> expectation = new HashMap<>();
-    final Map<String, String> constituentMap =
-        new HashMap() {
-          {
-            put("host", "127.0.0.1");
-            put("port", "0");
-          }
-        };
-    expectation.put("jsonrpc", constituentMap);
-    expectation.put("ws", constituentMap);
-    expectation.put("p2p", constituentMap);
-    assertThat(expectation.get("jsonrpc").get("host")).isEqualTo(result.get("jsonrpc").get("host"));
-    assertThat(expectation.get("jsonrpc").get("port")).isEqualTo(result.get("jsonrpc").get("port"));
-    assertThat(expectation.get("ws").get("host")).isEqualTo(result.get("ws").get("host"));
-    assertThat(expectation.get("ws").get("port")).isEqualTo(result.get("ws").get("port"));
-    assertThat(expectation.get("p2p").get("host")).isEqualTo(result.get("p2p").get("host"));
+    nodeA.verify(net.netServicesAllActive());
+    nodeB.verify(net.netServicesAllActive());
   }
 
   @Test

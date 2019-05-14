@@ -21,8 +21,8 @@ public class NetTransactions {
   public NetServicesTransaction netServices() {
     return new NetServicesTransaction();
   }
+
   public NetPeerCountTransaction peerCount() {
     return new NetPeerCountTransaction();
   }
-
 }
