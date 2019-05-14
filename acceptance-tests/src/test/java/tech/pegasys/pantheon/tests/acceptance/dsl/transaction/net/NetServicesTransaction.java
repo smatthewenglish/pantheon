@@ -35,6 +35,8 @@ public class NetServicesTransaction implements Transaction<Map<String, Map<Strin
       netServicesResponse = request.send();
     } catch (final Exception ignored) {
     }
-    return netServicesResponse.getResult();
+    return (netServicesResponse != null ? netServicesResponse.getResult() : null) != null
+        ? netServicesResponse.getResult()
+        : null;
   }
 }
