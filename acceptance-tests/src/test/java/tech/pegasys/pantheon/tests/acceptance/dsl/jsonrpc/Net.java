@@ -37,6 +37,10 @@ public class Net {
     return new ExpectNetServicesReturnsAllServicesAsActive(transactions.netServices());
   }
 
+    public Condition netServicesNotActive() {
+        return new ExpectNetServicesReturnsAllServicesAsActive.ExpectNetServicesReturnsNoServicesAsActive(transactions);
+    }
+
   public Condition netVersion() {
     return new ExpectNetVersionIsNotBlank(transactions.netVersion());
   }

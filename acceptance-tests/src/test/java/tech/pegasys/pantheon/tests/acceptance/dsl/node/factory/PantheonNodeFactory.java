@@ -130,6 +130,15 @@ public class PantheonNodeFactory {
             .build());
   }
 
+  public PantheonNode createArchiveNodeX(final String name)
+          throws IOException {
+    return create(
+            new PantheonFactoryConfigurationBuilder()
+                    .setName(name)
+                    .setDiscoveryEnabled(false)
+                    .build());
+  }
+
   public PantheonNode createArchiveNodeWithAuthentication(final String name)
       throws IOException, URISyntaxException {
     return create(

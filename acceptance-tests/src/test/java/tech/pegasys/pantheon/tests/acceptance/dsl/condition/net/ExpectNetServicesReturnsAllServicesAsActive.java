@@ -17,6 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import tech.pegasys.pantheon.tests.acceptance.dsl.condition.Condition;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.Node;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.net.NetServicesTransaction;
+import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.net.NetTransactions;
 import tech.pegasys.pantheon.util.NetworkUtility;
 
 import java.util.Map;
@@ -51,5 +52,19 @@ public class ExpectNetServicesReturnsAllServicesAsActive implements Condition {
 
   private boolean validateHost(final String ip) {
     return PATTERN.matcher(ip).matches();
+  }
+
+  public static class ExpectNetServicesReturnsNoServicesAsActive implements Condition {
+
+    private final NetTransactions transaction;
+
+    public ExpectNetServicesReturnsNoServicesAsActive(final NetTransactions transaction) {
+      this.transaction = transaction;
+    }
+
+    @Override
+    public void verify(final Node node) {
+      assertThat(node.execute(transaction.netServices())).isNull();
+    }
   }
 }

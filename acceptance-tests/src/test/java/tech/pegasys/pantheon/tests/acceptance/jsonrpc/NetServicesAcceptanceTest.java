@@ -21,7 +21,6 @@ import tech.pegasys.pantheon.tests.acceptance.dsl.node.cluster.ClusterConfigurat
 import org.junit.Before;
 import org.junit.Test;
 
-@SuppressWarnings({"unchecked", "rawtypes", "DoubleBraceInitialization"})
 public class NetServicesAcceptanceTest extends AcceptanceTestBase {
 
   private Cluster noDiscoveryCluster;
@@ -29,22 +28,29 @@ public class NetServicesAcceptanceTest extends AcceptanceTestBase {
   private Node nodeA;
   private Node nodeB;
 
-  @Before
-  public void setUp() throws Exception {
+  @Test
+  public void shouldIndicateNetServicesEnabled() throws Exception  {
     final ClusterConfiguration clusterConfiguration =
-        new ClusterConfigurationBuilder().setAwaitPeerDiscovery(false).build();
+            new ClusterConfigurationBuilder().setAwaitPeerDiscovery(false).build();
     noDiscoveryCluster = new Cluster(clusterConfiguration, net);
     nodeA = pantheon.createArchiveNodeWithDiscoveryDisabledAndAdmin("nodeA");
     nodeB = pantheon.createArchiveNodeWithDiscoveryDisabledAndAdmin("nodeB");
     noDiscoveryCluster.start(nodeA, nodeB);
-  }
 
-  @Test
-  public void shouldIndicateNetServicesEnabled() {
     nodeA.verify(net.netServicesAllActive());
     nodeB.verify(net.netServicesAllActive());
   }
 
   @Test
-  public void shouldIndicateNetServicesDisabled() {}
+  public void shouldIndicateNetServicesDisabled() throws Exception {
+    final ClusterConfiguration clusterConfiguration =
+            new ClusterConfigurationBuilder().setAwaitPeerDiscovery(false).build();
+    noDiscoveryCluster = new Cluster(clusterConfiguration, net);
+    nodeA = pantheon.createArchiveNodeX("nodeA");
+    nodeB = pantheon.createArchiveNodeX("nodeB");
+    noDiscoveryCluster.start(nodeA, nodeB);
+
+    nodeA.verify(net.netServicesNotActive());
+    nodeB.verify(net.netServicesNotActive());
+  }
 }
