@@ -42,12 +42,12 @@ public class ExpectNetServicesReturnsAllServicesAsActive implements Condition {
 
     assertThat(InetAddresses.isUriInetAddress(result.get("ws").get("host"))).isTrue();
     final int wsPort = Integer.valueOf(result.get("ws").get("port"));
-    // TODO: explicitly set port
+    // TODO: Port should not be 0-valued
     assertThat(NetworkUtility.isValidPort(wsPort) || wsPort == 0).isTrue();
 
     assertThat(InetAddresses.isUriInetAddress(result.get("jsonrpc").get("host"))).isTrue();
     final int jsonRpcPort = Integer.valueOf(result.get("jsonrpc").get("port"));
-    // TODO: explicitly set port
+    // TODO: Port should not be 0-valued
     assertThat(NetworkUtility.isValidPort(jsonRpcPort) || jsonRpcPort == 0).isTrue();
   }
 
