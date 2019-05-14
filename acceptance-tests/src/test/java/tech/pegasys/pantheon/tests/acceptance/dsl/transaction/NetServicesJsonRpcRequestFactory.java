@@ -32,10 +32,7 @@ public class NetServicesJsonRpcRequestFactory {
 
   public Request<?, NetServicesResponse> netServices() {
 
-    final Request request =
-        new Request<>(
-            "net_services", Collections.EMPTY_LIST, web3jService, NetServicesResponse.class);
-
-    return request;
+    return new Request<>(
+        "net_services", Collections.EMPTY_LIST, web3jService, NetServicesResponse.class);
   }
 }
