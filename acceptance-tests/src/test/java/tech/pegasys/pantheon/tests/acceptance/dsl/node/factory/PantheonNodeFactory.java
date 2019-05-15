@@ -135,6 +135,7 @@ public class PantheonNodeFactory {
     final MetricsConfiguration metricsConfiguration = MetricsConfiguration.createDefault();
     metricsConfiguration.setEnabled(true);
     metricsConfiguration.setPort(0);
+    metricsConfiguration.setPushEnabled(false);
     return create(
         new PantheonFactoryConfigurationBuilder()
             .setName(name)
