@@ -19,20 +19,17 @@ import org.web3j.protocol.Web3jService;
 import org.web3j.protocol.core.Request;
 import org.web3j.protocol.core.Response;
 
-@SuppressWarnings({"unchecked", "rawtypes"})
-public class NetServicesJsonRpcRequestFactory {
+public class CustomNetJsonRpcRequestFactory {
 
   public static class NetServicesResponse extends Response<Map<String, Map<String, String>>> {}
 
   private final Web3jService web3jService;
 
-  public NetServicesJsonRpcRequestFactory(final Web3jService web3jService) {
+  public CustomNetJsonRpcRequestFactory(final Web3jService web3jService) {
     this.web3jService = web3jService;
   }
 
-  public Request<?, NetServicesResponse> netServices() {
-
-    return new Request<>(
-        "net_services", Collections.EMPTY_LIST, web3jService, NetServicesResponse.class);
+  public Request<?, NetServicesResponse> customNet() {
+    return new Request<>("net_services", Collections.emptyList(), web3jService, NetServicesResponse.class);
   }
 }

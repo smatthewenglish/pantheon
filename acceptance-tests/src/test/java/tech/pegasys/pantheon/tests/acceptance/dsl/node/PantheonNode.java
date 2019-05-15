@@ -34,7 +34,7 @@ import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.CliqueJsonRpcReque
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.EeaJsonRpcRequestFactory;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.IbftJsonRpcRequestFactory;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.JsonRequestFactories;
-import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.NetServicesJsonRpcRequestFactory;
+import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.CustomNetJsonRpcRequestFactory;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.PermissioningJsonRpcRequestFactory;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.Transaction;
 import tech.pegasys.pantheon.tests.acceptance.dsl.waitcondition.WaitCondition;
@@ -267,7 +267,7 @@ public class PantheonNode implements NodeConfiguration, RunnableNode, AutoClosea
               new PermissioningJsonRpcRequestFactory(web3jService),
               new AdminJsonRpcRequestFactory(web3jService),
               new EeaJsonRpcRequestFactory(web3jService),
-              new NetServicesJsonRpcRequestFactory(web3jService),
+              new CustomNetJsonRpcRequestFactory(web3jService),
               websocketService);
     }
 

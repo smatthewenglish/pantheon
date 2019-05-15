@@ -12,29 +12,35 @@
  */
 package tech.pegasys.pantheon.tests.acceptance.dsl.transaction.net;
 
+import org.apache.logging.log4j.Logger;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.JsonRequestFactories;
-import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.NetServicesJsonRpcRequestFactory;
+import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.CustomNetJsonRpcRequestFactory;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.Transaction;
 
 import java.util.Map;
 
 import org.web3j.protocol.core.Request;
 
+import static org.apache.logging.log4j.LogManager.getLogger;
+
 public class NetServicesTransaction implements Transaction<Map<String, Map<String, String>>> {
+  private static final Logger LOG = getLogger();
 
   NetServicesTransaction() {}
 
   @Override
   public Map<String, Map<String, String>> execute(final JsonRequestFactories requestFactories) {
-    NetServicesJsonRpcRequestFactory.NetServicesResponse netServicesResponse = null;
+    Map<String, Map<String, String>> netServicesActive = null;
     try {
-      NetServicesJsonRpcRequestFactory netServicesJsonRpcRequestFactory =
+      CustomNetJsonRpcRequestFactory netServicesJsonRpcRequestFactory =
           requestFactories.netServices();
-      Request<?, NetServicesJsonRpcRequestFactory.NetServicesResponse> request =
-          netServicesJsonRpcRequestFactory.netServices();
-      netServicesResponse = request.send();
-    } catch (final Exception ignored) {
+      Request<?, CustomNetJsonRpcRequestFactory.NetServicesResponse> request =
+          netServicesJsonRpcRequestFactory.customNet();
+      CustomNetJsonRpcRequestFactory.NetServicesResponse netServicesResponse = request.send();
+      netServicesActive = netServicesResponse.getResult();
+    } catch (final Exception e) {
+      LOG.error("Error parsing response to 'net_services' json-rpc request.", e);
     }
-    return netServicesResponse != null ? netServicesResponse.getResult() : null;
+    return netServicesActive;
   }
 }

@@ -41,7 +41,7 @@ public class NetServicesAcceptanceTest extends AcceptanceTestBase {
   }
 
   @Test
-  public void shouldIndicateNetServicesDisabled() throws Exception {
+  public void shouldNotDisplayDisabledServices() throws Exception {
     final ClusterConfiguration clusterConfiguration =
         new ClusterConfigurationBuilder().setAwaitPeerDiscovery(false).build();
     noDiscoveryCluster = new Cluster(clusterConfiguration, net);
