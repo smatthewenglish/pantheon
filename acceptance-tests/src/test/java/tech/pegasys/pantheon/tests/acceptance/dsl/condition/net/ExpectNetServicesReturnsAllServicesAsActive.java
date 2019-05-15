@@ -47,31 +47,17 @@ public class ExpectNetServicesReturnsAllServicesAsActive implements Condition {
     assertThat(InetAddresses.isUriInetAddress(result.get("metrics").get("host"))).isTrue();
     final int metricsPort = Integer.valueOf(result.get("metrics").get("port"));
     // TODO: Port should not be 0-valued. Refer to PAN-2703
-    assertThat(metricsPort == 0).isTrue();
+    assertThat(NetworkUtility.isValidPort(p2pPort) || metricsPort == 0).isTrue();
 
     assertThat(InetAddresses.isUriInetAddress(result.get("ws").get("host"))).isTrue();
     final int wsPort = Integer.valueOf(result.get("ws").get("port"));
     // TODO: Port should not be 0-valued. Refer to PAN-2703
-    assertThat(wsPort == 0).isTrue();
+    assertThat(NetworkUtility.isValidPort(p2pPort) || wsPort == 0).isTrue();
 
     assertThat(InetAddresses.isUriInetAddress(result.get("jsonrpc").get("host"))).isTrue();
     final int jsonRpcPort = Integer.valueOf(result.get("jsonrpc").get("port"));
     // TODO: Port should not be 0-valued. Refer to PAN-2703
-    assertThat(jsonRpcPort == 0).isTrue();
-  }
-
-  public static class ExpectNetServicesReturnsNoServicesAsActive implements Condition {
-
-    private final NetTransactions transaction;
-
-    public ExpectNetServicesReturnsNoServicesAsActive(final NetTransactions transaction) {
-      this.transaction = transaction;
-    }
-
-    @Override
-    public void verify(final Node node) {
-      assertThat(node.execute(transaction.netServices())).isNull();
-    }
+    assertThat(NetworkUtility.isValidPort(p2pPort) || jsonRpcPort == 0).isTrue();
   }
 
   public static class ExpectNetServicesReturnsNoServicesAsActiveX implements Condition {
@@ -91,7 +77,7 @@ public class ExpectNetServicesReturnsAllServicesAsActive implements Condition {
       assertThat(InetAddresses.isUriInetAddress(result.get("jsonrpc").get("host"))).isTrue();
       final int jsonrpcPort = Integer.valueOf(result.get("jsonrpc").get("port"));
       // TODO: Port should not be 0-valued. Refer to PAN-2703
-      assertThat(jsonrpcPort == 0).isTrue();
+      assertThat(NetworkUtility.isValidPort(jsonrpcPort) || jsonrpcPort == 0).isTrue();
     }
   }
 }
