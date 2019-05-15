@@ -12,16 +12,16 @@
  */
 package tech.pegasys.pantheon.tests.acceptance.dsl.transaction.net;
 
-import org.apache.logging.log4j.Logger;
-import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.JsonRequestFactories;
+import static org.apache.logging.log4j.LogManager.getLogger;
+
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.CustomNetJsonRpcRequestFactory;
+import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.JsonRequestFactories;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.Transaction;
 
 import java.util.Map;
 
+import org.apache.logging.log4j.Logger;
 import org.web3j.protocol.core.Request;
-
-import static org.apache.logging.log4j.LogManager.getLogger;
 
 public class NetServicesTransaction implements Transaction<Map<String, Map<String, String>>> {
   private static final Logger LOG = getLogger();
@@ -37,9 +37,7 @@ public class NetServicesTransaction implements Transaction<Map<String, Map<Strin
       Request<?, CustomNetJsonRpcRequestFactory.NetServicesResponse> request =
           netServicesJsonRpcRequestFactory.customNet();
 
-
       System.out.println();
-
 
       CustomNetJsonRpcRequestFactory.NetServicesResponse netServicesResponse = request.send();
       netServicesActive = netServicesResponse.getResult();

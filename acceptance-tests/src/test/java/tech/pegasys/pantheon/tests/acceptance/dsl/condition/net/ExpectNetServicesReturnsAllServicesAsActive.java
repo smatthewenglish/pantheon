@@ -37,7 +37,8 @@ public class ExpectNetServicesReturnsAllServicesAsActive implements Condition {
   @Override
   public void verify(final Node node) {
     final Map<String, Map<String, String>> result = node.execute(transaction);
-    assertThat(result.keySet()).containsExactlyInAnyOrderElementsOf(Arrays.asList("p2p","jsonrpc","ws","metrics"));
+    assertThat(result.keySet())
+        .containsExactlyInAnyOrderElementsOf(Arrays.asList("p2p", "jsonrpc", "ws", "metrics"));
 
     assertThat(InetAddresses.isUriInetAddress(result.get("p2p").get("host"))).isTrue();
     final int p2pPort = Integer.valueOf(result.get("p2p").get("port"));
@@ -84,7 +85,8 @@ public class ExpectNetServicesReturnsAllServicesAsActive implements Condition {
     @Override
     public void verify(final Node node) {
       final Map<String, Map<String, String>> result = node.execute(transaction);
-      assertThat(result.keySet()).containsExactlyInAnyOrderElementsOf(Collections.singletonList("jsonrpc"));
+      assertThat(result.keySet())
+          .containsExactlyInAnyOrderElementsOf(Collections.singletonList("jsonrpc"));
 
       assertThat(InetAddresses.isUriInetAddress(result.get("jsonrpc").get("host"))).isTrue();
       final int jsonrpcPort = Integer.valueOf(result.get("jsonrpc").get("port"));

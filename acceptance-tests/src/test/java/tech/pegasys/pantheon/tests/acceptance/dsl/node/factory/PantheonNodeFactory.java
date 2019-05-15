@@ -18,7 +18,6 @@ import static java.util.stream.Collectors.toList;
 import static tech.pegasys.pantheon.consensus.clique.jsonrpc.CliqueRpcApis.CLIQUE;
 import static tech.pegasys.pantheon.consensus.ibft.jsonrpc.IbftRpcApis.IBFT;
 
-import io.netty.util.internal.SocketUtils;
 import tech.pegasys.pantheon.consensus.clique.CliqueExtraData;
 import tech.pegasys.pantheon.consensus.ibft.IbftExtraData;
 import tech.pegasys.pantheon.ethereum.core.Address;
@@ -34,7 +33,6 @@ import tech.pegasys.pantheon.tests.acceptance.dsl.node.PantheonNode;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.RunnableNode;
 
 import java.io.IOException;
-import java.net.ServerSocket;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.Charset;
@@ -138,34 +136,34 @@ public class PantheonNodeFactory {
     metricsConfiguration.setEnabled(true);
     metricsConfiguration.setPort(0);
     return create(
-            new PantheonFactoryConfigurationBuilder()
-                    .setName(name)
-                    .setMetricsConfiguration(metricsConfiguration)
-                    .setJsonRpcConfiguration(jsonRpcConfigWithAdmin())
-                    .webSocketEnabled()
-                    .setP2pEnabled(true)
-                    .build());
+        new PantheonFactoryConfigurationBuilder()
+            .setName(name)
+            .setMetricsConfiguration(metricsConfiguration)
+            .setJsonRpcConfiguration(jsonRpcConfigWithAdmin())
+            .webSocketEnabled()
+            .setP2pEnabled(true)
+            .build());
   }
 
   public PantheonNode createArchiveNodeNetServicesDisabled(final String name) throws IOException {
-//    final MetricsConfiguration metricsConfiguration = MetricsConfiguration.createDefault();
-//    metricsConfiguration.setEnabled(false);
-//    return create(
-//        new PantheonFactoryConfigurationBuilder()
-//            .setName(name).setMetricsConfiguration(metricsConfiguration)
-//            .setP2pEnabled(true)
-//            .setDiscoveryEnabled(false)
-//            .build());
+    //    final MetricsConfiguration metricsConfiguration = MetricsConfiguration.createDefault();
+    //    metricsConfiguration.setEnabled(false);
+    //    return create(
+    //        new PantheonFactoryConfigurationBuilder()
+    //            .setName(name).setMetricsConfiguration(metricsConfiguration)
+    //            .setP2pEnabled(true)
+    //            .setDiscoveryEnabled(false)
+    //            .build());
     final MetricsConfiguration metricsConfiguration = MetricsConfiguration.createDefault();
     metricsConfiguration.setEnabled(false);
-    //metricsConfiguration.setPort(0);
+    // metricsConfiguration.setPort(0);
     return create(
-            new PantheonFactoryConfigurationBuilder()
-                    .setName(name)
-                    .setMetricsConfiguration(metricsConfiguration)
-                    .setJsonRpcConfiguration(jsonRpcConfigWithAdmin())
-                    .setP2pEnabled(false)
-                    .build());
+        new PantheonFactoryConfigurationBuilder()
+            .setName(name)
+            .setMetricsConfiguration(metricsConfiguration)
+            .setJsonRpcConfiguration(jsonRpcConfigWithAdmin())
+            .setP2pEnabled(false)
+            .build());
   }
 
   public PantheonNode createArchiveNodeWithAuthentication(final String name)
