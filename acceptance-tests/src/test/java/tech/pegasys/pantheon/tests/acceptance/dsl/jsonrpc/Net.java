@@ -37,7 +37,7 @@ public class Net {
     return new ExpectNetServicesReturnsAllServicesAsActive(transactions.netServices());
   }
 
-  public Condition netServicesNotActive() {
+  public Condition netServicesOnlyJsonRpcEnabled() {
     return new ExpectNetServicesReturnsAllServicesAsActive
         .ExpectNetServicesReturnsNoServicesAsActiveX(transactions.netServices());
   }

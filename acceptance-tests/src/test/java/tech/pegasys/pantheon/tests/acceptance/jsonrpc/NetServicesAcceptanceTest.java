@@ -49,7 +49,7 @@ public class NetServicesAcceptanceTest extends AcceptanceTestBase {
     nodeB = pantheon.createArchiveNodeNetServicesDisabled("nodeB");
     noDiscoveryCluster.start(nodeA, nodeB);
 
-    nodeA.verify(net.netServicesNotActive());
-    nodeB.verify(net.netServicesNotActive());
+    nodeA.verify(net.netServicesOnlyJsonRpcEnabled());
+    nodeB.verify(net.netServicesOnlyJsonRpcEnabled());
   }
 }

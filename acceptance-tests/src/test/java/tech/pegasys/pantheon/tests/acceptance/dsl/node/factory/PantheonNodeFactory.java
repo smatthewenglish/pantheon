@@ -146,17 +146,8 @@ public class PantheonNodeFactory {
   }
 
   public PantheonNode createArchiveNodeNetServicesDisabled(final String name) throws IOException {
-    //    final MetricsConfiguration metricsConfiguration = MetricsConfiguration.createDefault();
-    //    metricsConfiguration.setEnabled(false);
-    //    return create(
-    //        new PantheonFactoryConfigurationBuilder()
-    //            .setName(name).setMetricsConfiguration(metricsConfiguration)
-    //            .setP2pEnabled(true)
-    //            .setDiscoveryEnabled(false)
-    //            .build());
     final MetricsConfiguration metricsConfiguration = MetricsConfiguration.createDefault();
     metricsConfiguration.setEnabled(false);
-    // metricsConfiguration.setPort(0);
     return create(
         new PantheonFactoryConfigurationBuilder()
             .setName(name)
