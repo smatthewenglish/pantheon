@@ -39,7 +39,7 @@ public class Net {
 
   public Condition netServicesNotActive() {
     return new ExpectNetServicesReturnsAllServicesAsActive
-        .ExpectNetServicesReturnsNoServicesAsActive(transactions);
+        .ExpectNetServicesReturnsNoServicesAsActiveX(transactions.netServices());
   }
 
   public Condition netVersion() {

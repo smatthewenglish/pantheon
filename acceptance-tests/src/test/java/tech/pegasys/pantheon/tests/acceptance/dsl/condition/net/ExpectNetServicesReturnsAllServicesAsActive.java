@@ -21,6 +21,7 @@ import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.net.NetTransaction
 import tech.pegasys.pantheon.util.NetworkUtility;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Map;
 
 import com.google.common.net.InetAddresses;
@@ -69,6 +70,26 @@ public class ExpectNetServicesReturnsAllServicesAsActive implements Condition {
     @Override
     public void verify(final Node node) {
       assertThat(node.execute(transaction.netServices())).isNull();
+    }
+  }
+
+  public static class ExpectNetServicesReturnsNoServicesAsActiveX implements Condition {
+
+    private final NetServicesTransaction transaction;
+
+    public ExpectNetServicesReturnsNoServicesAsActiveX(final NetServicesTransaction transaction) {
+      this.transaction = transaction;
+    }
+
+    @Override
+    public void verify(final Node node) {
+      final Map<String, Map<String, String>> result = node.execute(transaction);
+      assertThat(result.keySet()).containsExactlyInAnyOrderElementsOf(Collections.singletonList("jsonrpc"));
+
+      assertThat(InetAddresses.isUriInetAddress(result.get("jsonrpc").get("host"))).isTrue();
+      final int jsonrpcPort = Integer.valueOf(result.get("jsonrpc").get("port"));
+      // TODO: Port should not be 0-valued. Refer to PAN-2703
+      assertThat(jsonrpcPort == 0).isTrue();
     }
   }
 }

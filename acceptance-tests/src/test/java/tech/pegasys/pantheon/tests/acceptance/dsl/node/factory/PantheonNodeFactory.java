@@ -143,19 +143,29 @@ public class PantheonNodeFactory {
                     .setMetricsConfiguration(metricsConfiguration)
                     .setJsonRpcConfiguration(jsonRpcConfigWithAdmin())
                     .webSocketEnabled()
+                    .setP2pEnabled(true)
                     .build());
   }
 
   public PantheonNode createArchiveNodeNetServicesDisabled(final String name) throws IOException {
+//    final MetricsConfiguration metricsConfiguration = MetricsConfiguration.createDefault();
+//    metricsConfiguration.setEnabled(false);
+//    return create(
+//        new PantheonFactoryConfigurationBuilder()
+//            .setName(name).setMetricsConfiguration(metricsConfiguration)
+//            .setP2pEnabled(true)
+//            .setDiscoveryEnabled(false)
+//            .build());
     final MetricsConfiguration metricsConfiguration = MetricsConfiguration.createDefault();
     metricsConfiguration.setEnabled(false);
+    //metricsConfiguration.setPort(0);
     return create(
-        new PantheonFactoryConfigurationBuilder()
-            .setName(name)
-                .setMetricsConfiguration(metricsConfiguration)
-            .setP2pEnabled(false)
-            .setDiscoveryEnabled(false)
-            .build());
+            new PantheonFactoryConfigurationBuilder()
+                    .setName(name)
+                    .setMetricsConfiguration(metricsConfiguration)
+                    .setJsonRpcConfiguration(jsonRpcConfigWithAdmin())
+                    .setP2pEnabled(false)
+                    .build());
   }
 
   public PantheonNode createArchiveNodeWithAuthentication(final String name)
