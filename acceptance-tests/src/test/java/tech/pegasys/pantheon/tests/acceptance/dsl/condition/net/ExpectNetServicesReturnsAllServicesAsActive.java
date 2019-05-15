@@ -20,6 +20,7 @@ import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.net.NetServicesTra
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.net.NetTransactions;
 import tech.pegasys.pantheon.util.NetworkUtility;
 
+import java.util.Arrays;
 import java.util.Map;
 
 import com.google.common.net.InetAddresses;
@@ -35,20 +36,26 @@ public class ExpectNetServicesReturnsAllServicesAsActive implements Condition {
   @Override
   public void verify(final Node node) {
     final Map<String, Map<String, String>> result = node.execute(transaction);
+    assertThat(result.keySet()).containsExactlyInAnyOrderElementsOf(Arrays.asList("p2p","jsonrpc","ws","metrics"));
 
     assertThat(InetAddresses.isUriInetAddress(result.get("p2p").get("host"))).isTrue();
     final int p2pPort = Integer.valueOf(result.get("p2p").get("port"));
     assertThat(NetworkUtility.isValidPort(p2pPort)).isTrue();
 
+    assertThat(InetAddresses.isUriInetAddress(result.get("metrics").get("host"))).isTrue();
+    final int metricsPort = Integer.valueOf(result.get("metrics").get("port"));
+    // TODO: Port should not be 0-valued. Refer to PAN-2703
+    assertThat(metricsPort == 0).isTrue();
+
     assertThat(InetAddresses.isUriInetAddress(result.get("ws").get("host"))).isTrue();
     final int wsPort = Integer.valueOf(result.get("ws").get("port"));
     // TODO: Port should not be 0-valued. Refer to PAN-2703
-    assertThat(NetworkUtility.isValidPort(wsPort) || wsPort == 0).isTrue();
+    assertThat(wsPort == 0).isTrue();
 
     assertThat(InetAddresses.isUriInetAddress(result.get("jsonrpc").get("host"))).isTrue();
     final int jsonRpcPort = Integer.valueOf(result.get("jsonrpc").get("port"));
     // TODO: Port should not be 0-valued. Refer to PAN-2703
-    assertThat(NetworkUtility.isValidPort(jsonRpcPort) || jsonRpcPort == 0).isTrue();
+    assertThat(jsonRpcPort == 0).isTrue();
   }
 
   public static class ExpectNetServicesReturnsNoServicesAsActive implements Condition {

@@ -18,6 +18,7 @@ import static java.util.stream.Collectors.toList;
 import static tech.pegasys.pantheon.consensus.clique.jsonrpc.CliqueRpcApis.CLIQUE;
 import static tech.pegasys.pantheon.consensus.ibft.jsonrpc.IbftRpcApis.IBFT;
 
+import io.netty.util.internal.SocketUtils;
 import tech.pegasys.pantheon.consensus.clique.CliqueExtraData;
 import tech.pegasys.pantheon.consensus.ibft.IbftExtraData;
 import tech.pegasys.pantheon.ethereum.core.Address;
@@ -26,12 +27,14 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.JsonRpcConfiguration;
 import tech.pegasys.pantheon.ethereum.jsonrpc.RpcApi;
 import tech.pegasys.pantheon.ethereum.jsonrpc.RpcApis;
 import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.WebSocketConfiguration;
+import tech.pegasys.pantheon.metrics.prometheus.MetricsConfiguration;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.GenesisConfigProvider;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.Node;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.PantheonNode;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.RunnableNode;
 
 import java.io.IOException;
+import java.net.ServerSocket;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.Charset;
@@ -130,10 +133,26 @@ public class PantheonNodeFactory {
             .build());
   }
 
+  public PantheonNode createArchiveNodeNetServicesEnabled(final String name) throws IOException {
+    final MetricsConfiguration metricsConfiguration = MetricsConfiguration.createDefault();
+    metricsConfiguration.setEnabled(true);
+    metricsConfiguration.setPort(0);
+    return create(
+            new PantheonFactoryConfigurationBuilder()
+                    .setName(name)
+                    .setMetricsConfiguration(metricsConfiguration)
+                    .setJsonRpcConfiguration(jsonRpcConfigWithAdmin())
+                    .webSocketEnabled()
+                    .build());
+  }
+
   public PantheonNode createArchiveNodeNetServicesDisabled(final String name) throws IOException {
+    final MetricsConfiguration metricsConfiguration = MetricsConfiguration.createDefault();
+    metricsConfiguration.setEnabled(false);
     return create(
         new PantheonFactoryConfigurationBuilder()
             .setName(name)
+                .setMetricsConfiguration(metricsConfiguration)
             .setP2pEnabled(false)
             .setDiscoveryEnabled(false)
             .build());

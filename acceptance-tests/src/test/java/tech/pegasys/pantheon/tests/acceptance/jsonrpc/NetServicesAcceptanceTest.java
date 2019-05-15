@@ -32,8 +32,8 @@ public class NetServicesAcceptanceTest extends AcceptanceTestBase {
     final ClusterConfiguration clusterConfiguration =
         new ClusterConfigurationBuilder().setAwaitPeerDiscovery(false).build();
     noDiscoveryCluster = new Cluster(clusterConfiguration, net);
-    nodeA = pantheon.createArchiveNodeWithDiscoveryDisabledAndAdmin("nodeA");
-    nodeB = pantheon.createArchiveNodeWithDiscoveryDisabledAndAdmin("nodeB");
+    nodeA = pantheon.createArchiveNodeNetServicesEnabled("nodeA");
+    nodeB = pantheon.createArchiveNodeNetServicesEnabled("nodeB");
     noDiscoveryCluster.start(nodeA, nodeB);
 
     nodeA.verify(net.netServicesAllActive());
