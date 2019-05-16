@@ -54,11 +54,11 @@ public class ExpectNetServicesReturnsAllServicesAsActive implements Condition {
     assertThat(NetworkUtility.isValidPort(p2pPort) || jsonRpcPort == 0).isTrue();
   }
 
-  public static class ExpectNetServicesReturnsNoServicesAsActiveX implements Condition {
+  public static class ExpectNetServicesReturnsOnlyJsonRpcActive implements Condition {
 
     private final NetServicesTransaction transaction;
 
-    public ExpectNetServicesReturnsNoServicesAsActiveX(final NetServicesTransaction transaction) {
+    public ExpectNetServicesReturnsOnlyJsonRpcActive(final NetServicesTransaction transaction) {
       this.transaction = transaction;
     }
 

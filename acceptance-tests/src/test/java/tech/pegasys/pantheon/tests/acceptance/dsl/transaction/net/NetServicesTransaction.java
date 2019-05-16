@@ -29,18 +29,17 @@ public class NetServicesTransaction implements Transaction<Map<String, Map<Strin
 
   @Override
   public Map<String, Map<String, String>> execute(final JsonRequestFactories requestFactories) {
-    Map<String, Map<String, String>> netServicesActive = null;
+    CustomNetJsonRpcRequestFactory.NetServicesResponse netServicesResponse = null;
     try {
       final CustomNetJsonRpcRequestFactory netServicesJsonRpcRequestFactory =
           requestFactories.netServices();
       final Request<?, CustomNetJsonRpcRequestFactory.NetServicesResponse> request =
           netServicesJsonRpcRequestFactory.customNet();
 
-      final CustomNetJsonRpcRequestFactory.NetServicesResponse netServicesResponse = request.send();
-      netServicesActive = netServicesResponse.getResult();
+      netServicesResponse = request.send();
     } catch (final Exception e) {
       throw new RuntimeException(e);
     }
-    return netServicesActive;
+    return netServicesResponse.getResult();
   }
 }
