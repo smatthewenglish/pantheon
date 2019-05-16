@@ -24,7 +24,6 @@ import org.apache.logging.log4j.Logger;
 import org.web3j.protocol.core.Request;
 
 public class NetServicesTransaction implements Transaction<Map<String, Map<String, String>>> {
-  private static final Logger LOG = getLogger();
 
   NetServicesTransaction() {}
 
@@ -32,15 +31,15 @@ public class NetServicesTransaction implements Transaction<Map<String, Map<Strin
   public Map<String, Map<String, String>> execute(final JsonRequestFactories requestFactories) {
     Map<String, Map<String, String>> netServicesActive = null;
     try {
-      CustomNetJsonRpcRequestFactory netServicesJsonRpcRequestFactory =
+      final CustomNetJsonRpcRequestFactory netServicesJsonRpcRequestFactory =
           requestFactories.netServices();
-      Request<?, CustomNetJsonRpcRequestFactory.NetServicesResponse> request =
+      final Request<?, CustomNetJsonRpcRequestFactory.NetServicesResponse> request =
           netServicesJsonRpcRequestFactory.customNet();
 
-      CustomNetJsonRpcRequestFactory.NetServicesResponse netServicesResponse = request.send();
+      final CustomNetJsonRpcRequestFactory.NetServicesResponse netServicesResponse = request.send();
       netServicesActive = netServicesResponse.getResult();
     } catch (final Exception e) {
-      LOG.error("Error parsing response to 'net_services' json-rpc request.", e);
+      throw new RuntimeException(e);
     }
     return netServicesActive;
   }
