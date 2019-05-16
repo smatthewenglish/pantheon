@@ -37,16 +37,11 @@ public class ExpectNetServicesReturnsAllServicesAsActive implements Condition {
   public void verify(final Node node) {
     final Map<String, Map<String, String>> result = node.execute(transaction);
     assertThat(result.keySet())
-        .containsExactlyInAnyOrderElementsOf(Arrays.asList("p2p", "jsonrpc", "ws", "metrics"));
+        .containsExactlyInAnyOrderElementsOf(Arrays.asList("p2p", "jsonrpc", "ws"));
 
     assertThat(InetAddresses.isUriInetAddress(result.get("p2p").get("host"))).isTrue();
     final int p2pPort = Integer.valueOf(result.get("p2p").get("port"));
     assertThat(NetworkUtility.isValidPort(p2pPort)).isTrue();
-
-    assertThat(InetAddresses.isUriInetAddress(result.get("metrics").get("host"))).isTrue();
-    final int metricsPort = Integer.valueOf(result.get("metrics").get("port"));
-    // TODO: Port should not be 0-valued. Refer to PAN-2703
-    assertThat(NetworkUtility.isValidPort(p2pPort) || metricsPort == 0).isTrue();
 
     assertThat(InetAddresses.isUriInetAddress(result.get("ws").get("host"))).isTrue();
     final int wsPort = Integer.valueOf(result.get("ws").get("port"));

@@ -30,7 +30,7 @@ public class NetServicesAcceptanceTest extends AcceptanceTestBase {
   @Test
   public void shouldIndicateNetServicesEnabled() throws Exception {
     final ClusterConfiguration clusterConfiguration =
-        new ClusterConfigurationBuilder().setAwaitPeerDiscovery(false).build();
+        new ClusterConfigurationBuilder().awaitPeerDiscovery(false).build();
     noDiscoveryCluster = new Cluster(clusterConfiguration, net);
     nodeA = pantheon.createArchiveNodeNetServicesEnabled("nodeA");
     nodeB = pantheon.createArchiveNodeNetServicesEnabled("nodeB");
@@ -43,7 +43,7 @@ public class NetServicesAcceptanceTest extends AcceptanceTestBase {
   @Test
   public void shouldNotDisplayDisabledServices() throws Exception {
     final ClusterConfiguration clusterConfiguration =
-        new ClusterConfigurationBuilder().setAwaitPeerDiscovery(false).build();
+        new ClusterConfigurationBuilder().awaitPeerDiscovery(false).build();
     noDiscoveryCluster = new Cluster(clusterConfiguration, net);
     nodeA = pantheon.createArchiveNodeNetServicesDisabled("nodeA");
     nodeB = pantheon.createArchiveNodeNetServicesDisabled("nodeB");
