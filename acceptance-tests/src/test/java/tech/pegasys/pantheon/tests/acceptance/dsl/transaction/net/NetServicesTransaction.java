@@ -12,15 +12,12 @@
  */
 package tech.pegasys.pantheon.tests.acceptance.dsl.transaction.net;
 
-import static org.apache.logging.log4j.LogManager.getLogger;
-
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.CustomNetJsonRpcRequestFactory;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.JsonRequestFactories;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.Transaction;
 
 import java.util.Map;
 
-import org.apache.logging.log4j.Logger;
 import org.web3j.protocol.core.Request;
 
 public class NetServicesTransaction implements Transaction<Map<String, Map<String, String>>> {

@@ -19,16 +19,16 @@ import tech.pegasys.pantheon.tests.acceptance.dsl.node.Node;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.net.NetServicesTransaction;
 import tech.pegasys.pantheon.util.NetworkUtility;
 
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.Map;
 
 import com.google.common.net.InetAddresses;
 
-public class ExpectNetServicesReturnsAllServicesAsActive implements Condition {
+public class ExpectNetServicesReturnsOnlyJsonRpcActive implements Condition {
 
   private final NetServicesTransaction transaction;
 
-  public ExpectNetServicesReturnsAllServicesAsActive(final NetServicesTransaction transaction) {
+  public ExpectNetServicesReturnsOnlyJsonRpcActive(final NetServicesTransaction transaction) {
     this.transaction = transaction;
   }
 
@@ -36,20 +36,11 @@ public class ExpectNetServicesReturnsAllServicesAsActive implements Condition {
   public void verify(final Node node) {
     final Map<String, Map<String, String>> result = node.execute(transaction);
     assertThat(result.keySet())
-        .containsExactlyInAnyOrderElementsOf(Arrays.asList("p2p", "jsonrpc", "ws"));
-
-    assertThat(InetAddresses.isUriInetAddress(result.get("p2p").get("host"))).isTrue();
-    final int p2pPort = Integer.valueOf(result.get("p2p").get("port"));
-    assertThat(NetworkUtility.isValidPort(p2pPort)).isTrue();
-
-    assertThat(InetAddresses.isUriInetAddress(result.get("ws").get("host"))).isTrue();
-    final int wsPort = Integer.valueOf(result.get("ws").get("port"));
-    // TODO: Port should not be 0-valued. Refer to PAN-2703
-    assertThat(NetworkUtility.isValidPort(p2pPort) || wsPort == 0).isTrue();
+        .containsExactlyInAnyOrderElementsOf(Collections.singletonList("jsonrpc"));
 
     assertThat(InetAddresses.isUriInetAddress(result.get("jsonrpc").get("host"))).isTrue();
-    final int jsonRpcPort = Integer.valueOf(result.get("jsonrpc").get("port"));
+    final int jsonrpcPort = Integer.valueOf(result.get("jsonrpc").get("port"));
     // TODO: Port should not be 0-valued. Refer to PAN-2703
-    assertThat(NetworkUtility.isValidPort(p2pPort) || jsonRpcPort == 0).isTrue();
+    assertThat(NetworkUtility.isValidPort(jsonrpcPort) || jsonrpcPort == 0).isTrue();
   }
 }
