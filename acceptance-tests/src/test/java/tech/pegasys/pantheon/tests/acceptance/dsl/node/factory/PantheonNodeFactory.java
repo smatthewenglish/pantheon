@@ -137,20 +137,20 @@ public class PantheonNodeFactory {
     // metricsConfiguration.setPort(0);
     return create(
         new PantheonFactoryConfigurationBuilder()
-            .setName(name)
+            .name(name)
             // .setMetricsConfiguration(metricsConfiguration)
-            .setJsonRpcConfiguration(jsonRpcConfigWithAdmin())
+            .jsonRpcConfiguration(jsonRpcConfigWithAdmin())
             .webSocketEnabled()
-            .setP2pEnabled(true)
+            .p2pEnabled(true)
             .build());
   }
 
   public PantheonNode createArchiveNodeNetServicesDisabled(final String name) throws IOException {
     return create(
         new PantheonFactoryConfigurationBuilder()
-            .setName(name)
-            .setJsonRpcConfiguration(jsonRpcConfigWithAdmin())
-            .setP2pEnabled(false)
+            .name(name)
+            .jsonRpcConfiguration(jsonRpcConfigWithAdmin())
+            .p2pEnabled(false)
             .build());
   }
 
