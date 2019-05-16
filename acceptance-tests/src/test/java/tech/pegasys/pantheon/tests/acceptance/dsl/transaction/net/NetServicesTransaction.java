@@ -31,7 +31,7 @@ public class NetServicesTransaction implements Transaction<Map<String, Map<Strin
       final CustomNetJsonRpcRequestFactory netServicesJsonRpcRequestFactory =
           requestFactories.netServices();
       final Request<?, CustomNetJsonRpcRequestFactory.NetServicesResponse> request =
-          netServicesJsonRpcRequestFactory.customNet();
+          netServicesJsonRpcRequestFactory.netServices();
 
       netServicesResponse = request.send();
     } catch (final Exception e) {

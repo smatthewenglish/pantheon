@@ -29,7 +29,7 @@ public class CustomNetJsonRpcRequestFactory {
     this.web3jService = web3jService;
   }
 
-  public Request<?, NetServicesResponse> customNet() {
+  public Request<?, NetServicesResponse> netServices() {
     return new Request<>(
         "net_services", Collections.emptyList(), web3jService, NetServicesResponse.class);
   }
