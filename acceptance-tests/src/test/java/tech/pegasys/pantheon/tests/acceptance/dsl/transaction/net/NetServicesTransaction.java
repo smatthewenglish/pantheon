@@ -29,9 +29,9 @@ public class NetServicesTransaction implements Transaction<Map<String, Map<Strin
     CustomNetJsonRpcRequestFactory.NetServicesResponse netServicesResponse = null;
     try {
       final CustomNetJsonRpcRequestFactory netServicesJsonRpcRequestFactory =
-          requestFactories.netServices();
+          requestFactories.customNet();
       final Request<?, CustomNetJsonRpcRequestFactory.NetServicesResponse> request =
-          netServicesJsonRpcRequestFactory.customNet();
+          netServicesJsonRpcRequestFactory.netServices();
 
       netServicesResponse = request.send();
     } catch (final Exception e) {

@@ -71,7 +71,7 @@ public class JsonRequestFactories {
     return admin;
   }
 
-  public CustomNetJsonRpcRequestFactory netServices() {
+  public CustomNetJsonRpcRequestFactory customNet() {
     return customNet;
   }
 
