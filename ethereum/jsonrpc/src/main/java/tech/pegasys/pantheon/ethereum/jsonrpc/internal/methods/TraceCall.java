@@ -13,6 +13,8 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessRe
 import tech.pegasys.pantheon.ethereum.transaction.CallParameter;
 import tech.pegasys.pantheon.ethereum.transaction.TransactionSimulator;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.OptionalLong;
 
 import static tech.pegasys.pantheon.ethereum.jsonrpc.JsonRpcErrorConverter.convertTransactionInvalidReason;
@@ -50,23 +52,6 @@ public class TraceCall implements JsonRpcMethod  {
         return resultByBlockNumber(request, blockchainQueries.headBlockNumber());
     }
 
-    protected Object findResultByParamType(final JsonRpcRequest request) {
-        final BlockParameter blockParam = blockParameter(request);
-
-        final Object result;
-        final OptionalLong blockNumber = blockParam.getNumber();
-        if (blockNumber.isPresent()) {
-            result = resultByBlockNumber(request, blockNumber.getAsLong());
-        } else if (blockParam.isLatest()) {
-            result = latestResult(request);
-        } else {
-            // If block parameter is not numeric or latest, it is pending.
-            result = pendingResult(request);
-        }
-
-        return result;
-    }
-
     @Override
     public String getName() {
         return RpcMethod.TRACE_CALL.getMethodName();
@@ -75,32 +60,13 @@ public class TraceCall implements JsonRpcMethod  {
     protected BlockParameter blockParameter(final JsonRpcRequest request) {
         return parameters().required(request.getParams(), 1, BlockParameter.class);
     }
-    
+
     protected Object resultByBlockNumber(final JsonRpcRequest request, final long blockNumber) {
         final CallParameter callParams = validateAndGetCallParams(request);
 
         return transactionSimulator
                 .process(callParams, blockNumber)
-                .map(
-                        result ->
-                                result
-                                        .getValidationResult()
-                                        .either(
-                                                (() ->
-                                                        new JsonRpcSuccessResponse(
-                                                                request.getId(), result.getOutput().toString())),
-                                                reason ->
-                                                        new JsonRpcErrorResponse(
-                                                                request.getId(), convertTransactionInvalidReason(reason))))
-                .orElse(validRequestBlockNotFound(request));
-    }
-
-    private JsonRpcSuccessResponse validRequestBlockNotFound(final JsonRpcRequest request) {
-        return new JsonRpcSuccessResponse(request.getId(), null);
-    }
-
-    public JsonRpcResponse response(final JsonRpcRequest request) {
-        return (JsonRpcResponse) findResultByParamType(request);
+                .map(result -> result.getOutput().toString()).orElse(null);
     }
 
     private CallParameter validateAndGetCallParams(final JsonRpcRequest request) {
@@ -110,5 +76,31 @@ public class TraceCall implements JsonRpcMethod  {
             throw new InvalidJsonRpcParameters("Missing \"to\" field in call arguments");
         }
         return callParams;
+    }
+
+    public JsonRpcResponse response(final JsonRpcRequest request) {
+        return new JsonRpcSuccessResponse(request.getId(), findResultByParamType(request));
+    }
+
+    protected Object findResultByParamType(final JsonRpcRequest request) {
+
+        final BlockParameter blockParam = blockParameter(request);
+
+        final OptionalLong blockNumber = blockParam.getNumber();
+
+        Map result = new HashMap<>();
+
+        if (blockNumber.isPresent()) {
+            result.put("output", resultByBlockNumber(request, blockNumber.getAsLong()));
+        } else if (blockParam.isLatest()) {
+            result.put("output", latestResult(request));
+        } else {
+            // If block parameter is not numeric or latest, it is pending.
+            result.put("output", pendingResult(request));
+        }
+
+        result.put("stateDiff", null);
+
+        return result;
     }
 }

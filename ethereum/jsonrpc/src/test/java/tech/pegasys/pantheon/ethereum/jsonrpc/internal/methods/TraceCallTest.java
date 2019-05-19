@@ -99,6 +99,8 @@ public class TraceCallTest {
 
         final JsonRpcResponse response = method.response(request);
 
+        System.out.println();
+
         assertThat(response).isEqualToComparingFieldByFieldRecursively(expectedResponse);
         verify(transactionSimulator).process(eq(callParameter()), anyLong());
     }
