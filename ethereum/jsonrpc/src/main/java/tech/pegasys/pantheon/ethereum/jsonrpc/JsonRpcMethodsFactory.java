@@ -264,14 +264,13 @@ public class JsonRpcMethodsFactory {
               blockchainQueries),
           new DebugTraceBlockByNumber(parameter, new BlockTracer(blockReplay), blockchainQueries),
           new DebugTraceBlockByHash(parameter, new BlockTracer(blockReplay)),
-      new TraceCall(
+          new TraceCall(
               blockchainQueries,
               new TransactionSimulator(
-                      blockchainQueries.getBlockchain(),
-                      blockchainQueries.getWorldStateArchive(),
-                      protocolSchedule),
-              parameter)
-    );
+                  blockchainQueries.getBlockchain(),
+                  blockchainQueries.getWorldStateArchive(),
+                  protocolSchedule),
+              parameter));
     }
     if (rpcApis.contains(RpcApis.NET)) {
       addMethods(
