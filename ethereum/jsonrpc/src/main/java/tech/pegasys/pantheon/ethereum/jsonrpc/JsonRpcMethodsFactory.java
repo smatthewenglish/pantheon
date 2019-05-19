@@ -73,6 +73,7 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.NetPeerCount;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.NetServices;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.NetVersion;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.RpcModules;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.TraceCall;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.TxPoolPantheonStatistics;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.TxPoolPantheonTransactions;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.Web3ClientVersion;
@@ -262,7 +263,15 @@ public class JsonRpcMethodsFactory {
               ScheduleBasedBlockHeaderFunctions.create(protocolSchedule),
               blockchainQueries),
           new DebugTraceBlockByNumber(parameter, new BlockTracer(blockReplay), blockchainQueries),
-          new DebugTraceBlockByHash(parameter, new BlockTracer(blockReplay)));
+          new DebugTraceBlockByHash(parameter, new BlockTracer(blockReplay)),
+      new TraceCall(
+              blockchainQueries,
+              new TransactionSimulator(
+                      blockchainQueries.getBlockchain(),
+                      blockchainQueries.getWorldStateArchive(),
+                      protocolSchedule),
+              parameter)
+    );
     }
     if (rpcApis.contains(RpcApis.NET)) {
       addMethods(

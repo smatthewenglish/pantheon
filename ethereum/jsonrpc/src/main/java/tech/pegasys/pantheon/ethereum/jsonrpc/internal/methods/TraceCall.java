@@ -17,7 +17,7 @@ import java.util.OptionalLong;
 
 import static tech.pegasys.pantheon.ethereum.jsonrpc.JsonRpcErrorConverter.convertTransactionInvalidReason;
 
-public class TraceCall implements JsonRpcMethod {
+public class TraceCall implements JsonRpcMethod  {
 
     private final TransactionSimulator transactionSimulator;
     private final BlockchainQueries blockchainQueries;
@@ -27,14 +27,9 @@ public class TraceCall implements JsonRpcMethod {
             final BlockchainQueries blockchainQueries,
             final TransactionSimulator transactionSimulator,
             final JsonRpcParameter parameters) {
-        this.transactionSimulator = transactionSimulator;
         this.blockchainQueries = blockchainQueries;
         this.parameters = parameters;
-    }
-
-    @Override
-    public String getName() {
-        return RpcMethod.TRACE_CALL.getMethodName();
+        this.transactionSimulator = transactionSimulator;
     }
 
     protected BlockchainQueries blockchainQueries() {
@@ -45,10 +40,42 @@ public class TraceCall implements JsonRpcMethod {
         return parameters;
     }
 
+    protected Object pendingResult(final JsonRpcRequest request) {
+        // TODO: Update once we mine and better understand pending semantics.
+        // This may also be worth always returning null for.
+        return null;
+    }
+
+    protected Object latestResult(final JsonRpcRequest request) {
+        return resultByBlockNumber(request, blockchainQueries.headBlockNumber());
+    }
+
+    protected Object findResultByParamType(final JsonRpcRequest request) {
+        final BlockParameter blockParam = blockParameter(request);
+
+        final Object result;
+        final OptionalLong blockNumber = blockParam.getNumber();
+        if (blockNumber.isPresent()) {
+            result = resultByBlockNumber(request, blockNumber.getAsLong());
+        } else if (blockParam.isLatest()) {
+            result = latestResult(request);
+        } else {
+            // If block parameter is not numeric or latest, it is pending.
+            result = pendingResult(request);
+        }
+
+        return result;
+    }
+
+    @Override
+    public String getName() {
+        return RpcMethod.TRACE_CALL.getMethodName();
+    }
+
     protected BlockParameter blockParameter(final JsonRpcRequest request) {
         return parameters().required(request.getParams(), 1, BlockParameter.class);
     }
-
+    
     protected Object resultByBlockNumber(final JsonRpcRequest request, final long blockNumber) {
         final CallParameter callParams = validateAndGetCallParams(request);
 
@@ -73,7 +100,7 @@ public class TraceCall implements JsonRpcMethod {
     }
 
     public JsonRpcResponse response(final JsonRpcRequest request) {
-        return new JsonRpcSuccessResponse(request.getId(), findResultByParamType(request));
+        return (JsonRpcResponse) findResultByParamType(request);
     }
 
     private CallParameter validateAndGetCallParams(final JsonRpcRequest request) {
@@ -83,30 +110,5 @@ public class TraceCall implements JsonRpcMethod {
             throw new InvalidJsonRpcParameters("Missing \"to\" field in call arguments");
         }
         return callParams;
-    }
-
-    Object pendingResult(final JsonRpcRequest request) {
-        return null;
-    }
-
-    Object latestResult(final JsonRpcRequest request) {
-        return resultByBlockNumber(request, blockchainQueries.headBlockNumber());
-    }
-
-    Object findResultByParamType(final JsonRpcRequest request) {
-        final BlockParameter blockParam = blockParameter(request);
-
-        final Object result;
-        final OptionalLong blockNumber = blockParam.getNumber();
-        if (blockNumber.isPresent()) {
-            result = resultByBlockNumber(request, blockNumber.getAsLong());
-        } else if (blockParam.isLatest()) {
-            result = latestResult(request);
-        } else {
-            // If block parameter is not numeric or latest, it is pending.
-            result = pendingResult(request);
-        }
-
-        return result;
     }
 }
