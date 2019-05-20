@@ -3,14 +3,22 @@ package tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods;
 import org.junit.Before;
 import org.junit.Test;
 import tech.pegasys.pantheon.ethereum.chain.Blockchain;
+import tech.pegasys.pantheon.ethereum.chain.DefaultMutableBlockchain;
 import tech.pegasys.pantheon.ethereum.chain.MutableBlockchain;
 import tech.pegasys.pantheon.ethereum.core.Account;
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.Block;
+import tech.pegasys.pantheon.ethereum.core.BlockBody;
 import tech.pegasys.pantheon.ethereum.core.BlockDataGenerator;
+import tech.pegasys.pantheon.ethereum.core.BlockHeader;
+import tech.pegasys.pantheon.ethereum.core.BlockHeaderBuilder;
+import tech.pegasys.pantheon.ethereum.core.BlockHeaderFunctions;
 import tech.pegasys.pantheon.ethereum.core.Hash;
+import tech.pegasys.pantheon.ethereum.core.LogsBloomFilter;
+import tech.pegasys.pantheon.ethereum.core.MutableWorldState;
 import tech.pegasys.pantheon.ethereum.core.TransactionReceipt;
 import tech.pegasys.pantheon.ethereum.core.WorldState;
+import tech.pegasys.pantheon.ethereum.core.WorldUpdater;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.parameters.JsonCallParameter;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.parameters.JsonRpcParameter;
@@ -19,14 +27,21 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.internal.queries.BlockchainQueries
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.results.Quantity;
+import tech.pegasys.pantheon.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import tech.pegasys.pantheon.ethereum.mainnet.MainnetProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
+import tech.pegasys.pantheon.ethereum.storage.keyvalue.KeyValueStoragePrefixedKeyBlockchainStorage;
 import tech.pegasys.pantheon.ethereum.transaction.TransactionSimulator;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateArchive;
+import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
+import tech.pegasys.pantheon.services.kvstore.InMemoryKeyValueStorage;
+import tech.pegasys.pantheon.services.kvstore.KeyValueStorage;
 import tech.pegasys.pantheon.util.bytes.Bytes32;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 import tech.pegasys.pantheon.util.uint.UInt256;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -34,6 +49,7 @@ import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
+import static sun.security.krb5.Confounder.bytes;
 import static tech.pegasys.pantheon.ethereum.core.InMemoryStorageProvider.createInMemoryBlockchain;
 import static tech.pegasys.pantheon.ethereum.core.InMemoryStorageProvider.createInMemoryWorldStateArchive;
 
@@ -137,16 +153,77 @@ public class TraceCallHyperTest {
     public void setUp() {
 
         final WorldStateArchive worldStateArchive = createInMemoryWorldStateArchive();
-
-        final int blockCount = 2;
-
+        final MutableWorldState mutableWorldState = worldStateArchive.getMutable();
+        final WorldUpdater worldUpdater = mutableWorldState.updater();
         /* * */
         final List<Address> addressList = generateAddressList();
         /* * */
+        worldUpdater.createAccount(addressList.get(0));
+        worldUpdater.createAccount(addressList.get(1));
+        worldUpdater.commit();
+
+
+
+
+        final int blockCount = 2;
+
+
         final List<UInt256> storageKeyList = generateStorageKeyList();
         /* * */
 
+
+
+
+        final KeyValueStorage kvStore = new InMemoryKeyValueStorage();
+
+        final BlockHeader genesisHeader =
+                BlockHeaderBuilder.create()
+                        .parentHash(Hash.ZERO)
+                        .ommersHash(Hash.ZERO)
+                        .coinbase(Address.fromHexString("0x0000000000000000000000000000000000000000"))
+                        .stateRoot(Hash.ZERO)
+                        .transactionsRoot(Hash.ZERO)
+                        .receiptsRoot(Hash.ZERO)
+                        .logsBloom(new LogsBloomFilter(BytesValue.of(bytes(LogsBloomFilter.BYTE_SIZE))))
+                        .difficulty(UInt256.ZERO)
+                        .number(0L)
+                        .gasLimit(1L)
+                        .gasUsed(1L)
+                        .timestamp(0L)
+                        .extraData(Bytes32.wrap(bytes(Bytes32.SIZE)))
+                        .mixHash(Hash.ZERO)
+                        .nonce(0L)
+                        .blockHeaderFunctions(new MainnetBlockHeaderFunctions())
+                        .buildBlockHeader();
+        final BlockBody genesisBody = new BlockBody(Collections.emptyList(), Collections.emptyList());
+        final Block genesisBlock = new Block(genesisHeader, genesisBody);
+        final DefaultMutableBlockchain blockchain = new DefaultMutableBlockchain(genesisBlock, new KeyValueStoragePrefixedKeyBlockchainStorage(kvStore, new MainnetBlockHeaderFunctions()), new NoOpMetricsSystem());
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         final BlockDataGenerator blockDataGenerator = new BlockDataGenerator();
+
+
+
+        final long blockNumber0 = BlockHeader.GENESIS_BLOCK_NUMBER;
+        final Hash hash0 = Hash.ZERO;
+
+
+
+
+
+
 
 
 
@@ -158,7 +235,7 @@ public class TraceCallHyperTest {
 
         // Generate some queries data
         final List<BlockchainQueriesTest.BlockData> blockDataList = new ArrayList<>(blockCount);
-        final List<Block> blockList = blockDataGenerator.blockSequence(blockCount, worldStateArchive, addressList, storageKeys);
+        final List<Block> blockList = blockDataGenerator.blockSequence(blockCount, worldStateArchive, addressList, storageKeyList);
 
         for (int i = 0; i < blockCount; i++) {
             final Block block = blockList.get(i);
