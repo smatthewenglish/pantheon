@@ -550,13 +550,13 @@ public class BlockchainQueriesTest {
     return new BlockchainWithData(blockchain, blockData, worldStateArchive);
   }
 
-  private static class BlockchainWithData {
+  public static class BlockchainWithData {
     final MutableBlockchain blockchain;
     final List<BlockData> blockData;
     final WorldStateArchive worldStateArchive;
     final BlockchainQueries blockchainQueries;
 
-    private BlockchainWithData(
+    public BlockchainWithData(
         final MutableBlockchain blockchain,
         final List<BlockData> blockData,
         final WorldStateArchive worldStateArchive) {
@@ -565,15 +565,39 @@ public class BlockchainQueriesTest {
       this.worldStateArchive = worldStateArchive;
       this.blockchainQueries = new BlockchainQueries(blockchain, worldStateArchive);
     }
+
+    public MutableBlockchain getBlockchain() {
+      return blockchain;
+    }
+
+    public List<BlockData> getBlockData() {
+      return blockData;
+    }
+
+    public WorldStateArchive getWorldStateArchive() {
+      return worldStateArchive;
+    }
+
+    public BlockchainQueries getBlockchainQueries() {
+      return blockchainQueries;
+    }
   }
 
-  private static class BlockData {
+  public static class BlockData {
     final Block block;
     final List<TransactionReceipt> receipts;
 
-    private BlockData(final Block block, final List<TransactionReceipt> receipts) {
+    public BlockData(final Block block, final List<TransactionReceipt> receipts) {
       this.block = block;
       this.receipts = receipts;
+    }
+
+    public Block getBlock() {
+      return block;
+    }
+
+    public List<TransactionReceipt> getTransactionReceiptList() {
+      return receipts;
     }
   }
 }
