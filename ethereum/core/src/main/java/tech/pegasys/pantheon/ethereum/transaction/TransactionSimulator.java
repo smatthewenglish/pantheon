@@ -26,6 +26,7 @@ import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSpec;
 import tech.pegasys.pantheon.ethereum.mainnet.TransactionProcessor;
 import tech.pegasys.pantheon.ethereum.vm.BlockHashLookup;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateArchive;
+import tech.pegasys.pantheon.ethereum.worldstate.WorldStateStorage;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.util.Optional;
@@ -50,6 +51,15 @@ public class TransactionSimulator {
   private final Blockchain blockchain;
   private final WorldStateArchive worldStateArchive;
   private final ProtocolSchedule<?> protocolSchedule;
+
+  /* * */
+  WorldStateStorage storage0;
+  WorldStateStorage storage1;
+  /* * */
+
+  public WorldStateStorage getStorage0() {
+    return storage0;
+  }
 
   public TransactionSimulator(
       final Blockchain blockchain,
@@ -81,8 +91,13 @@ public class TransactionSimulator {
     if (header == null) {
       return Optional.empty();
     }
-    final MutableWorldState worldState =
-        worldStateArchive.getMutable(header.getStateRoot()).orElse(null);
+
+    MutableWorldState worldState = worldStateArchive.getMutable(header.getStateRoot()).orElse(null);
+
+    /* * */
+    storage0 = worldStateArchive.getStorage();
+    /* * */
+
     if (worldState == null) {
       return Optional.empty();
     }
@@ -90,7 +105,7 @@ public class TransactionSimulator {
     final Address senderAddress =
         callParams.getFrom() != null ? callParams.getFrom() : DEFAULT_FROM;
     final Account sender = worldState.get(senderAddress);
-    final long nonce = sender != null ? sender.getNonce() : 0L;
+    long nonce = sender != null ? sender.getNonce() : 0L;
     final long gasLimit =
         callParams.getGasLimit() >= 0 ? callParams.getGasLimit() : header.getGasLimit();
     final Wei gasPrice = callParams.getGasPrice() != null ? callParams.getGasPrice() : Wei.ZERO;
@@ -112,8 +127,7 @@ public class TransactionSimulator {
 
     final ProtocolSpec<?> protocolSpec = protocolSchedule.getByBlockNumber(header.getNumber());
 
-    final TransactionProcessor transactionProcessor =
-        protocolSchedule.getByBlockNumber(header.getNumber()).getTransactionProcessor();
+    final TransactionProcessor transactionProcessor = protocolSchedule.getByBlockNumber(header.getNumber()).getTransactionProcessor();
     final TransactionProcessor.Result result =
         transactionProcessor.processTransaction(
             blockchain,
@@ -123,6 +137,10 @@ public class TransactionSimulator {
             protocolSpec.getMiningBeneficiaryCalculator().calculateBeneficiary(header),
             new BlockHashLookup(header, blockchain),
             false);
+
+    /* * */
+    //storage1 = ...
+    /* * */
 
     return Optional.of(new TransactionSimulatorResult(transaction, result));
   }
@@ -146,8 +164,8 @@ public class TransactionSimulator {
       return Optional.empty();
     }
 
-    final MutableWorldState worldState =
-        worldStateArchive.getMutable(header.getStateRoot()).orElse(null);
+    final MutableWorldState worldState = worldStateArchive.getMutable(header.getStateRoot()).orElse(null);
+
     if (worldState == null) {
       return Optional.empty();
     }
