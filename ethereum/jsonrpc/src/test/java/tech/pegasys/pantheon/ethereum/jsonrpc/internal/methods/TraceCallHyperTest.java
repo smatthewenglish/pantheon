@@ -26,6 +26,7 @@ import tech.pegasys.pantheon.util.uint.UInt256;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
@@ -36,19 +37,22 @@ import static tech.pegasys.pantheon.ethereum.core.InMemoryStorageProvider.create
 public class TraceCallHyperTest {
 
     BlockchainQueries blockchainQueries;
-    ProtocolSchedule protocolSchedule;
 
     @Before
     public void setUp() {
+
+        // final List<Account> accounts = dataGen.createRandomContractAccountsWithNonEmptyStorage(remoteWorldState, 20);
 
         final BlockDataGenerator blockDataGenerator = new BlockDataGenerator();
 
         final WorldStateArchive worldStateArchive = createInMemoryWorldStateArchive();
 
-        final int blockCount = 3;
+        final int blockCount = 2;
 
-        final List<Address> addresses = Arrays.asList(blockDataGenerator.address(), blockDataGenerator.address(), blockDataGenerator.address());
-        final List<UInt256> storageKeys = Arrays.asList(blockDataGenerator.storageKey(), blockDataGenerator.storageKey(), blockDataGenerator.storageKey());
+        // final List<Address> addresses = Arrays.asList(blockDataGenerator.address(), blockDataGenerator.address(), blockDataGenerator.address());
+        final List<Address> addresses = Collections.singletonList(blockDataGenerator.address());
+        // final List<UInt256> storageKeys = Arrays.asList(blockDataGenerator.storageKey(), blockDataGenerator.storageKey(), blockDataGenerator.storageKey());
+        final List<UInt256> storageKeys = Collections.singletonList(blockDataGenerator.storageKey());
 
         // Generate some queries data
         final List<BlockchainQueriesTest.BlockData> blockDataList = new ArrayList<>(blockCount);
@@ -62,39 +66,29 @@ public class TraceCallHyperTest {
 
         // Setup blockchain
         final MutableBlockchain blockchain = createInMemoryBlockchain(blockList.get(0));
-        blockDataList
-                .subList(1, blockDataList.size())
-                .forEach(b -> blockchain.appendBlock(b.getBlock(), b.getTransactionReceiptList()));
+        blockDataList.subList(1, blockDataList.size()).forEach(b -> blockchain.appendBlock(b.getBlock(), b.getTransactionReceiptList()));
 
         blockchainQueries = new BlockchainQueries(blockchain, worldStateArchive);
 
-       final BlockchainQueriesTest.BlockchainWithData blockchainWithData = new BlockchainQueriesTest.BlockchainWithData(blockchain, blockDataList, worldStateArchive);
+        /* * */
 
-       /* * */
+        final BlockchainQueriesTest.BlockchainWithData blockchainWithData = new BlockchainQueriesTest.BlockchainWithData(blockchain, blockDataList, worldStateArchive);
 
-        final Hash latestStateRoot0 = blockchainWithData.getBlockData().get(2).getBlock().getHeader().getStateRoot();
+        final Hash latestStateRoot0 = blockchainWithData.getBlockData().get(1).getBlock().getHeader().getStateRoot();
         final WorldState worldState0 = blockchainWithData.getWorldStateArchive().get(latestStateRoot0).get();
         addresses.forEach(
                 address ->
                         storageKeys.forEach(
                                 storageKey -> {
                                     final Account actualAccount0 = worldState0.get(address);
-                                    final UInt256 result = blockchainQueries.storageAt(address, storageKey, 2L).get();
+                                    final UInt256 result = blockchainQueries.storageAt(address, storageKey, 1L).get();
+
+                                    System.out.println("storageKey: " + storageKey);
+                                    System.out.println("result: " + result);
+
                                     assertEquals(actualAccount0.getStorageValue(storageKey), result);
                                 }));
 
-        final Hash latestStateRoot1 = blockchainWithData.getBlockData().get(1).getBlock().getHeader().getStateRoot();
-        final WorldState worldState1 = blockchainWithData.getWorldStateArchive().get(latestStateRoot1).get();
-        addresses.forEach(
-                address ->
-                        storageKeys.forEach(
-                                storageKey -> {
-                                    final Account actualAccount1 = worldState1.get(address);
-                                    final UInt256 result = blockchainQueries.storageAt(address, storageKey, 1L).get();
-                                    assertEquals(actualAccount1.getStorageValue(storageKey), result);
-                                }));
-
-        protocolSchedule = MainnetProtocolSchedule.create();
     }
 
     TraceCall traceCall;
@@ -103,17 +97,23 @@ public class TraceCallHyperTest {
     public void wireTogetherFireTogether() {
         System.out.println("hello world...");
 
-        TransactionSimulator transactionSimulator = new TransactionSimulator(
-                blockchainQueries.getBlockchain(),
-                blockchainQueries.getWorldStateArchive(),
-                protocolSchedule);
+        final Blockchain blockchain = blockchainQueries.getBlockchain();
+        final WorldStateArchive worldStateArchive = blockchainQueries.getWorldStateArchive();
+        final ProtocolSchedule protocolSchedule = MainnetProtocolSchedule.create();
+
+        final TransactionSimulator transactionSimulator = new TransactionSimulator(blockchain, worldStateArchive, protocolSchedule);
 
         final JsonRpcParameter jsonRpcParameter = new JsonRpcParameter();
 
         traceCall = new TraceCall(blockchainQueries, transactionSimulator, jsonRpcParameter);
 
-        final JsonRpcRequest jsonRpcRequest = new JsonRpcRequest("2.0", "trace_call", new Object[] {
-                new JsonCallParameter("0x0", "0x0", "0x0", "0x0", "0x0", ""), Quantity.create(2L)});
+
+        final String storageKey = "108880666909002678955999504419132212304398961865316732214021935797026080667126";
+
+
+        JsonCallParameter jsonCallParameter = new JsonCallParameter("0x0", "0x0", "0x0", "0x0", "0x0", "");
+
+        final JsonRpcRequest jsonRpcRequest = new JsonRpcRequest("2.0", "trace_call", new Object[] {jsonCallParameter, Quantity.create(1L)});
 
         JsonRpcResponse jsonRpcResponse = traceCall.response(jsonRpcRequest);
 

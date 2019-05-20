@@ -149,6 +149,8 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
       final Boolean isPersistingState) {
     LOG.trace("Starting execution of {}", transaction);
 
+    System.out.println("999");
+
     ValidationResult<TransactionInvalidReason> validationResult =
         transactionValidator.validate(transaction);
     // Make sure the transaction is intrinsically valid before trying to
